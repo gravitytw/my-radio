@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的網路廣播播放器</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .player-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+        h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        .now-playing {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #eef2f5;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #16a085;
+            min-height: 24px;
+        }
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+        .station-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .station-btn {
+            background-color: #ffffff;
+            border: 2px solid #dcdde1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            font-weight: 500;
+        }
+        .station-btn:hover {
+            background-color: #f5f6fa;
+            border-color: #3498db;
+            color: #3498db;
+        }
+        .station-btn.active {
+            background-color: #3498db;
+            border-color: #3498db;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+    <h2>📻 網路廣播電臺</h2>
+    <div class="now-playing" id="current-title">請選擇電臺收聽</div>
+    
+    <audio id="radio-player" controls></audio>
+
+    <div class="station-list">
+        <button class="station-btn" onclick="playStation('警廣台中分臺 (TCS)', 'http://stream.pbs.gov.tw:1935/live/TCS/playlist.m3u8', this, true)">🟢 警廣台中分臺 (TCS)</button>
+        <button class="station-btn" onclick="playStation('中廣流行網', 'https://sonnykuo.appspot.com/bcc/?id=中廣流行網', this, false)">🔵 中廣流行網</button>
+        <button class="station-btn" onclick="playStation('中廣新聞網', 'https://sonnykuo.appspot.com/bcc/?id=中廣新聞網', this, false)">🔵 中廣新聞網</button>
+        <button class="station-btn" onclick="playStation('中廣音樂網', 'https://sonnykuo.appspot.com/bcc/?id=中廣音樂網', this, false)">🔵 中廣音樂網</button>
+        <button class="station-btn" onclick="playStation('飛碟聯播網', 'https://stream.rcs.revma.com/em90w4aeewzuv.m4a', this, false)">🟠 飛碟聯播網</button>
+        <button class="station-btn" onclick="playStation('全國廣播 M-Radio', 'https://stream.rcs.revma.com/044q61ha7a0uv', this, false)">🔴 全國廣播 M-Radio</button>
+    </div>
+</div>
+
+<script>
+    const audio = document.getElementById('radio-player');
+    const titleDiv = document.getElementById('current-title');
+    let hls = null;
+
+    function playStation(name, url, btnElement, isHls) {
+        document.querySelectorAll('.station-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        titleDiv.textContent = `正在播放：${name}`;
+
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
+
+        if (isHls) {
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(audio);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    audio.play();
+                });
+            } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+                audio.src = url;
+                audio.addEventListener('loadedmetadata', function() {
+                    audio.play();
+                });
+            } else {
+                alert('您的瀏覽器不支援播放此 HLS 串流格式。');
+            }
+        } else {
+            audio.src = url;
+            audio.load();
+            audio.play().catch(error => {
+                console.log("自動播放受瀏覽器政策攔截，請手動點擊播放鈕。", error);
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
