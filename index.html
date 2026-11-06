@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的網路廣播播放器</title>
+    <!-- 引入 HLS.js 用於順暢播放警廣 HLS 安全串流 -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         body {
@@ -49,7 +50,7 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 10px;
-            max-height: 300px;
+            max-height: 320px;
             overflow-y: auto;
             padding-right: 5px;
         }
@@ -82,10 +83,12 @@
     <h2>📻 網路廣播電臺</h2>
     <div class="now-playing" id="current-title">請選擇電臺收聽</div>
     
+    <!-- 網頁原生音訊播放器 -->
     <audio id="radio-player" controls></audio>
 
     <div class="station-list">
-        <button class="station-btn" onclick="playStation('警廣台中分臺 (TCS)', 'http://stream.pbs.gov.tw:1935/live/TCS/playlist.m3u8', this, true)">🟢 警廣台中分臺 (TCS)</button>
+        <!-- 已將警廣網址修改為最新 HTTPS 安全直播源 -->
+        <button class="station-btn" onclick="playStation('警廣台中分臺 (TCS)', 'https://stream.pbs.gov.tw/live/TCS/playlist.m3u8', this, true)">🟢 警廣台中分臺 (TCS)</button>
         <button class="station-btn" onclick="playStation('中廣流行網', 'https://sonnykuo.appspot.com/bcc/?id=中廣流行網', this, false)">🔵 中廣流行網</button>
         <button class="station-btn" onclick="playStation('中廣新聞網', 'https://sonnykuo.appspot.com/bcc/?id=中廣新聞網', this, false)">🔵 中廣新聞網</button>
         <button class="station-btn" onclick="playStation('中廣音樂網', 'https://sonnykuo.appspot.com/bcc/?id=中廣音樂網', this, false)">🔵 中廣音樂網</button>
@@ -100,32 +103,59 @@
     let hls = null;
 
     function playStation(name, url, btnElement, isHls) {
+        // 更新按鈕選取狀態
         document.querySelectorAll('.station-btn').forEach(btn => btn.classList.remove('active'));
         btnElement.classList.add('active');
+        
+        // 更新顯示名稱
         titleDiv.textContent = `正在播放：${name}`;
 
+        // 清理先前可能存在的 HLS 實例
         if (hls) {
             hls.destroy();
             hls = null;
         }
 
+        // HLS 串流規格處理 (.m3u8 格式)
         if (isHls) {
             if (Hls.isSupported()) {
-                hls = new Hls();
+                hls = new Hls({
+                    maxMaxBufferLength: 10 // 優化直播即時緩衝
+                });
                 hls.loadSource(url);
                 hls.attachMedia(audio);
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    audio.play();
+                    audio.play().catch(e => console.log("等待使用者手動點擊播放"));
+                });
+                
+                // 錯誤自動重連機制
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log("網路連線錯誤，嘗試重新載入...");
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log("解碼錯誤，嘗試修復...");
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 });
             } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+                // 針對 iOS Safari 原生支援 HLS 的處理
                 audio.src = url;
                 audio.addEventListener('loadedmetadata', function() {
-                    audio.play();
+                    audio.play().catch(e => console.log("等待 iOS 使用者手動點擊播放"));
                 });
             } else {
                 alert('您的瀏覽器不支援播放此 HLS 串流格式。');
             }
         } else {
+            // 一般音訊串流處理 (.m4a / MP3 等直接音訊)
             audio.src = url;
             audio.load();
             audio.play().catch(error => {
