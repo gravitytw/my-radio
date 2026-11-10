@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roy's 雲端網路廣播播放器</title>
-    <!-- 引入完整的 HLS.js 用於播放 .m3u8 格式 -->
+    <!-- 引入 HLS.js 用於播放 .m3u8 格式 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
     <style>
         :root {
             --primary-color: #6366f1;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
             --bg-overlay: rgba(15, 23, 42, 0.85);
         }
 
@@ -21,7 +23,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-image: url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=1920'); /* 預設固定高質感深色背景圖 */
+            background-image: url('https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=1200&auto=format&fit=crop'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -33,9 +35,10 @@
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             backdrop-filter: blur(10px);
             box-sizing: border-box;
+            margin: 20px;
         }
 
         .card { display: none; }
@@ -140,6 +143,53 @@
             font-size: 0.875rem;
             color: #94a3b8;
         }
+
+        /* 電台列表管理表格 */
+        .station-table-container {
+            margin-top: 1.5rem;
+            border-top: 1px solid #334155;
+            padding-top: 1rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .station-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border: 1px solid #334155;
+            font-size: 0.9rem;
+        }
+
+        .station-info {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 0.5rem;
+        }
+
+        .station-actions {
+            display: flex;
+            gap: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            width: auto;
+            margin-top: 0;
+        }
+        .btn-edit { background: var(--success-color); }
+        .btn-edit:hover { background: #059669; }
+        .btn-del { background: var(--danger-color); }
+        .btn-del:hover { background: #dc2626; }
     </style>
 </head>
 <body>
@@ -192,27 +242,35 @@
             <label>📻 收聽清單</label>
             <select id="stationSelect" onchange="playStation()">
                 <option value="">-- 請選擇電臺 --</option>
-                <option value="https://classicoldies.stream.publicradio.org/classicoldies.mp3" data-hls="false">經典老歌電臺 (範例 MP3)</option>
-                <option value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" data-hls="true">測試 HLS 電臺 (範例 .m3u8)</option>
             </select>
         </div>
 
         <audio id="audioPlayer" class="audio-player" controls></audio>
 
-        <!-- 管理面板 (新增自訂串流) -->
+        <!-- 管理面板 (新增與編輯自訂串流) -->
         <div style="margin-top: 2rem; border-top: 1px solid #334155; padding-top: 1rem;">
-            <label>🛠 管理面板 (自訂新增串流)</label>
+            <label id="panelTitle">🛠 管理面板 (新增自訂串流)</label>
+            <input type="hidden" id="editIndex" value="-1">
             <div class="form-group" style="margin-top: 0.5rem;">
-                <input type="text" id="newStationName" placeholder="電臺名稱">
+                <input type="text" id="stationName" placeholder="電臺名稱">
             </div>
             <div class="form-group">
-                <input type="text" id="newStationUrl" placeholder="串流網址 (URL)">
+                <input type="text" id="stationUrl" placeholder="串流網址 (URL)">
                 <div class="checkbox-group">
                     <input type="checkbox" id="isHls">
                     <label for="isHls">這是 HLS 串流 (警廣等 .m3u8 格式請勾選)</label>
                 </div>
             </div>
-            <button onclick="addNewStation()">➕ 新增此電臺</button>
+            <button id="saveBtn" onclick="saveStation()">➕ 新增此電臺</button>
+            <button id="cancelEditBtn" onclick="cancelEdit()" style="background: #64748b; display: none; margin-top: 0.5rem;">取消修改</button>
+        </div>
+
+        <!-- 收聽清單管理列表 -->
+        <div class="station-table-container">
+            <label>📋 管理收聽清單 (可編輯/刪除)</label>
+            <div id="stationListContainer" style="margin-top: 0.5rem;">
+                <!-- 動態渲染電台項目 -->
+            </div>
         </div>
 
         <button onclick="handleLogout()" style="background: #ef4444; margin-top: 1.5rem;">登出電臺</button>
@@ -220,10 +278,24 @@
 </div>
 
 <script>
-    // 預設帳密儲存庫 (使用 localStorage)
+    // 帳密儲存庫與電台清單儲存庫 (使用 localStorage 保持資料)
     let users = JSON.parse(localStorage.getItem('radio_users')) || {};
-    let hls = null;
+    
+    // 預設電台資料
+    let defaultStations = [
+        { name: "中廣流行網 i-like", url: "https://stream.bcc.com.tw/bcc_i_like_radio", hls: false },
+        { name: "警察廣播電臺 (範例 HLS)", url: "https://hls.ner.gov.tw/live/channel1/index.m3u8", hls: true }
+    ];
+    let stations = JSON.parse(localStorage.getItem('radio_stations')) || defaultStations;
+
+    let hlsPlayer = null;
     let titleInterval = null;
+
+    // 初始化網頁渲染
+    document.addEventListener("DOMContentLoaded", () => {
+        renderStationDropdown();
+        renderStationList();
+    });
 
     // 切換畫面
     function switchCard(cardId) {
@@ -273,29 +345,116 @@
         switchCard('loginCard');
     }
 
-    // 新增自訂電臺
-    function addNewStation() {
-        const name = document.getElementById('newStationName').value.trim();
-        const url = document.getElementById('newStationUrl').value.trim();
+    // 渲染電台下拉選單
+    function renderStationDropdown() {
+        const select = document.getElementById('stationSelect');
+        // 保留第一個預設選項
+        select.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
+        
+        stations.forEach((station, index) => {
+            const option = document.createElement('option');
+            option.value = station.url;
+            option.text = station.name;
+            option.setAttribute('data-hls', station.hls ? 'true' : 'false');
+            option.setAttribute('data-index', index);
+            select.add(option);
+        });
+    }
+
+    // 渲染管理清單 (修改與移除面板)
+    function renderStationList() {
+        const container = document.getElementById('stationListContainer');
+        container.innerHTML = '';
+
+        if (stations.length === 0) {
+            container.innerHTML = '<div style="color:#64748b; font-size:0.85rem; text-align:center;">目前無自訂電台</div>';
+            return;
+        }
+
+        stations.forEach((station, index) => {
+            const item = document.createElement('div');
+            item.className = 'station-item';
+            item.innerHTML = `
+                <div class="station-info">
+                    <strong>${station.name}</strong><br>
+                    <span style="font-size:0.75rem; color:#64748b;">${station.url}</span>
+                </div>
+                <div class="station-actions">
+                    <button class="btn-sm btn-edit" onclick="startEditStation(${index})">修改</button>
+                    <button class="btn-sm btn-del" onclick="deleteStation(${index})">刪除</button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    // 儲存電台 (新增或更新)
+    function saveStation() {
+        const name = document.getElementById('stationName').value.trim();
+        const url = document.getElementById('stationUrl').value.trim();
         const isHls = document.getElementById('isHls').checked;
+        const editIndex = parseInt(document.getElementById('editIndex').value);
 
         if (!name || !url) {
             alert('請輸入電臺名稱與網址！');
             return;
         }
 
-        const select = document.getElementById('stationSelect');
-        const option = document.createElement('option');
-        option.value = url;
-        option.text = name;
-        option.setAttribute('data-hls', isHls ? 'true' : 'false');
-        select.add(option);
+        if (editIndex === -1) {
+            // 新增
+            stations.push({ name, url, hls: isHls });
+            alert('電臺新增成功！');
+        } else {
+            // 修改更新
+            stations[editIndex] = { name, url, hls: isHls };
+            alert('電臺更新成功！');
+            cancelEdit();
+        }
 
-        // 清空欄位
-        document.getElementById('newStationName').value = '';
-        document.getElementById('newStationUrl').value = '';
+        localStorage.setItem('radio_stations', JSON.stringify(stations));
+        renderStationDropdown();
+        renderStationList();
+        clearForm();
+    }
+
+    // 進入編輯模式
+    function startEditStation(index) {
+        const station = stations[index];
+        document.getElementById('stationName').value = station.name;
+        document.getElementById('stationUrl').value = station.url;
+        document.getElementById('isHls').checked = station.hls;
+        document.getElementById('editIndex').value = index;
+
+        document.getElementById('panelTitle').innerText = '🛠 管理面板 (修改電台資料)';
+        document.getElementById('saveBtn').innerText = '💾 儲存修改內容';
+        document.getElementById('cancelEditBtn').style.display = 'block';
+    }
+
+    // 取消編輯模式
+    function cancelEdit() {
+        clearForm();
+        document.getElementById('editIndex').value = '-1';
+        document.getElementById('panelTitle').innerText = '🛠 管理面板 (新增自訂串流)';
+        document.getElementById('saveBtn').innerText = '➕ 新增此電臺';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+    }
+
+    // 刪除電台
+    function deleteStation(index) {
+        if (confirm(`確定要刪除「${stations[index].name}」這個電台嗎？`)) {
+            stations.splice(index, 1);
+            localStorage.setItem('radio_stations', JSON.stringify(stations));
+            renderStationDropdown();
+            renderStationList();
+            cancelEdit();
+        }
+    }
+
+    // 清空表單
+    function clearForm() {
+        document.getElementById('stationName').value = '';
+        document.getElementById('stationUrl').value = '';
         document.getElementById('isHls').checked = false;
-        alert('電臺新增成功！');
     }
 
     // 播放選擇的電臺
@@ -303,8 +462,6 @@
         const select = document.getElementById('stationSelect');
         const selectedOption = select.options[select.selectedIndex];
         const url = select.value;
-        const isHlsStr = selectedOption.getAttribute('data-hls');
-        const stationName = selectedOption.text;
         
         const audio = document.getElementById('audioPlayer');
 
@@ -316,23 +473,26 @@
             return;
         }
 
+        const isHlsStr = selectedOption.getAttribute('data-hls');
+        const stationName = selectedOption.text;
+
         // 更新文字內容
         const playText = `正在播放：${stationName} 🎵 串流網址: ${url} `;
         updateMarquee(playText);
         startTitleMarquee(playText);
 
         // 處理 HLS 串流與一般音訊
-        if (hls) {
-            hls.destroy();
-            hls = null;
+        if (hlsPlayer) {
+            hlsPlayer.destroy();
+            hlsPlayer = null;
         }
 
         if (isHlsStr === 'true') {
             if (Hls.isSupported()) {
-                hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(audio);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                hlsPlayer = new Hls();
+                hlsPlayer.loadSource(url);
+                hlsPlayer.attachMedia(audio);
+                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
                     audio.play();
                 });
             } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
@@ -370,5 +530,6 @@
         }
     }
 </script>
+
 </body>
 </html>
