@@ -283,12 +283,12 @@
 </div>
 <script>
     const defaultStations = [
-        { name: "警察廣播電臺 (總台)", url: "http://pbs.gov.tw", hls: true },
-        { name: "中廣流行網", url: "https://appspot.com", hls: false },
-        { name: "中廣新聞網", url: "https://appspot.com", hls: false },
-        { name: "中廣音樂網", url: "https://appspot.com", hls: false },
-        { name: "國際復古音樂流 1", url: "https://revma.com", hls: false },
-        { name: "國際復古音樂流 2", url: "https://revma.com", hls: false }
+        { name: "警察廣播電臺 (臺中臺)", url: "https://stream.pbs.gov.tw/live/TCS/playlist.m3u8", hls: true },
+        { name: "中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣流行網", hls: false },
+        { name: "中廣新聞網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣新聞網", hls: false },
+        { name: "中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣音樂網", hls: false },
+        { name: "UFO Radio飛碟電臺", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", hls: false },
+        { name: "全國廣播 M-Radio", url: "https://stream.rcs.revma.com/044q61ha7a0uv", hls: false }
     ];
 
     let users = JSON.parse(localStorage.getItem('radio_users')) || {};
