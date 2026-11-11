@@ -8,6 +8,8 @@
   <link href="https://googleapis.com" rel="stylesheet">
   <script src="https://jsdelivr.net"></script>
   <style>
+#radio-dashboard:not(.hidden) { display: flex; }
+
     :root {
       --bg-void: #050811;
       --panel-bg: rgba(12, 20, 38, 0.75);
@@ -61,6 +63,36 @@
       text-shadow: 0 0 22px rgba(0, 243, 255, 0.45);
       margin-bottom: 4px;
     }
+    .hud-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+      font-size: 0.85rem;
+      color: var(--neon-cyan);
+      box-shadow: inset 0 0 12px rgba(0, 243, 255, 0.1);
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background-color: #64748b;
+      margin-right: 6px;
+    }
+
+    .status-dot.active {
+      background-color: #00ff88;
+      box-shadow: 0 0 10px #00ff88;
+    }
+
     .cyber-card {
       background: var(--panel-bg);
       backdrop-filter: blur(14px);
@@ -284,8 +316,12 @@
 <body>
 <div class="hud-wrapper">
   <h1 class="main-title">⚡ Roy's 雲端網路廣播播放器</h1>
+  <div class="hud-status-bar">
+    <div id="hud-datetime">📅 載入時間中...</div>
+    <div><span class="status-dot" id="status-dot"></span><span id="now-playing-text">待機中 (未選擇電臺)</span></div>
+  </div>
 
-  <div id="login-section" class="cyber-card">
+    <div id="login-section" class="cyber-card">
     <h2>📻 Roy's Radio 登入</h2>
     <div class="form-group">
       <label>電子郵件 (Email)</label>
@@ -301,13 +337,43 @@
       <span onclick="switchView('reset-section')">忘記密碼？</span>
     </div>
   </div>
-  <!-- 申請新帳號與重設密碼區塊請接續貼上 -->
-  <div id="register-section" class="cyber-card hidden">...</div>
-  <div id="reset-section" class="cyber-card hidden">...</div>
-  <div id="radio-dashboard" class="hidden" style="display:flex; flex-direction:column; gap:20px;">
+
+  <div id="register-section" class="cyber-card hidden">
+    <h2>📝 申請新帳號</h2>
+    <div class="form-group">
+      <label>設定電子郵件 (Email)</label>
+      <input type="email" id="reg-email" placeholder="輸入新帳號 Email" />
+    </div>
+    <div class="form-group">
+      <label>設定安全密碼 (至少6碼)</label>
+      <input type="password" id="reg-password" placeholder="設定至少6碼密碼" />
+    </div>
+    <button class="btn btn-primary" onclick="handleRegister()">提交申請並登入</button>
+    <button class="btn btn-secondary" onclick="switchView('login-section')">返回登入系統</button>
+  </div>
+  <div id="reset-section" class="cyber-card hidden">
+    <h2>🔑 重設安全密碼</h2>
+    <div class="form-group">
+      <label>已註冊的電子郵件 (Email)</label>
+      <input type="email" id="reset-email" placeholder="輸入註冊時的 Email" />
+    </div>
+    <div class="form-group">
+      <label>設定新密碼 (至少6碼)</label>
+      <input type="password" id="reset-new-pass" placeholder="輸入新密碼" />
+    </div>
+    <div class="form-group">
+      <label>再次確認新密碼</label>
+      <input type="password" id="reset-confirm-pass" placeholder="再次輸入新密碼" />
+    </div>
+    <button class="btn btn-primary" onclick="handleReset()">重設密碼並返回登入</button>
+    <button class="btn btn-secondary" onclick="switchView('login-section')">返回登入系統</button>
+  </div>
+
+  <div id="radio-dashboard" class="hidden" style="flex-direction:column; gap:20px;">
     <div class="cyber-card">
       <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:8px;">歡迎來到 Roy 的廣播電臺，請選擇電臺開始收聽...</p>
       <h2>🌌 Roy 的廣播電臺</h2>
+
       <div class="visualizer" id="visualizer">
         <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
         <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
@@ -516,6 +582,67 @@
       renderStations();
     }
   });
+  let currentStationName = '未選擇電臺';
+
+  function updateClock() {
+    const now = new Date();
+    const days = ['日', '一', '二', '三', '四', '五', '六'];
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const w = days[now.getDay()];
+    const time = now.toTimeString().split(' ')[0];
+    document.getElementById('hud-datetime').textContent = `📅 ${y}年${m}月${d}日 (週${w}) ${time}`;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  function updateNowPlayingUI(isPlaying) {
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('now-playing-text');
+    if (isPlaying) {
+      dot.classList.add('active');
+      text.textContent = `正在播放：${currentStationName}`;
+      document.title = `▶ ${currentStationName} | Roy's Radio`;
+    } else {
+      dot.classList.remove('active');
+      text.textContent = currentStationName === '未選擇電臺' ? '待機中 (未選擇電臺)' : `已暫停：${currentStationName}`;
+      document.title = `⏸ ${currentStationName} | Roy's Radio`;
+    }
+  }
+
+  audio.addEventListener('play', () => {
+    visualizer.classList.add('playing');
+    updateNowPlayingUI(true);
+  });
+  audio.addEventListener('pause', () => {
+    visualizer.classList.remove('playing');
+    updateNowPlayingUI(false);
+  });
+  audio.addEventListener('ended', () => {
+    visualizer.classList.remove('playing');
+    updateNowPlayingUI(false);
+  });
+
+  function playSelectedStation() {
+    const idx = document.getElementById('station-select').value;
+    if (idx === '') return;
+    const st = stations[idx];
+    currentStationName = st.name;
+
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+    if (st.isHls && Hls.isSupported()) {
+      hlsInstance = new Hls();
+      hlsInstance.loadSource(st.url);
+      hlsInstance.attachMedia(audio);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => audio.play());
+    } else {
+      audio.src = st.url;
+      audio.play();
+    }
+  }
+
 </script>
 </body>
 </html>
