@@ -315,7 +315,7 @@
 </head>
 <body>
 <div class="hud-wrapper">
-  <h1 class="main-title">⚡ Roy's 雲端網路廣播播放器</h1>
+  <h1 class="main-title">⚡ Roy's Net Radio player</h1>
   <div class="hud-status-bar">
     <div id="hud-datetime">📅 載入時間中...</div>
     <div><span class="status-dot" id="status-dot"></span><span id="now-playing-text">待機中 (未選擇電臺)</span></div>
@@ -424,8 +424,12 @@
 </div>
 <script>
   const defaultStations = [
-    { name: "警廣全國治安交通網 (HLS)", url: "https://pbs.gov.tw", isHls: true },
-    { name: "警廣臺北分臺 (HLS)", url: "https://pbs.gov.tw", isHls: true }
+    { name: "🔵中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣流行網", isHls: true },
+ { name: "中廣新聞網❤️", url: "https://sonnykuo.appspot.com/bcc/?id=中廣新聞網", isHls: true },
+ { name: "💝中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣音樂網", isHls: true },
+ { name: "飛碟聯播網🟠", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", isHls: true },
+ { name: "🔴全國廣播 M-Radio", url: "https://stream.rcs.revma.com/044q61ha7a0uv", isHls: true },
+    { name: "警廣臺中分臺(TCS)💛", url: "https://stream.pbs.gov.tw/live/TCS/playlist.m3u8", isHls: true }
   ];
 
   let stations = JSON.parse(localStorage.getItem('roy_radio_stations')) || defaultStations;
