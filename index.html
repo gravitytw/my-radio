@@ -1,12 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roy's 雲端網路廣播播放器</title>
-    <!-- 引入 HLS.js 用於播放 .m3u8 格式 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+    <script src="https://cloudflare.com"></script>
     <style>
         :root {
             --primary-color: #6366f1;
@@ -15,7 +13,6 @@
             --warning-color: #f59e0b;
             --bg-overlay: rgba(15, 23, 42, 0.85);
         }
-
         body {
             margin: 0;
             padding: 0;
@@ -25,12 +22,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-image: url('https://images.unsplash.com/photo-1614680376593-902f74fa0d41?q=80&w=1974&auto=format&fit=crop'); /* 預設固定背景圖 */
+            background-image: url('https://unsplash.com');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }
-
         .container {
             background: var(--bg-overlay);
             padding: 2.5rem;
@@ -42,10 +38,8 @@
             box-sizing: border-box;
             margin: 20px;
         }
-
         .card { display: none; }
         .card.active { display: block; }
-
         h2 {
             margin-top: 0;
             color: #fff;
@@ -53,18 +47,13 @@
             font-size: 1.8rem;
             margin-bottom: 1.5rem;
         }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
+        .form-group { margin-bottom: 1.25rem; }
         label {
             display: block;
             margin-bottom: 0.5rem;
             font-size: 0.9rem;
             color: #94a3b8;
         }
-
         input[type="email"], input[type="password"], input[type="text"], select {
             width: 100%;
             padding: 0.75rem;
@@ -75,7 +64,6 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
-
         button {
             width: 100%;
             padding: 0.75rem;
@@ -89,22 +77,18 @@
             transition: background 0.2s;
             margin-top: 0.5rem;
         }
-
         button:hover { background: #4f46e5; }
-
         .links {
             margin-top: 1rem;
             text-align: center;
             font-size: 0.875rem;
         }
-
         .links a {
             color: #a5b4fc;
             text-decoration: none;
             margin: 0 0.5rem;
         }
-
-        /* 網頁內跑馬燈樣式 */
+        .links a:hover { text-decoration: underline; }
         .marquee-container {
             background: #0f172a;
             padding: 0.5rem;
@@ -114,7 +98,6 @@
             margin-bottom: 1.5rem;
             border: 1px solid #334155;
         }
-
         .marquee-text {
             display: inline-block;
             padding-left: 100%;
@@ -122,21 +105,12 @@
             color: #38bdf8;
             font-weight: bold;
         }
-
         @keyframes marquee {
             0% { transform: translate3d(0, 0, 0); }
             100% { transform: translate3d(-100%, 0, 0); }
         }
-
-        .radio-list {
-            margin: 1.5rem 0;
-        }
-
-        .audio-player {
-            width: 100%;
-            margin-top: 1rem;
-        }
-
+        .radio-list { margin: 1.5rem 0; }
+        .audio-player { width: 100%; margin-top: 1rem; }
         .checkbox-group {
             display: flex;
             align-items: center;
@@ -145,8 +119,6 @@
             font-size: 0.875rem;
             color: #94a3b8;
         }
-
-        /* 電台管理清單清單 */
         .station-manager-list {
             margin-top: 1.5rem;
             max-height: 200px;
@@ -156,7 +128,6 @@
             padding: 0.5rem;
             background: #0f172a;
         }
-
         .station-item {
             display: flex;
             justify-content: space-between;
@@ -164,24 +135,16 @@
             padding: 0.5rem;
             border-bottom: 1px solid #1e293b;
         }
-        .station-item:last-child {
-            border-bottom: none;
-        }
-
+        .station-item:last-child { border-bottom: none; }
         .station-info {
             flex-grow: 1;
-            margin-right: 100px;
+            margin-right: 10px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             font-size: 0.9rem;
         }
-
-        .station-actions {
-            display: flex;
-            gap: 0.25rem;
-        }
-
+        .station-actions { display: flex; gap: 0.25rem; }
         .btn-sm {
             padding: 0.25rem 0.5rem;
             font-size: 0.8rem;
@@ -193,10 +156,14 @@
         .btn-edit:hover { background: #d97706; }
         .btn-delete { background: var(--danger-color); }
         .btn-delete:hover { background: #dc2626; }
+        .section-divider {
+            margin-top: 1.5rem;
+            border-top: 1px solid #334155;
+            padding-top: 1.25rem;
+        }
     </style>
 </head>
 <body>
-
 <div class="container">
     <!-- 1. 登入區塊 -->
     <div id="loginCard" class="card active">
@@ -212,6 +179,8 @@
         <button onclick="handleLogin()">驗證並登入</button>
         <div class="links">
             <a href="#" onclick="switchCard('registerCard')">申請註冊新帳號</a>
+            <span>|</span>
+            <a href="#" onclick="switchCard('forgotCard')">忘記密碼？</a>
         </div>
     </div>
 
@@ -232,9 +201,28 @@
         </div>
     </div>
 
+    <!-- 2.5 忘記密碼區塊 -->
+    <div id="forgotCard" class="card">
+        <h2>🔑 重設安全密碼</h2>
+        <div class="form-group">
+            <label>已註冊的電子郵件 (Email)</label>
+            <input type="email" id="forgotEmail" placeholder="請輸入您註冊時的 Email">
+        </div>
+        <div class="form-group">
+            <label>設定新密碼 (至少6碼)</label>
+            <input type="password" id="forgotNewPwd" placeholder="請輸入新密碼">
+        </div>
+        <div class="form-group">
+            <label>再次確認新密碼</label>
+            <input type="password" id="forgotConfirmPwd" placeholder="請再次輸入新密碼">
+        </div>
+        <button onclick="handleForgotPassword()" style="background: var(--warning-color);">重設密碼並返回登入</button>
+        <div class="links">
+            <a href="#" onclick="switchCard('loginCard')">返回登入系統</a>
+        </div>
+    </div>
     <!-- 3. 播放器主頁面 -->
     <div id="playerCard" class="card">
-        <!-- 上方跑馬燈 -->
         <div class="marquee-container">
             <div id="marqueeText" class="marquee-text">歡迎來到 Roy 的廣播電臺，請選擇電臺開始收聽...</div>
         </div>
@@ -251,7 +239,7 @@
         <audio id="audioPlayer" class="audio-player" controls></audio>
 
         <!-- 管理面板 (新增/修改自訂串流) -->
-        <div style="margin-top: 2rem; border-top: 1px solid #334155; padding-top: 1rem;">
+        <div class="section-divider">
             <label id="panelTitle">🛠 管理面板 (新增自訂串流)</label>
             <input type="hidden" id="editIndex" value="">
             
@@ -262,7 +250,7 @@
                 <input type="text" id="newStationUrl" placeholder="串流網址 (URL)">
                 <div class="checkbox-group">
                     <input type="checkbox" id="isHls">
-                    <label for="isHls">這是 HLS 串流 (警廣等 .m3u8 格式請勾選)</label>
+                    <label for="isHls" style="margin-bottom: 0;">這是 HLS 串流 (警廣等 .m3u8 格式請勾選)</label>
                 </div>
             </div>
             <button id="btnSubmit" onclick="saveStation()">➕ 新增此電臺</button>
@@ -275,25 +263,38 @@
             <div id="stationManagerList" class="station-manager-list"></div>
         </div>
 
+        <!-- 修改密碼面板 -->
+        <div class="section-divider">
+            <label>🔐 修改帳號密碼 (<span id="currentUserDisplay" style="color:#a5b4fc;"></span>)</label>
+            <div class="form-group" style="margin-top: 0.5rem;">
+                <input type="password" id="oldPwd" placeholder="請輸入目前的舊密碼">
+            </div>
+            <div class="form-group">
+                <input type="password" id="newPwd" placeholder="請輸入新密碼 (至少6碼)">
+            </div>
+            <div class="form-group">
+                <input type="password" id="confirmNewPwd" placeholder="再次確認新密碼">
+            </div>
+            <button onclick="handleChangePassword()" style="background: var(--success-color);">💾 更新帳號密碼</button>
+        </div>
+
         <button onclick="handleLogout()" style="background: #ef4444; margin-top: 1.5rem;">登出電臺</button>
     </div>
 </div>
-
 <script>
-    // 預設電台資料庫（包含使用者提供的新電台）
     const defaultStations = [
-        { name: "警察廣播電臺 (總台)", url: "http://stream.pbs.gov.tw:1935/live/TCS/playlist.m3u8", hls: true },
-        { name: "中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=%E4%B8%AD%E5%BB%A3%E6%B5%81%E8%A1%8C%E7%B6%B2", hls: false },
-        { name: "中廣新聞網", url: "https://sonnykuo.appspot.com/bcc/?id=%E4%B8%AD%E5%BB%A3%E6%96%B0%E8%81%9E%E7%B6%B2", hls: false },
-        { name: "中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=%E4%B8%AD%E5%BB%A3%E9%9F%B3%E6%A8%82%E7%B6%B2", hls: false },
-        { name: "國際復古音樂流 1", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", hls: false },
-        { name: "國際復古音樂流 2", url: "https://stream.rcs.revma.com/044q61ha7a0uv", hls: false }
+        { name: "警察廣播電臺 (總台)", url: "http://pbs.gov.tw", hls: true },
+        { name: "中廣流行網", url: "https://appspot.com", hls: false },
+        { name: "中廣新聞網", url: "https://appspot.com", hls: false },
+        { name: "中廣音樂網", url: "https://appspot.com", hls: false },
+        { name: "國際復古音樂流 1", url: "https://revma.com", hls: false },
+        { name: "國際復古音樂流 2", url: "https://revma.com", hls: false }
     ];
 
     let users = JSON.parse(localStorage.getItem('radio_users')) || {};
     let stations = JSON.parse(localStorage.getItem('radio_stations'));
-    
-    // 如果本地沒有儲存過電台，則載入預設名單
+    let currentUserEmail = null;
+
     if (!stations) {
         stations = defaultStations;
         localStorage.setItem('radio_stations', JSON.stringify(stations));
@@ -302,32 +303,32 @@
     let hls = null;
     let titleInterval = null;
 
-    // 初始化電台清單與管理面板
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", function() {
         renderStations();
     });
 
     function switchCard(cardId) {
-        document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+        document.querySelectorAll('.card').forEach(function(card) {
+            card.classList.remove('active');
+        });
         document.getElementById(cardId).classList.add('active');
     }
 
     function handleRegister() {
         const email = document.getElementById('regEmail').value.trim();
         const pwd = document.getElementById('regPwd').value;
-
         if (!email || pwd.length < 6) {
             alert('請輸入正確的 Email 且密碼至少需要 6 個字元！');
             return;
         }
-
         if (users[email]) {
             alert('此 Email 已被註冊！');
             return;
         }
-
         users[email] = pwd;
         localStorage.setItem('radio_users', JSON.stringify(users));
+        currentUserEmail = email;
+        document.getElementById('currentUserDisplay').innerText = email;
         alert('註冊成功！已為您自動登入。');
         switchCard('playerCard');
     }
@@ -335,108 +336,150 @@
     function handleLogin() {
         const email = document.getElementById('loginEmail').value.trim();
         const pwd = document.getElementById('loginPwd').value;
-
         if (users[email] && users[email] === pwd) {
+            currentUserEmail = email;
+            document.getElementById('currentUserDisplay').innerText = email;
+            document.getElementById('loginPwd').value = '';
             switchCard('playerCard');
         } else {
             alert('電子郵件或密碼錯誤，請重試。');
         }
     }
 
+    function handleForgotPassword() {
+        const email = document.getElementById('forgotEmail').value.trim();
+        const newPwd = document.getElementById('forgotNewPwd').value;
+        const confirmPwd = document.getElementById('forgotConfirmPwd').value;
+        if (!email) {
+            alert('請輸入您註冊時的電子郵件！');
+            return;
+        }
+        if (!users[email]) {
+            alert('查無此電子郵件帳號，請確認是否輸入正確或先申請註冊。');
+            return;
+        }
+        if (newPwd.length < 6) {
+            alert('新密碼至少需要 6 個字元！');
+            return;
+        }
+        if (newPwd !== confirmPwd) {
+            alert('兩次輸入的新密碼不一致，請重新確認！');
+            return;
+        }
+        users[email] = newPwd;
+        localStorage.setItem('radio_users', JSON.stringify(users));
+        document.getElementById('forgotEmail').value = '';
+        document.getElementById('forgotNewPwd').value = '';
+        document.getElementById('forgotConfirmPwd').value = '';
+        document.getElementById('loginEmail').value = email;
+        alert('密碼已成功重設！請使用新密碼登入。');
+        switchCard('loginCard');
+    }
+
+    function handleChangePassword() {
+        if (!currentUserEmail) {
+            alert('請先登入帳號！');
+            return;
+        }
+        const oldPwd = document.getElementById('oldPwd').value;
+        const newPwd = document.getElementById('newPwd').value;
+        const confirmNewPwd = document.getElementById('confirmNewPwd').value;
+        if (users[currentUserEmail] !== oldPwd) {
+            alert('目前的舊密碼輸入錯誤！');
+            return;
+        }
+        if (newPwd.length < 6) {
+            alert('新密碼至少需要 6 個字元！');
+            return;
+        }
+        if (newPwd !== confirmNewPwd) {
+            alert('兩次輸入的新密碼不一致，請重新確認！');
+            return;
+        }
+        users[currentUserEmail] = newPwd;
+        localStorage.setItem('radio_users', JSON.stringify(users));
+        document.getElementById('oldPwd').value = '';
+        document.getElementById('newPwd').value = '';
+        document.getElementById('confirmNewPwd').value = '';
+        alert('密碼修改成功！下次登入請使用新密碼。');
+    }
+
     function handleLogout() {
         const audio = document.getElementById('audioPlayer');
         audio.pause();
         stopTitleMarquee();
+        currentUserEmail = null;
         document.title = "Roy's 雲端網路廣播播放器";
         switchCard('loginCard');
     }
-
-    // 渲染電台至「下拉選單」與「管理清單」
     function renderStations() {
         const select = document.getElementById('stationSelect');
         const managerList = document.getElementById('stationManagerList');
-        
-        // 保留預設的第一個選項
         select.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
         managerList.innerHTML = '';
 
-        stations.forEach((station, index) => {
-            // 1. 渲染至下拉選單
+        stations.forEach(function(station, index) {
             const option = document.createElement('option');
             option.value = station.url;
             option.text = station.name;
             option.setAttribute('data-hls', station.hls ? 'true' : 'false');
             select.add(option);
 
-            // 2. 渲染至管理清單
             const item = document.createElement('div');
             item.className = 'station-item';
-            item.innerHTML = `
-                <div class="station-info">${station.name}</div>
-                <div class="station-actions">
-                    <button class="btn-sm btn-edit" onclick="editStation(${index})">修改</button>
-                    <button class="btn-sm btn-delete" onclick="deleteStation(${index})">刪除</button>
-                </div>
-            `;
+            item.innerHTML = '<div class="station-info">' + station.name + '</div>' +
+                '<div class="station-actions">' +
+                '<button class="btn-sm btn-edit" onclick="editStation(' + index + ')">修改</button>' +
+                '<button class="btn-sm btn-delete" onclick="deleteStation(' + index + ')">刪除</button>' +
+                '</div>';
             managerList.appendChild(item);
         });
     }
 
-    // 新增或儲存修改後的電台
     function saveStation() {
         const name = document.getElementById('newStationName').value.trim();
         const url = document.getElementById('newStationUrl').value.trim();
         const isHls = document.getElementById('isHls').checked;
         const editIndex = document.getElementById('editIndex').value;
-
         if (!name || !url) {
             alert('請輸入電臺名稱與網址！');
             return;
         }
-
         if (editIndex !== "") {
-            // 修改已有電台
-            stations[editIndex] = { name, url, hls: isHls };
+            stations[editIndex] = { name: name, url: url, hls: isHls };
             alert('電臺修改成功！');
         } else {
-            // 新增電台
-            stations.push({ name, url, hls: isHls });
+            stations.push({ name: name, url: url, hls: isHls });
             alert('電臺新增成功！');
         }
-
         localStorage.setItem('radio_stations', JSON.stringify(stations));
         renderStations();
         cancelEdit();
     }
 
-    // 點擊修改按鈕
     function editStation(index) {
         const station = stations[index];
         document.getElementById('newStationName').value = station.name;
         document.getElementById('newStationUrl').value = station.url;
         document.getElementById('isHls').checked = station.hls;
         document.getElementById('editIndex').value = index;
-
-        document.getElementById('panelTitle').innerText = "🛠 管理面板 (修改現有電流)";
+        document.getElementById('panelTitle').innerText = "🛠 管理面板 (修改現有串流)";
         document.getElementById('btnSubmit').innerText = "💾 儲存修改內容";
         document.getElementById('btnCancelEdit').style.display = 'block';
     }
 
-    // 取消修改狀態
     function cancelEdit() {
         document.getElementById('newStationName').value = '';
         document.getElementById('newStationUrl').value = '';
         document.getElementById('isHls').checked = false;
         document.getElementById('editIndex').value = "";
-
         document.getElementById('panelTitle').innerText = "🛠 管理面板 (新增自訂串流)";
         document.getElementById('btnSubmit').innerText = "➕ 新增此電臺";
         document.getElementById('btnCancelEdit').style.display = 'none';
     }
 
-    // 刪除電台
     function deleteStation(index) {
-        if (confirm(`確定要刪除「${stations[index].name}」這個電台嗎？`)) {
+        if (confirm('確定要刪除「' + stations[index].name + '」這個電台嗎？')) {
             stations.splice(index, 1);
             localStorage.setItem('radio_stations', JSON.stringify(stations));
             renderStations();
@@ -444,14 +487,22 @@
         }
     }
 
-    // 播放選擇的電臺
+    function getFormattedDateString() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        const weekDay = weekDays[now.getDay()];
+        return year + '年' + month + '月' + day + '日 ' + weekDay;
+    }
+
     function playStation() {
         const select = document.getElementById('stationSelect');
         const selectedOption = select.options[select.selectedIndex];
         const url = select.value;
         const isHlsStr = selectedOption ? selectedOption.getAttribute('data-hls') : 'false';
         const stationName = selectedOption ? selectedOption.text : '';
-        
         const audio = document.getElementById('audioPlayer');
 
         if (!url) {
@@ -462,9 +513,9 @@
             return;
         }
 
-        const playText = `正在播放：${stationName} 🎵 串流網址: ${url} `;
+        const playText = '正在播放：' + stationName + ' 🎵 串流網址: ' + url + ' ';
         updateMarquee(playText);
-        startTitleMarquee(playText);
+        startTitleMarquee(stationName);
 
         if (hls) {
             hls.destroy();
@@ -495,12 +546,13 @@
         document.getElementById('marqueeText').innerText = text;
     }
 
-    function startTitleMarquee(text) {
+    function startTitleMarquee(stationName) {
         stopTitleMarquee();
-        let displayCtx = text + "   ";
-        titleInterval = setInterval(() => {
-            displayCtx = displayCtx.substring(1) + displayCtx.substring(0, 1);
-            document.title = displayCtx;
+        let offset = 0;
+        titleInterval = setInterval(function() {
+            const fullText = getFormattedDateString() + ' 您現在收聽的電台為' + stationName + '   ';
+            offset = (offset + 1) % fullText.length;
+            document.title = fullText.substring(offset) + fullText.substring(0, offset);
         }, 400);
     }
 
@@ -511,6 +563,5 @@
         }
     }
 </script>
-
 </body>
 </html>
