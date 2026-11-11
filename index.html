@@ -1,567 +1,521 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roy's 雲端網路廣播播放器</title>
-    <script src="https://cloudflare.com"></script>
-    <style>
-        :root {
-            --primary-color: #6366f1;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --bg-overlay: rgba(15, 23, 42, 0.85);
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #f8fafc;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: url('https://unsplash.com');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-        .container {
-            background: var(--bg-overlay);
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 500px;
-            backdrop-filter: blur(10px);
-            box-sizing: border-box;
-            margin: 20px;
-        }
-        .card { display: none; }
-        .card.active { display: block; }
-        h2 {
-            margin-top: 0;
-            color: #fff;
-            text-align: center;
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-        }
-        .form-group { margin-bottom: 1.25rem; }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            color: #94a3b8;
-        }
-        input[type="email"], input[type="password"], input[type="text"], select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            background: #1e293b;
-            color: #fff;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 8px;
-            background: var(--primary-color);
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 0.5rem;
-        }
-        button:hover { background: #4f46e5; }
-        .links {
-            margin-top: 1rem;
-            text-align: center;
-            font-size: 0.875rem;
-        }
-        .links a {
-            color: #a5b4fc;
-            text-decoration: none;
-            margin: 0 0.5rem;
-        }
-        .links a:hover { text-decoration: underline; }
-        .marquee-container {
-            background: #0f172a;
-            padding: 0.5rem;
-            border-radius: 8px;
-            overflow: hidden;
-            white-space: nowrap;
-            margin-bottom: 1.5rem;
-            border: 1px solid #334155;
-        }
-        .marquee-text {
-            display: inline-block;
-            padding-left: 100%;
-            animation: marquee 15s linear infinite;
-            color: #38bdf8;
-            font-weight: bold;
-        }
-        @keyframes marquee {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
-        .radio-list { margin: 1.5rem 0; }
-        .audio-player { width: 100%; margin-top: 1rem; }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-            color: #94a3b8;
-        }
-        .station-manager-list {
-            margin-top: 1.5rem;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 0.5rem;
-            background: #0f172a;
-        }
-        .station-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem;
-            border-bottom: 1px solid #1e293b;
-        }
-        .station-item:last-child { border-bottom: none; }
-        .station-info {
-            flex-grow: 1;
-            margin-right: 10px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 0.9rem;
-        }
-        .station-actions { display: flex; gap: 0.25rem; }
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.8rem;
-            border-radius: 4px;
-            width: auto;
-            margin-top: 0;
-        }
-        .btn-edit { background: var(--warning-color); }
-        .btn-edit:hover { background: #d97706; }
-        .btn-delete { background: var(--danger-color); }
-        .btn-delete:hover { background: #dc2626; }
-        .section-divider {
-            margin-top: 1.5rem;
-            border-top: 1px solid #334155;
-            padding-top: 1.25rem;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roy's 雲端網路廣播播放器 // CYBER HUD</title>
+  <!-- 載入科技字體與 HLS.js 串流播放核心 -->
+  <link href="https://googleapis.com" rel="stylesheet">
+  <script src="https://jsdelivr.net"></script>
+  <style>
+    :root {
+      --bg-void: #050811;
+      --panel-bg: rgba(12, 20, 38, 0.75);
+      --neon-cyan: #00f3ff;
+      --neon-purple: #bc13fe;
+      --neon-pink: #ff0055;
+      --text-main: #e2e8f0;
+      --text-dim: #7dd3fc;
+      --border-glow: rgba(0, 243, 255, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(188, 19, 254, 0.16), transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(0, 243, 255, 0.14), transparent 40%),
+        linear-gradient(rgba(0, 243, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      color: var(--text-main);
+      font-family: 'Noto Sans TC', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 28px 16px;
+    }
+
+    .hud-wrapper {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .main-title {
+      font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+      text-align: center;
+      font-size: 1.65rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, var(--neon-cyan), #ffffff, var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 22px rgba(0, 243, 255, 0.45);
+      margin-bottom: 4px;
+    }
+    .cyber-card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-glow);
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), inset 0 0 18px rgba(0, 243, 255, 0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cyber-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-purple), transparent);
+    }
+
+    h2 {
+      font-size: 1.15rem;
+      color: var(--neon-cyan);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 1px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    input[type="url"],
+    select {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(5, 10, 22, 0.88);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.35);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 11px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.25s ease;
+      margin-top: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(188, 19, 254, 0.25));
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 14px rgba(0, 243, 255, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: var(--neon-cyan);
+      color: #050811;
+      box-shadow: 0 0 22px rgba(0, 243, 255, 0.65);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      border-color: #ffffff;
+      color: #ffffff;
+    }
+
+    .btn-danger {
+      background: rgba(255, 0, 85, 0.15);
+      border: 1px solid var(--neon-pink);
+      color: #ff4d88;
+    }
+
+    .btn-danger:hover {
+      background: var(--neon-pink);
+      color: #ffffff;
+      box-shadow: 0 0 18px rgba(255, 0, 85, 0.55);
+    }
+
+    .link-row {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+    }
+
+    .link-row span {
+      cursor: pointer;
+      text-decoration: underline;
+      margin: 0 6px;
+    }
+
+    .link-row span:hover {
+      color: var(--neon-cyan);
+    }
+
+    .visualizer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 5px;
+      height: 36px;
+      margin: 14px 0;
+      padding: 6px;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 243, 255, 0.15);
+    }
+
+    .bar {
+      width: 5px;
+      height: 6px;
+      background: linear-gradient(to top, var(--neon-purple), var(--neon-cyan));
+      border-radius: 3px;
+      transition: height 0.2s ease;
+    }
+
+    .playing .bar {
+      animation: eq 0.8s ease-in-out infinite alternate;
+    }
+
+    .playing .bar:nth-child(odd) { animation-duration: 0.55s; }
+    .playing .bar:nth-child(3n) { animation-duration: 0.95s; }
+    .playing .bar:nth-child(4n) { animation-duration: 0.65s; }
+
+    @keyframes eq {
+      0% { height: 5px; }
+      100% { height: 26px; }
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+
+    .checkbox-row input {
+      accent-color: var(--neon-cyan);
+      width: 16px;
+      height: 16px;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 10px;
+      filter: invert(92%) hue-rotate(155deg) brightness(1.05);
+      border-radius: 8px;
+    }
+
+    .station-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(0, 243, 255, 0.18);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .station-actions button {
+      padding: 4px 10px;
+      margin-left: 6px;
+      border-radius: 6px;
+      border: 1px solid var(--neon-cyan);
+      background: transparent;
+      color: var(--neon-cyan);
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .station-actions button.del {
+      border-color: var(--neon-pink);
+      color: var(--neon-pink);
+    }
+
+    .hidden { display: none !important; }
+    .btn-row { display: flex; gap: 10px; }
+  </style>
 </head>
 <body>
-<div class="container">
-    <!-- 1. 登入區塊 -->
-    <div id="loginCard" class="card active">
-        <h2>📻 Roy's Radio 登入</h2>
-        <div class="form-group">
-            <label>電子郵件 (Email)</label>
-            <input type="email" id="loginEmail" placeholder="example@email.com">
-        </div>
-        <div class="form-group">
-            <label>安全密碼</label>
-            <input type="password" id="loginPwd" placeholder="請輸入密碼">
-        </div>
-        <button onclick="handleLogin()">驗證並登入</button>
-        <div class="links">
-            <a href="#" onclick="switchCard('registerCard')">申請註冊新帳號</a>
-            <span>|</span>
-            <a href="#" onclick="switchCard('forgotCard')">忘記密碼？</a>
-        </div>
+<div class="hud-wrapper">
+  <h1 class="main-title">⚡ Roy's 雲端網路廣播播放器</h1>
+
+  <div id="login-section" class="cyber-card">
+    <h2>📻 Roy's Radio 登入</h2>
+    <div class="form-group">
+      <label>電子郵件 (Email)</label>
+      <input type="email" id="login-email" placeholder="輸入您的 Email" />
+    </div>
+    <div class="form-group">
+      <label>安全密碼</label>
+      <input type="password" id="login-password" placeholder="輸入安全密碼" />
+    </div>
+    <button class="btn btn-primary" onclick="handleLogin()">驗證並登入</button>
+    <div class="link-row">
+      <span onclick="switchView('register-section')">申請註冊新帳號</span> | 
+      <span onclick="switchView('reset-section')">忘記密碼？</span>
+    </div>
+  </div>
+  <!-- 申請新帳號與重設密碼區塊請接續貼上 -->
+  <div id="register-section" class="cyber-card hidden">...</div>
+  <div id="reset-section" class="cyber-card hidden">...</div>
+  <div id="radio-dashboard" class="hidden" style="display:flex; flex-direction:column; gap:20px;">
+    <div class="cyber-card">
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:8px;">歡迎來到 Roy 的廣播電臺，請選擇電臺開始收聽...</p>
+      <h2>🌌 Roy 的廣播電臺</h2>
+      <div class="visualizer" id="visualizer">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <div class="form-group">
+        <label>📻 收聽清單</label>
+        <select id="station-select" onchange="playSelectedStation()">
+          <option value="">-- 請選擇電臺 --</option>
+        </select>
+      </div>
+      <audio id="audio-player" controls></audio>
+    </div>
+    <div class="cyber-card">
+      <h2>🛠 管理面板 (新增自訂串流)</h2>
+      <div class="form-group">
+        <label>電臺名稱</label>
+        <input type="text" id="station-name" placeholder="例如：警廣全國治安交通網" />
+      </div>
+      <div class="form-group">
+        <label>串流網址 (URL)</label>
+        <input type="url" id="station-url" placeholder="https://... (.m3u8 或 .mp3)" />
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="is-hls" />
+        <span>這是 HLS 串流 (警廣等 .m3u8 格式請勾選)</span>
+      </label>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="save-station-btn" onclick="saveStation()">➕ 新增此電臺</button>
+        <button class="btn btn-secondary hidden" id="cancel-edit-btn" onclick="cancelEdit()">取消修改</button>
+      </div>
     </div>
 
-    <!-- 2. 註冊區塊 -->
-    <div id="registerCard" class="card">
-        <h2>📝 申請新帳號</h2>
-        <div class="form-group">
-            <label>設定電子郵件 (Email)</label>
-            <input type="email" id="regEmail" placeholder="example@email.com">
-        </div>
-        <div class="form-group">
-            <label>設定安全密碼 (至少6碼)</label>
-            <input type="password" id="regPwd" placeholder="請輸入密碼">
-        </div>
-        <button onclick="handleRegister()">提交申請並登入</button>
-        <div class="links">
-            <a href="#" onclick="switchCard('loginCard')">返回登入系統</a>
-        </div>
+    <div class="cyber-card">
+      <h2>📋 電台列表清單管理</h2>
+      <div id="station-list-container"></div>
     </div>
 
-    <!-- 2.5 忘記密碼區塊 -->
-    <div id="forgotCard" class="card">
-        <h2>🔑 重設安全密碼</h2>
-        <div class="form-group">
-            <label>已註冊的電子郵件 (Email)</label>
-            <input type="email" id="forgotEmail" placeholder="請輸入您註冊時的 Email">
-        </div>
-        <div class="form-group">
-            <label>設定新密碼 (至少6碼)</label>
-            <input type="password" id="forgotNewPwd" placeholder="請輸入新密碼">
-        </div>
-        <div class="form-group">
-            <label>再次確認新密碼</label>
-            <input type="password" id="forgotConfirmPwd" placeholder="請再次輸入新密碼">
-        </div>
-        <button onclick="handleForgotPassword()" style="background: var(--warning-color);">重設密碼並返回登入</button>
-        <div class="links">
-            <a href="#" onclick="switchCard('loginCard')">返回登入系統</a>
-        </div>
+    <div class="cyber-card">
+      <h2>🔐 修改帳號密碼 (<span id="current-user-email"></span>)</h2>
+      <div class="form-group">
+        <input type="password" id="new-user-pass" placeholder="輸入新密碼 (至少6碼)" />
+      </div>
+      <button class="btn btn-primary" onclick="updatePassword()">💾 更新帳號密碼</button>
+      <button class="btn btn-danger" style="margin-top:12px;" onclick="handleLogout()">登出電臺</button>
     </div>
-    <!-- 3. 播放器主頁面 -->
-    <div id="playerCard" class="card">
-        <div class="marquee-container">
-            <div id="marqueeText" class="marquee-text">歡迎來到 Roy 的廣播電臺，請選擇電臺開始收聽...</div>
-        </div>
-
-        <h2>🌌 Roy 的廣播電臺</h2>
-        
-        <div class="radio-list">
-            <label>📻 收聽清單</label>
-            <select id="stationSelect" onchange="playStation()">
-                <option value="">-- 請選擇電臺 --</option>
-            </select>
-        </div>
-
-        <audio id="audioPlayer" class="audio-player" controls></audio>
-
-        <!-- 管理面板 (新增/修改自訂串流) -->
-        <div class="section-divider">
-            <label id="panelTitle">🛠 管理面板 (新增自訂串流)</label>
-            <input type="hidden" id="editIndex" value="">
-            
-            <div class="form-group" style="margin-top: 0.5rem;">
-                <input type="text" id="newStationName" placeholder="電臺名稱">
-            </div>
-            <div class="form-group">
-                <input type="text" id="newStationUrl" placeholder="串流網址 (URL)">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="isHls">
-                    <label for="isHls" style="margin-bottom: 0;">這是 HLS 串流 (警廣等 .m3u8 格式請勾選)</label>
-                </div>
-            </div>
-            <button id="btnSubmit" onclick="saveStation()">➕ 新增此電臺</button>
-            <button id="btnCancelEdit" onclick="cancelEdit()" style="background:#475569; display:none; margin-top:0.25rem;">取消修改</button>
-        </div>
-
-        <!-- 編輯與刪除管理列表 -->
-        <div style="margin-top: 1.5rem;">
-            <label>📋 電台列表清單管理</label>
-            <div id="stationManagerList" class="station-manager-list"></div>
-        </div>
-
-        <!-- 修改密碼面板 -->
-        <div class="section-divider">
-            <label>🔐 修改帳號密碼 (<span id="currentUserDisplay" style="color:#a5b4fc;"></span>)</label>
-            <div class="form-group" style="margin-top: 0.5rem;">
-                <input type="password" id="oldPwd" placeholder="請輸入目前的舊密碼">
-            </div>
-            <div class="form-group">
-                <input type="password" id="newPwd" placeholder="請輸入新密碼 (至少6碼)">
-            </div>
-            <div class="form-group">
-                <input type="password" id="confirmNewPwd" placeholder="再次確認新密碼">
-            </div>
-            <button onclick="handleChangePassword()" style="background: var(--success-color);">💾 更新帳號密碼</button>
-        </div>
-
-        <button onclick="handleLogout()" style="background: #ef4444; margin-top: 1.5rem;">登出電臺</button>
-    </div>
+  </div>
 </div>
 <script>
-    const defaultStations = [
-        { name: "警察廣播電臺 (臺中臺)", url: "https://stream.pbs.gov.tw/live/TCS/playlist.m3u8", hls: true },
-        { name: "中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣流行網", hls: false },
-        { name: "中廣新聞網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣新聞網", hls: false },
-        { name: "中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣音樂網", hls: false },
-        { name: "UFO Radio飛碟電臺", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", hls: false },
-        { name: "全國廣播 M-Radio", url: "https://stream.rcs.revma.com/044q61ha7a0uv", hls: false }
-    ];
+  const defaultStations = [
+    { name: "警廣全國治安交通網 (HLS)", url: "https://pbs.gov.tw", isHls: true },
+    { name: "警廣臺北分臺 (HLS)", url: "https://pbs.gov.tw", isHls: true }
+  ];
 
-    let users = JSON.parse(localStorage.getItem('radio_users')) || {};
-    let stations = JSON.parse(localStorage.getItem('radio_stations'));
-    let currentUserEmail = null;
+  let stations = JSON.parse(localStorage.getItem('roy_radio_stations')) || defaultStations;
+  let editIndex = -1;
+  let hlsInstance = null;
 
-    if (!stations) {
-        stations = defaultStations;
-        localStorage.setItem('radio_stations', JSON.stringify(stations));
-    }
+  const audio = document.getElementById('audio-player');
+  const visualizer = document.getElementById('visualizer');
 
-    let hls = null;
-    let titleInterval = null;
+  audio.addEventListener('play', () => visualizer.classList.add('playing'));
+  audio.addEventListener('pause', () => visualizer.classList.remove('playing'));
+  audio.addEventListener('ended', () => visualizer.classList.remove('playing'));
 
-    document.addEventListener("DOMContentLoaded", function() {
-        renderStations();
+  function switchView(viewId) {
+    ['login-section', 'register-section', 'reset-section', 'radio-dashboard'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
     });
+    document.getElementById(viewId).classList.remove('hidden');
+  }
 
-    function switchCard(cardId) {
-        document.querySelectorAll('.card').forEach(function(card) {
-            card.classList.remove('active');
-        });
-        document.getElementById(cardId).classList.add('active');
+  function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-password').value;
+    if (!email || pass.length < 6) { alert('請輸入有效的 Email 與至少 6 碼密碼'); return; }
+    localStorage.setItem('roy_radio_user', email);
+    document.getElementById('current-user-email').textContent = email;
+    switchView('radio-dashboard');
+    renderStations();
+  }
+
+  function handleRegister() {
+    const email = document.getElementById('reg-email').value.trim();
+    const pass = document.getElementById('reg-password').value;
+    if (!email || pass.length < 6) { alert('請設定有效 Email 與至少 6 碼密碼'); return; }
+    localStorage.setItem('roy_radio_user', email);
+    document.getElementById('current-user-email').textContent = email;
+    alert('帳號申請成功並已自動登入！');
+    switchView('radio-dashboard');
+    renderStations();
+  }
+
+  function handleReset() {
+    const email = document.getElementById('reset-email').value.trim();
+    const p1 = document.getElementById('reset-new-pass').value;
+    const p2 = document.getElementById('reset-confirm-pass').value;
+    if (!email || p1.length < 6 || p1 !== p2) { alert('請確認資料填寫正確且兩次密碼一致'); return; }
+    alert('安全密碼已重設！請使用新密碼登入。');
+    switchView('login-section');
+  }
+
+  function updatePassword() {
+    const newPass = document.getElementById('new-user-pass').value;
+    if (newPass.length < 6) { alert('新密碼至少需要 6 碼'); return; }
+    document.getElementById('new-user-pass').value = '';
+    alert('帳號密碼已成功更新！');
+  }
+
+  function handleLogout() {
+    audio.pause();
+    localStorage.removeItem('roy_radio_user');
+    switchView('login-section');
+  }
+  function renderStations() {
+    const select = document.getElementById('station-select');
+    const list = document.getElementById('station-list-container');
+    select.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
+    list.innerHTML = '';
+
+    stations.forEach((st, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = st.name;
+      select.appendChild(opt);
+
+      const item = document.createElement('div');
+      item.className = 'station-item';
+      item.innerHTML = `
+        <span>${st.name} ${st.isHls ? '<small style="color:var(--neon-cyan)">[HLS]</small>' : ''}</span>
+        <div class="station-actions">
+          <button onclick="editStation(${idx})">編輯</button>
+          <button class="del" onclick="deleteStation(${idx})">刪除</button>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+    localStorage.setItem('roy_radio_stations', JSON.stringify(stations));
+  }
+
+  function playSelectedStation() {
+    const idx = document.getElementById('station-select').value;
+    if (idx === '') return;
+    const st = stations[idx];
+
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+    if (st.isHls && Hls.isSupported()) {
+      hlsInstance = new Hls();
+      hlsInstance.loadSource(st.url);
+      hlsInstance.attachMedia(audio);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => audio.play());
+    } else {
+      audio.src = st.url;
+      audio.play();
     }
+  }
 
-    function handleRegister() {
-        const email = document.getElementById('regEmail').value.trim();
-        const pwd = document.getElementById('regPwd').value;
-        if (!email || pwd.length < 6) {
-            alert('請輸入正確的 Email 且密碼至少需要 6 個字元！');
-            return;
-        }
-        if (users[email]) {
-            alert('此 Email 已被註冊！');
-            return;
-        }
-        users[email] = pwd;
-        localStorage.setItem('radio_users', JSON.stringify(users));
-        currentUserEmail = email;
-        document.getElementById('currentUserDisplay').innerText = email;
-        alert('註冊成功！已為您自動登入。');
-        switchCard('playerCard');
+  function saveStation() {
+    const name = document.getElementById('station-name').value.trim();
+    const url = document.getElementById('station-url').value.trim();
+    const isHls = document.getElementById('is-hls').checked;
+    if (!name || !url) { alert('請填寫電臺名稱與串流網址'); return; }
+
+    if (editIndex >= 0) {
+      stations[editIndex] = { name, url, isHls };
+      cancelEdit();
+    } else {
+      stations.push({ name, url, isHls });
     }
+    document.getElementById('station-name').value = '';
+    document.getElementById('station-url').value = '';
+    document.getElementById('is-hls').checked = false;
+    renderStations();
+  }
 
-    function handleLogin() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const pwd = document.getElementById('loginPwd').value;
-        if (users[email] && users[email] === pwd) {
-            currentUserEmail = email;
-            document.getElementById('currentUserDisplay').innerText = email;
-            document.getElementById('loginPwd').value = '';
-            switchCard('playerCard');
-        } else {
-            alert('電子郵件或密碼錯誤，請重試。');
-        }
+  function editStation(idx) {
+    editIndex = idx;
+    document.getElementById('station-name').value = stations[idx].name;
+    document.getElementById('station-url').value = stations[idx].url;
+    document.getElementById('is-hls').checked = stations[idx].isHls;
+    document.getElementById('save-station-btn').textContent = '💾 儲存修改';
+    document.getElementById('cancel-edit-btn').classList.remove('hidden');
+  }
+
+  function cancelEdit() {
+    editIndex = -1;
+    document.getElementById('station-name').value = '';
+    document.getElementById('station-url').value = '';
+    document.getElementById('is-hls').checked = false;
+    document.getElementById('save-station-btn').textContent = '➕ 新增此電臺';
+    document.getElementById('cancel-edit-btn').classList.add('hidden');
+  }
+
+  function deleteStation(idx) {
+    if (!confirm('確定要刪除此電臺嗎？')) return;
+    stations.splice(idx, 1);
+    renderStations();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedUser = localStorage.getItem('roy_radio_user');
+    if (savedUser) {
+      document.getElementById('current-user-email').textContent = savedUser;
+      switchView('radio-dashboard');
+      renderStations();
     }
-
-    function handleForgotPassword() {
-        const email = document.getElementById('forgotEmail').value.trim();
-        const newPwd = document.getElementById('forgotNewPwd').value;
-        const confirmPwd = document.getElementById('forgotConfirmPwd').value;
-        if (!email) {
-            alert('請輸入您註冊時的電子郵件！');
-            return;
-        }
-        if (!users[email]) {
-            alert('查無此電子郵件帳號，請確認是否輸入正確或先申請註冊。');
-            return;
-        }
-        if (newPwd.length < 6) {
-            alert('新密碼至少需要 6 個字元！');
-            return;
-        }
-        if (newPwd !== confirmPwd) {
-            alert('兩次輸入的新密碼不一致，請重新確認！');
-            return;
-        }
-        users[email] = newPwd;
-        localStorage.setItem('radio_users', JSON.stringify(users));
-        document.getElementById('forgotEmail').value = '';
-        document.getElementById('forgotNewPwd').value = '';
-        document.getElementById('forgotConfirmPwd').value = '';
-        document.getElementById('loginEmail').value = email;
-        alert('密碼已成功重設！請使用新密碼登入。');
-        switchCard('loginCard');
-    }
-
-    function handleChangePassword() {
-        if (!currentUserEmail) {
-            alert('請先登入帳號！');
-            return;
-        }
-        const oldPwd = document.getElementById('oldPwd').value;
-        const newPwd = document.getElementById('newPwd').value;
-        const confirmNewPwd = document.getElementById('confirmNewPwd').value;
-        if (users[currentUserEmail] !== oldPwd) {
-            alert('目前的舊密碼輸入錯誤！');
-            return;
-        }
-        if (newPwd.length < 6) {
-            alert('新密碼至少需要 6 個字元！');
-            return;
-        }
-        if (newPwd !== confirmNewPwd) {
-            alert('兩次輸入的新密碼不一致，請重新確認！');
-            return;
-        }
-        users[currentUserEmail] = newPwd;
-        localStorage.setItem('radio_users', JSON.stringify(users));
-        document.getElementById('oldPwd').value = '';
-        document.getElementById('newPwd').value = '';
-        document.getElementById('confirmNewPwd').value = '';
-        alert('密碼修改成功！下次登入請使用新密碼。');
-    }
-
-    function handleLogout() {
-        const audio = document.getElementById('audioPlayer');
-        audio.pause();
-        stopTitleMarquee();
-        currentUserEmail = null;
-        document.title = "Roy's 雲端網路廣播播放器";
-        switchCard('loginCard');
-    }
-    function renderStations() {
-        const select = document.getElementById('stationSelect');
-        const managerList = document.getElementById('stationManagerList');
-        select.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
-        managerList.innerHTML = '';
-
-        stations.forEach(function(station, index) {
-            const option = document.createElement('option');
-            option.value = station.url;
-            option.text = station.name;
-            option.setAttribute('data-hls', station.hls ? 'true' : 'false');
-            select.add(option);
-
-            const item = document.createElement('div');
-            item.className = 'station-item';
-            item.innerHTML = '<div class="station-info">' + station.name + '</div>' +
-                '<div class="station-actions">' +
-                '<button class="btn-sm btn-edit" onclick="editStation(' + index + ')">修改</button>' +
-                '<button class="btn-sm btn-delete" onclick="deleteStation(' + index + ')">刪除</button>' +
-                '</div>';
-            managerList.appendChild(item);
-        });
-    }
-
-    function saveStation() {
-        const name = document.getElementById('newStationName').value.trim();
-        const url = document.getElementById('newStationUrl').value.trim();
-        const isHls = document.getElementById('isHls').checked;
-        const editIndex = document.getElementById('editIndex').value;
-        if (!name || !url) {
-            alert('請輸入電臺名稱與網址！');
-            return;
-        }
-        if (editIndex !== "") {
-            stations[editIndex] = { name: name, url: url, hls: isHls };
-            alert('電臺修改成功！');
-        } else {
-            stations.push({ name: name, url: url, hls: isHls });
-            alert('電臺新增成功！');
-        }
-        localStorage.setItem('radio_stations', JSON.stringify(stations));
-        renderStations();
-        cancelEdit();
-    }
-
-    function editStation(index) {
-        const station = stations[index];
-        document.getElementById('newStationName').value = station.name;
-        document.getElementById('newStationUrl').value = station.url;
-        document.getElementById('isHls').checked = station.hls;
-        document.getElementById('editIndex').value = index;
-        document.getElementById('panelTitle').innerText = "🛠 管理面板 (修改現有串流)";
-        document.getElementById('btnSubmit').innerText = "💾 儲存修改內容";
-        document.getElementById('btnCancelEdit').style.display = 'block';
-    }
-
-    function cancelEdit() {
-        document.getElementById('newStationName').value = '';
-        document.getElementById('newStationUrl').value = '';
-        document.getElementById('isHls').checked = false;
-        document.getElementById('editIndex').value = "";
-        document.getElementById('panelTitle').innerText = "🛠 管理面板 (新增自訂串流)";
-        document.getElementById('btnSubmit').innerText = "➕ 新增此電臺";
-        document.getElementById('btnCancelEdit').style.display = 'none';
-    }
-
-    function deleteStation(index) {
-        if (confirm('確定要刪除「' + stations[index].name + '」這個電台嗎？')) {
-            stations.splice(index, 1);
-            localStorage.setItem('radio_stations', JSON.stringify(stations));
-            renderStations();
-            cancelEdit();
-        }
-    }
-
-    function getFormattedDateString() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        const weekDay = weekDays[now.getDay()];
-        return year + '年' + month + '月' + day + '日 ' + weekDay;
-    }
-
-    function playStation() {
-        const select = document.getElementById('stationSelect');
-        const selectedOption = select.options[select.selectedIndex];
-        const url = select.value;
-        const isHlsStr = selectedOption ? selectedOption.getAttribute('data-hls') : 'false';
-        const stationName = selectedOption ? selectedOption.text : '';
-        const audio = document.getElementById('audioPlayer');
-
-        if (!url) {
-            audio.pause();
-            updateMarquee("歡迎來到 Roy 的廣播電臺，請選擇電臺開始收聽...");
-            stopTitleMarquee();
-            document.title = "Roy's 雲端網路廣播播放器";
-            return;
-        }
-
-        const playText = '正在播放：' + stationName + ' 🎵 串流網址: ' + url + ' ';
-        updateMarquee(playText);
-        startTitleMarquee(stationName);
-
-        if (hls) {
-            hls.destroy();
-            hls = null;
-        }
-
-        if (isHlsStr === 'true') {
-            if (Hls.isSupported()) {
-                hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(audio);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    audio.play();
-                });
-            } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-                audio.src = url;
-                audio.play();
-            } else {
-                alert('您的瀏覽器不支援 HLS (.m3u8) 播放');
-            }
-        } else {
-            audio.src = url;
-            audio.play();
-        }
-    }
-
-    function updateMarquee(text) {
-        document.getElementById('marqueeText').innerText = text;
-    }
-
-    function startTitleMarquee(stationName) {
-        stopTitleMarquee();
-        let offset = 0;
-        titleInterval = setInterval(function() {
-            const fullText = getFormattedDateString() + ' 您現在收聽的電台為' + stationName + '   ';
-            offset = (offset + 1) % fullText.length;
-            document.title = fullText.substring(offset) + fullText.substring(0, offset);
-        }, 400);
-    }
-
-    function stopTitleMarquee() {
-        if (titleInterval) {
-            clearInterval(titleInterval);
-            titleInterval = null;
-        }
-    }
+  });
 </script>
 </body>
 </html>
