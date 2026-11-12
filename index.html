@@ -242,9 +242,14 @@
         <h3>📋 電台列表清單管理</h3>
         <div id="manageStationList"></div>
 
+                <h3>🆔 設定專屬登入 ID（設定後可用 ID 登入）</h3>
+        <input type="text" id="customIdInput" placeholder="輸入自訂 ID (3~20碼英數字或底線)" />
+        <button onclick="bindCustomId()">🔗 綁定專屬 ID</button>
+
         <h3>🔐 修改帳號密碼</h3>
         <input type="password" id="newAccountPass" placeholder="輸入新安全密碼 (至少6碼)" />
         <button onclick="updatePassword()">💾 更新帳號密碼</button>
+
       </div>
     </div>
   </div>
