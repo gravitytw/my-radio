@@ -4,10 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Roy's 雲端網路廣播播放器 // CYBER HUD v2.0</title>
-  <script src="https://jsdelivr.net"></script>
-  <script src="https://jsdelivr.net"></script>
-  <script src="https://jsdelivr.net"></script>
-  <script src="https://jsdelivr.net"></script>
+  <script>
+    [
+      "https://" + "cdn.jsdelivr.net/npm/hls.js@latest",
+      "https://" + "cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js",
+      "https://" + "cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.js",
+      "https://" + "cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.js"
+    ].forEach(function(url) {
+      document.write('<scr' + 'ipt src="' + url + '"></scr' + 'ipt>');
+    });
+  </script>
   <style>
 
     :root {
