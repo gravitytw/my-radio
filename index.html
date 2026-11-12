@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Roy's 雲端網路廣播播放器 // CYBER HUD v2.0</title>
   <script src="https://jsdelivr.net"></script>
-  <style>
+   <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+ <style>
     :root {
       --bg-dark: #070b14;
       --panel-bg: rgba(13, 21, 38, 0.85);
@@ -257,108 +260,221 @@
     </div>
   </div>
 </div>
-<script>
-  // ====== 預設電臺庫資料 ======
-  const PRESET_STATIONS = [
-    { name: "🔵中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣流行網", isHls: true },
- { name: "中廣新聞網❤️", url: "https://sonnykuo.appspot.com/bcc/?id=中廣新聞網", isHls: true },
- { name: "💝中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣音樂網", isHls: true },
- { name: "飛碟聯播網🟠", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", isHls: true },
- { name: "🔴全國廣播 M-Radio", url: "https://stream.rcs.revma.com/044q61ha7a0uv", isHls: true },
-    { name: "警廣臺中分臺(TCS)💛", url: "https://stream.pbs.gov.tw/live/TCS/playlist.m3u8", isHls: true }
-  ];
+  // ====== 6. Firebase 登入狀態監聽與會員驗證 ======
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUser = user;
+      const displayEmail = user.isAnonymous ? '訪客體驗模式 (匿名雲端)' : user.email;
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('playerSection').classList.remove('hidden');
+      document.getElementById('userHeaderInfo').classList.remove('hidden');
+      document.getElementById('currentUserEmail').textContent = `👤 ${displayEmail}`;
+      await loadUserDataFromCloud(user.uid);
+    } else {
+      currentUser = null;
+      audio.pause();
+      if (hls) hls.destroy();
+      stopTitleMarquee();
+      document.getElementById('playerSection').classList.add('hidden');
+      document.getElementById('userHeaderInfo').classList.add('hidden');
+      document.getElementById('authSection').classList.remove('hidden');
+    }
+  });
 
-  // ====== 狀態與儲存初始化 (暫用 localStorage) ======
-  let stations = JSON.parse(localStorage.getItem('roy_stations')) || [...PRESET_STATIONS.slice(0, 3)];
-  let favorites = JSON.parse(localStorage.getItem('roy_favs')) || [];
-  let playHistory = JSON.parse(localStorage.getItem('roy_history')) || [];
-  let currentFilter = 'all';
-  let currentStationIndex = -1;
-  let hls = null;
-
-  // 斷線重連變數
-  let retryCount = 0;
-  const MAX_RETRIES = 5;
-  let retryTimer = null;
-  let isUserPaused = true;
-
-  // 錄音變數
-  let mediaRecorder = null;
-  let recordedChunks = [];
-  let recInterval = null;
-  let recSeconds = 0;
-
-  // ICY Metadata 輪詢計時器
-  let icyTimer = null;
-
-  const audio = document.getElementById('audioPlayer');
-
-  // ====== 時鐘更新 ======
-  setInterval(() => {
-    const now = new Date();
-    document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
-  }, 1000);
-
-  // ====== 帳號系統 (前端模擬，未來可串接後端 API) ======
   function switchAuthView(boxId) {
     ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById(boxId).classList.remove('hidden');
   }
 
-  function login() {
+  async function login() {
     const email = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPass').value;
-    if (!email || pass.length < 6) return alert('請輸入有效的 Email 與至少 6 碼密碼');
-    enterPlayer(email);
+    if (!email || !pass) return alert('請輸入電子郵件與密碼');
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+    } catch (err) {
+      alert('登入失敗：' + err.message);
+    }
   }
 
-  function quickDemoLogin() { enterPlayer('cyber_guest@roysradio.net'); }
+  async function quickDemoLogin() {
+    try {
+      await auth.signInAnonymously();
+    } catch (err) {
+      alert('快速體驗啟動失敗（請確認 Firebase Console 已開啟「匿名」登入）：\n' + err.message);
+    }
+  }
 
-  function register() {
+  async function register() {
     const email = document.getElementById('regEmail').value.trim();
     const pass = document.getElementById('regPass').value;
-    if (!email || pass.length < 6) return alert('設定密碼需至少 6 碼');
-    enterPlayer(email);
+    if (!email || pass.length < 6) return alert('請輸入有效 Email 且密碼至少需 6 碼');
+    try {
+      await auth.createUserWithEmailAndPassword(email, pass);
+      alert('註冊成功！已為您自動登入並建立雲端資料庫。');
+    } catch (err) {
+      alert('註冊失敗：' + err.message);
+    }
   }
 
-  function resetPassword() {
-    const p1 = document.getElementById('resetPass1').value;
-    const p2 = document.getElementById('resetPass2').value;
-    if (p1.length < 6 || p1 !== p2) return alert('兩次密碼不一致或長度不足 6 碼');
-    alert('密碼已重設，請重新登入！');
-    switchAuthView('loginBox');
+  async function resetPassword() {
+    const email = document.getElementById('resetEmail').value.trim();
+    if (!email) return alert('請輸入您註冊的電子郵件！');
+    try {
+      await auth.sendPasswordResetEmail(email);
+      alert('密碼重設信已寄出至您的信箱！請點擊信中連結設定新密碼後再登入。');
+      switchAuthView('loginBox');
+    } catch (err) {
+      alert('寄送重設信失敗：' + err.message);
+    }
   }
 
-  function updatePassword() {
-    const p = document.getElementById('newAccountPass').value;
-    if (p.length < 6) return alert('新密碼至少需 6 碼');
-    alert('帳號密碼已更新！');
-    document.getElementById('newAccountPass').value = '';
-  }
-
-  function enterPlayer(email) {
-    document.getElementById('authSection').classList.add('hidden');
-    document.getElementById('playerSection').classList.remove('hidden');
-    document.getElementById('userHeaderInfo').classList.remove('hidden');
-    document.getElementById('currentUserEmail').textContent = `👤 ${email}`;
-    renderAllLists();
+  async function updatePassword() {
+    if (!currentUser || currentUser.isAnonymous) return alert('訪客體驗帳號無法修改密碼，請先註冊正式帳號！');
+    const newPass = document.getElementById('newAccountPass').value;
+    if (newPass.length < 6) return alert('新密碼至少需 6 碼');
+    try {
+      await currentUser.updatePassword(newPass);
+      alert('帳號密碼已成功更新！');
+      document.getElementById('newAccountPass').value = '';
+    } catch (err) {
+      alert('更新密碼失敗（基於安全機制，若登入時間過久請先登出再重新登入後修改）：\n' + err.message);
+    }
   }
 
   function logout() {
-    audio.pause();
-    if (hls) hls.destroy();
-    document.getElementById('playerSection').classList.add('hidden');
-    document.getElementById('userHeaderInfo').classList.add('hidden');
-    document.getElementById('authSection').classList.remove('hidden');
+    auth.signOut();
+  }
+  // ====== 6. Firebase 登入狀態監聽與會員驗證 ======
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUser = user;
+      const displayEmail = user.isAnonymous ? '訪客體驗模式 (匿名雲端)' : user.email;
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('playerSection').classList.remove('hidden');
+      document.getElementById('userHeaderInfo').classList.remove('hidden');
+      document.getElementById('currentUserEmail').textContent = `👤 ${displayEmail}`;
+      await loadUserDataFromCloud(user.uid);
+    } else {
+      currentUser = null;
+      audio.pause();
+      if (hls) hls.destroy();
+      stopTitleMarquee();
+      document.getElementById('playerSection').classList.add('hidden');
+      document.getElementById('userHeaderInfo').classList.add('hidden');
+      document.getElementById('authSection').classList.remove('hidden');
+    }
+  });
+
+  function switchAuthView(boxId) {
+    ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById(boxId).classList.remove('hidden');
   }
 
-  // ====== 電臺清單、最愛、歷史紀錄與預設庫 ======
-  function saveData() {
+  async function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    if (!email || !pass) return alert('請輸入電子郵件與密碼');
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+    } catch (err) {
+      alert('登入失敗：' + err.message);
+    }
+  }
+
+  async function quickDemoLogin() {
+    try {
+      await auth.signInAnonymously();
+    } catch (err) {
+      alert('快速體驗啟動失敗（請確認 Firebase Console 已開啟「匿名」登入）：\n' + err.message);
+    }
+  }
+
+  async function register() {
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value;
+    if (!email || pass.length < 6) return alert('請輸入有效 Email 且密碼至少需 6 碼');
+    try {
+      await auth.createUserWithEmailAndPassword(email, pass);
+      alert('註冊成功！已為您自動登入並建立雲端資料庫。');
+    } catch (err) {
+      alert('註冊失敗：' + err.message);
+    }
+  }
+
+  async function resetPassword() {
+    const email = document.getElementById('resetEmail').value.trim();
+    if (!email) return alert('請輸入您註冊的電子郵件！');
+    try {
+      await auth.sendPasswordResetEmail(email);
+      alert('密碼重設信已寄出至您的信箱！請點擊信中連結設定新密碼後再登入。');
+      switchAuthView('loginBox');
+    } catch (err) {
+      alert('寄送重設信失敗：' + err.message);
+    }
+  }
+
+  async function updatePassword() {
+    if (!currentUser || currentUser.isAnonymous) return alert('訪客體驗帳號無法修改密碼，請先註冊正式帳號！');
+    const newPass = document.getElementById('newAccountPass').value;
+    if (newPass.length < 6) return alert('新密碼至少需 6 碼');
+    try {
+      await currentUser.updatePassword(newPass);
+      alert('帳號密碼已成功更新！');
+      document.getElementById('newAccountPass').value = '';
+    } catch (err) {
+      alert('更新密碼失敗（基於安全機制，若登入時間過久請先登出再重新登入後修改）：\n' + err.message);
+    }
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+  // ====== 7. Cloud Firestore 雲端資料讀寫 ======
+  async function loadUserDataFromCloud(uid) {
+    try {
+      const docRef = db.collection('users').doc(uid);
+      const docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        const data = docSnap.data();
+        stations = data.stations || [...PRESET_STATIONS.slice(0, 3)];
+        favorites = data.favorites || [];
+        playHistory = data.playHistory || [];
+      } else {
+        const localStations = JSON.parse(localStorage.getItem('roy_stations'));
+        stations = (localStations && localStations.length > 0) ? localStations : [...PRESET_STATIONS.slice(0, 3)];
+        favorites = JSON.parse(localStorage.getItem('roy_favs')) || [];
+        playHistory = JSON.parse(localStorage.getItem('roy_history')) || [];
+        await saveData();
+      }
+      renderAllLists();
+    } catch (err) {
+      console.error('讀取雲端資料失敗:', err);
+      alert('讀取雲端電臺清單失敗，請確認 Firestore 資料庫與安全性規則已建立！');
+    }
+  }
+
+  async function saveData() {
     localStorage.setItem('roy_stations', JSON.stringify(stations));
     localStorage.setItem('roy_favs', JSON.stringify(favorites));
     localStorage.setItem('roy_history', JSON.stringify(playHistory));
+
+    if (currentUser) {
+      try {
+        await db.collection('users').doc(currentUser.uid).set({
+          stations: stations,
+          favorites: favorites,
+          playHistory: playHistory,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.error('雲端同步失敗:', err);
+      }
+    }
   }
 
+  // ====== 8. 電臺清單、最愛、歷史紀錄與預設庫 ======
   function setFilter(filter, btnEl) {
     currentFilter = filter;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -427,16 +543,16 @@
     `).join('');
   }
 
-  function importPreset(idx) {
+  async function importPreset(idx) {
     const p = PRESET_STATIONS[idx];
     if (stations.some(s => s.url === p.url)) return alert('此電臺已在清單中！');
     stations.push({ ...p });
-    saveData();
+    await saveData();
     renderAllLists();
-    alert(`已匯入：${p.name}`);
+    alert(`已匯入並同步至雲端：${p.name}`);
   }
 
-  function importAllPresets() {
+  async function importAllPresets() {
     let added = 0;
     PRESET_STATIONS.forEach(p => {
       if (!stations.some(s => s.url === p.url)) {
@@ -444,18 +560,18 @@
         added++;
       }
     });
-    saveData();
+    await saveData();
     renderAllLists();
-    alert(`已成功匯入 ${added} 個新電臺！`);
+    alert(`已成功匯入並同步 ${added} 個新電臺！`);
   }
 
-  function toggleCurrentFav() {
+  async function toggleCurrentFav() {
     if (currentStationIndex < 0) return;
     const st = stations[currentStationIndex];
     const pos = favorites.indexOf(st.url);
     if (pos >= 0) favorites.splice(pos, 1);
     else favorites.push(st.url);
-    saveData();
+    await saveData();
     updateFavButton();
     renderAllLists();
   }
@@ -468,7 +584,7 @@
     btn.style.color = isFav ? 'var(--accent-yellow)' : '';
   }
 
-  function addToHistory(st) {
+  async function addToHistory(st) {
     playHistory = playHistory.filter(h => h.url !== st.url);
     playHistory.unshift({
       name: st.name,
@@ -476,9 +592,9 @@
       time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
     });
     if (playHistory.length > 10) playHistory.pop();
-    saveData();
+    await saveData();
   }
-  // ====== 播放核心、HLS 與斷線自動重連 ======
+  // ====== 9. 播放核心、HLS 與斷線自動重連 ======
   function playSelectedStation() {
     const idx = document.getElementById('stationSelect').value;
     if (idx === '') return;
@@ -500,6 +616,7 @@
 
     document.getElementById('nowPlayingTitle').textContent = st.name;
     setStatus('連線中...', 'warn', '⏳ 載入串流...');
+    stopTitleMarquee("⏳ [連線中]");
     updateFavButton();
     renderDropdown();
     addToHistory(st);
@@ -531,11 +648,13 @@
     document.getElementById('bufferSpinner').textContent = spinnerText;
   }
 
-  // 音訊事件監聽：緩衝與斷線重連
   audio.addEventListener('playing', () => {
     retryCount = 0;
     setStatus('LIVE 直播中', 'ok', '');
     document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
+    if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+      startTitleMarquee(stations[currentStationIndex].name);
+    }
   });
 
   audio.addEventListener('waiting', () => {
@@ -554,10 +673,12 @@
     if (isUserPaused || currentStationIndex < 0) return;
     if (retryCount >= MAX_RETRIES) {
       setStatus('連線失敗', 'err', '❌ 已達最大重連次數，請檢查網址或手動重試');
+      stopTitleMarquee("❌ [連線失敗]");
       return;
     }
     retryCount++;
     setStatus('斷線重連中', 'err', `🔄 3秒後進行第 ${retryCount}/${MAX_RETRIES} 次重連...`);
+    stopTitleMarquee(`🔄 [重連 ${retryCount}/${MAX_RETRIES}]`);
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => {
       if (!isUserPaused) startStream(currentStationIndex);
@@ -575,6 +696,7 @@
       clearTimeout(retryTimer);
       audio.pause();
       setStatus('已暫停', '', '');
+      stopTitleMarquee("⏸ [已暫停]");
       document.getElementById('playPauseBtn').textContent = '▶ 播放';
     }
   }
@@ -600,8 +722,7 @@
     audio.muted = !audio.muted;
     document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
   }
-
-  // ====== 即時節目資訊 (ICY Metadata 解析) ======
+  // ====== 10. 即時節目資訊 (ICY Metadata 解析) ======
   function startIcyPolling(st) {
     clearInterval(icyTimer);
     const icyEl = document.getElementById('icyMetadata');
@@ -649,10 +770,13 @@
         const metaBytes = fullBuf.slice(metaint + 1, metaint + 1 + metaLen);
         const metaStr = new TextDecoder('utf-8').decode(metaBytes);
         const match = metaStr.match(/StreamTitle='([^']*)';/);
-        if (match && match) {
-          icyEl.textContent = `🎵 正在播放：${match}`;
+        if (match && match[1]) {
+          icyEl.textContent = `🎵 正在播放：${match[1]}`;
+          if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+            startTitleMarquee(`${stations[currentStationIndex].name} - 🎵 ${match[1]}`);
+          }
           if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
-            navigator.mediaSession.metadata.title = match;
+            navigator.mediaSession.metadata.title = match[1];
           }
           return;
         }
@@ -662,7 +786,8 @@
       icyEl.textContent = `🎵 串流播放中（此電臺未開放跨網域曲目讀取）`;
     }
   }
-  // ====== 即時錄音功能 (Stream Recorder) ======
+
+  // ====== 11. 即時錄音功能 (Stream Recorder) ======
   function toggleRecording() {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       stopRecording();
@@ -719,8 +844,7 @@
     btn.classList.remove('recording');
     document.getElementById('recTimer').textContent = '';
   }
-
-  // ====== 系統媒體控制 (Media Session API) & 鍵盤快捷鍵 ======
+  // ====== 12. 系統媒體控制 & 鍵盤快捷鍵 ======
   function setupMediaSession(st) {
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -740,16 +864,9 @@
     if (document.getElementById('playerSection').classList.contains('hidden')) return;
 
     switch (e.code) {
-      case 'Space':
-        e.preventDefault();
-        togglePlay();
-        break;
-      case 'ArrowLeft':
-        prevStation();
-        break;
-      case 'ArrowRight':
-        nextStation();
-        break;
+      case 'Space': e.preventDefault(); togglePlay(); break;
+      case 'ArrowLeft': prevStation(); break;
+      case 'ArrowRight': nextStation(); break;
       case 'ArrowUp':
         e.preventDefault();
         audio.volume = Math.min(1, +(audio.volume + 0.05).toFixed(2));
@@ -760,16 +877,12 @@
         audio.volume = Math.max(0, +(audio.volume - 0.05).toFixed(2));
         document.getElementById('volumeSlider').value = audio.volume;
         break;
-      case 'KeyM':
-        toggleMute();
-        break;
-      case 'KeyR':
-        toggleRecording();
-        break;
+      case 'KeyM': toggleMute(); break;
+      case 'KeyR': toggleRecording(); break;
     }
   });
 
-  // ====== 管理面板折疊與電臺 CRUD ======
+  // ====== 13. 管理面板折疊與電臺 CRUD ======
   function toggleAdminPanel() {
     const content = document.getElementById('adminPanelContent');
     const arrow = document.getElementById('adminArrow');
@@ -794,7 +907,7 @@
     `).join('');
   }
 
-  function saveStation() {
+  async function saveStation() {
     const name = document.getElementById('stationName').value.trim();
     const url = document.getElementById('stationUrl').value.trim();
     const isHls = document.getElementById('isHlsCheck').checked;
@@ -807,7 +920,7 @@
     } else {
       stations.push({ name, url, isHls });
     }
-    saveData();
+    await saveData();
     cancelEdit();
     renderAllLists();
   }
@@ -827,46 +940,12 @@
     document.getElementById('isHlsCheck').checked = false;
   }
 
-  function deleteStation(idx) {
+  async function deleteStation(idx) {
     if (!confirm(`確定要刪除「${stations[idx].name}」嗎？`)) return;
     stations.splice(idx, 1);
-    saveData();
+    await saveData();
     renderAllLists();
   }
-  // ====== 視窗標題列跑馬燈功能 ======
-  let titleMarqueeTimer = null;
-  const BASE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v2.0";
-
-  function runTitleMarquee(stationName) {
-    clearInterval(titleMarqueeTimer);
-    let text = `▶ 正在收聽：${stationName} ｜ Roy's Net Radio 📻 　　`;
-    titleMarqueeTimer = setInterval(() => {
-      text = text.slice(1) + text[0];
-      document.title = text;
-    }, 300);
-  }
-
-  function resetTitleMarquee(prefix = "") {
-    clearInterval(titleMarqueeTimer);
-    titleMarqueeTimer = null;
-    document.title = prefix ? `${prefix} ${BASE_TITLE}` : BASE_TITLE;
-  }
-
-  // 自動監聽播放器狀態來啟動/停止跑馬燈
-  audio.addEventListener('playing', () => {
-    if (currentStationIndex >= 0 && stations[currentStationIndex]) {
-      runTitleMarquee(stations[currentStationIndex].name);
-    }
-  });
-
-  audio.addEventListener('pause', () => {
-    resetTitleMarquee("⏸ [已暫停]");
-  });
-
-  audio.addEventListener('ended', () => {
-    resetTitleMarquee();
-  });
 </script>
-
 </body>
 </html>
