@@ -296,14 +296,17 @@
 
   const audio = document.getElementById('audioPlayer');
 
-  function startTitleMarquee(displayText) {
+   function startTitleMarquee(displayText) {
     stopTitleMarquee();
     let marqueeText = `▶ 正在收聽：${displayText} ｜ Roy's Net Radio 📻 　　`;
     titleMarqueeTimer = setInterval(() => {
-      marqueeText = marqueeText.slice(1) + marqueeText;
-      document.title = marqueeText;
+      marqueeText = marqueeText.slice(1) + marqueeText[0];
+      if (!document.hidden) {
+        document.title = marqueeText;
+      }
     }, 300);
   }
+
 
   function stopTitleMarquee(statusPrefix = "") {
     clearInterval(titleMarqueeTimer);
@@ -591,15 +594,36 @@
 
     if (hls) { hls.destroy(); hls = null; }
     audio.pause();
+    // 【第1段新增】先徹底銷毀舊的 HLS 實例與清空原生 audio 緩衝
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
 
     if (st.isHls && Hls.isSupported()) {
-      hls = new Hls();
+            hls = new Hls({
+        backBufferLength: 15,      // 過去的音訊只保留 15 秒，超過立刻從記憶體刪除
+        maxBufferLength: 15,       // 最多預載未來 15 秒
+        maxMaxBufferLength: 30,    // 絕對緩衝上限 30 秒
+        enableWorker: true         // 啟用背景執行緒分擔運算壓力
+      });
+
       hls.loadSource(st.url);
       hls.attachMedia(audio);
       hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(handleStreamError));
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) handleStreamError();
+            hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          if (hls) {
+            hls.destroy();
+            hls = null;
+          }
+          handleStreamError();
+        }
       });
+
     } else {
       audio.src = st.url;
       audio.play().catch(handleStreamError);
@@ -690,8 +714,11 @@
     audio.muted = !audio.muted;
     document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
   }
-  function startIcyPolling(st) {
-    clearInterval(icyTimer);
+    function startIcyPolling(st) {
+    if (icyTimer) {
+      clearInterval(icyTimer);
+      icyTimer = null;
+    }
     const icyEl = document.getElementById('icyMetadata');
     if (st.isHls) {
       icyEl.textContent = `🎵 HLS 串流直播中：${st.name}`;
@@ -699,8 +726,13 @@
     }
     icyEl.textContent = '🎵 正在偵測 ICY 節目曲目資訊...';
     fetchIcyMetadata(st.url);
-    icyTimer = setInterval(() => fetchIcyMetadata(st.url), 15000);
+    icyTimer = setInterval(() => {
+      if (!document.hidden && !audio.paused) {
+        fetchIcyMetadata(st.url);
+      }
+    }, 15000);
   }
+
 
   async function fetchIcyMetadata(url) {
     const icyEl = document.getElementById('icyMetadata');
