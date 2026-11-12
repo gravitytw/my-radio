@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Roy's 雲端網路廣播播放器 // CYBER HUD v2.0</title>
   <script src="https://jsdelivr.net"></script>
-   <script src="https://gstatic.com"></script>
   <script src="https://gstatic.com"></script>
   <script src="https://gstatic.com"></script>
- <style>
+  <script src="https://gstatic.com"></script>
+  <style>
     :root {
       --bg-dark: #070b14;
       --panel-bg: rgba(13, 21, 38, 0.85);
@@ -30,7 +30,6 @@
 
     .container { max-width: 860px; margin: 0 auto; }
 
-    /* HUD 卡片樣式 */
     .hud-box {
       background: var(--panel-bg);
       border: 1px solid rgba(0, 243, 255, 0.35);
@@ -48,7 +47,6 @@
     .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .clock { color: var(--accent-green); font-weight: bold; }
 
-    /* 狀態列與即時資訊 */
     .status-panel {
       background: rgba(0, 0, 0, 0.45);
       border-left: 4px solid var(--border-glow);
@@ -69,7 +67,6 @@
       margin-top: 8px; font-size: 0.92rem; color: var(--accent-yellow);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    /* 表單與按鈕 */
     input, select {
       width: 100%; padding: 10px 12px; margin: 6px 0 12px;
       background: rgba(5, 10, 20, 0.8); border: 1px solid rgba(0, 243, 255, 0.4);
@@ -97,7 +94,6 @@
     .volume-box { display: flex; align-items: center; gap: 6px; margin-left: auto; }
     .volume-box input[type="range"] { width: 100px; margin: 0; }
 
-    /* 標籤頁與清單 */
     .tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
     .tab-btn.active { background: var(--border-glow); color: #050a14; }
 
@@ -107,10 +103,7 @@
       gap: 8px;
     }
     .station-item:hover { background: rgba(0, 243, 255, 0.06); }
-    .star-btn { cursor: pointer; font-size: 1.2rem; color: var(--text-dim); user-select: none; }
-    .star-btn.fav { color: var(--accent-yellow); text-shadow: 0 0 8px var(--accent-yellow); }
 
-    /* 折疊面板 */
     .collapsible-header {
       display: flex; justify-content: space-between; align-items: center;
       cursor: pointer; user-select: none;
@@ -124,7 +117,6 @@
 </head>
 <body>
 <div class="container">
-  <!-- 頂部標題與時鐘 -->
   <div class="hud-box top-bar">
     <div>
       <h1>⚡ Roy's Net Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v2.0</small></h1>
@@ -136,7 +128,6 @@
     </div>
   </div>
 
-  <!-- 1. 登入 / 註冊 / 忘記密碼區塊 -->
   <div id="authSection">
     <div id="loginBox" class="hud-box">
       <h2>📻 Roy's Radio 登入</h2>
@@ -165,21 +156,17 @@
     <div id="resetBox" class="hud-box hidden">
       <h2>🔑 重設安全密碼</h2>
       <input type="email" id="resetEmail" placeholder="已註冊的電子郵件 (Email)" />
-      <input type="password" id="resetPass1" placeholder="設定新密碼 (至少6碼)" />
-      <input type="password" id="resetPass2" placeholder="再次確認新密碼" />
       <div class="controls-row">
-        <button onclick="resetPassword()">重設密碼並返回登入</button>
+        <button onclick="resetPassword()">寄送密碼重設信</button>
         <button class="btn-pink" onclick="switchAuthView('loginBox')">返回登入系統</button>
       </div>
     </div>
   </div>
 
-  <!-- 2. 主播放器介面 -->
   <div id="playerSection" class="hidden">
     <div class="hud-box">
       <h2>🌌 Roy 的廣播電臺</h2>
 
-      <!-- 狀態與 ICY 即時節目資訊 -->
       <div class="status-panel">
         <div>
           <span id="connBadge" class="status-badge">待機中</span>
@@ -189,7 +176,6 @@
         <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...</div>
       </div>
 
-      <!-- 篩選分頁：全部 / 我的最愛 / 播放紀錄 / 預設電臺庫 -->
       <div class="tabs">
         <button class="tab-btn active" onclick="setFilter('all', this)">📻 全部清單</button>
         <button class="tab-btn" onclick="setFilter('fav', this)">⭐ 我的最愛</button>
@@ -197,17 +183,14 @@
         <button class="tab-btn btn-green" onclick="setFilter('presets', this)">📦 預設電臺庫</button>
       </div>
 
-      <!-- 電臺下拉選單 (全部/最愛模式) -->
       <div id="selectModeBox">
         <select id="stationSelect" onchange="playSelectedStation()">
           <option value="">-- 請選擇電臺 --</option>
         </select>
       </div>
 
-      <!-- 清單檢視區 (播放紀錄 / 預設電臺庫) -->
       <div id="listViewBox" class="hidden" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
 
-      <!-- 播放控制列與錄音 -->
       <div class="controls-row">
         <button onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
         <button id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
@@ -229,7 +212,6 @@
       <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
 
-    <!-- 3. 可折疊管理面板 -->
     <div class="hud-box">
       <div class="collapsible-header" onclick="toggleAdminPanel()">
         <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 電臺管理 / 帳號設定）</h2>
@@ -260,7 +242,73 @@
     </div>
   </div>
 </div>
-  // ====== 6. Firebase 登入狀態監聽與會員驗證 ======
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
+    authDomain: "://firebaseapp.com",
+    projectId: "roy-radio",
+    storageBucket: "roy-radio.firebasestorage.app",
+    messagingSenderId: "15329601327",
+    appId: "1:15329601327:web:d3036a3c5d8b6091e823da",
+    measurementId: "G-2N69W5VK65"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const PRESET_STATIONS = [
+    { name: "警廣 全國治安交通網 (HLS)", url: "https://pbs.gov.tw", isHls: true },
+    { name: "ICRT 台北國際社區廣播電台", url: "https://leanstream.co", isHls: false },
+    { name: "SomaFM Groove Salad (環境音樂)", url: "https://somafm.com", isHls: false },
+    { name: "SomaFM Synthwave (賽博龐克電子)", url: "https://somafm.com", isHls: false },
+    { name: "Linn Jazz 英國爵士電台", url: "http://linn.co.uk", isHls: false }
+  ];
+
+  let currentUser = null;
+  let stations = [];
+  let favorites = [];
+  let playHistory = [];
+  let currentFilter = 'all';
+  let currentStationIndex = -1;
+  let hls = null;
+
+  let retryCount = 0;
+  const MAX_RETRIES = 5;
+  let retryTimer = null;
+  let isUserPaused = true;
+
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recInterval = null;
+  let recSeconds = 0;
+
+  let icyTimer = null;
+  let titleMarqueeTimer = null;
+  const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v2.0";
+
+  const audio = document.getElementById('audioPlayer');
+
+  function startTitleMarquee(displayText) {
+    stopTitleMarquee();
+    let marqueeText = `▶ 正在收聽：${displayText} ｜ Roy's Net Radio 📻 　　`;
+    titleMarqueeTimer = setInterval(() => {
+      marqueeText = marqueeText.slice(1) + marqueeText;
+      document.title = marqueeText;
+    }, 300);
+  }
+
+  function stopTitleMarquee(statusPrefix = "") {
+    clearInterval(titleMarqueeTimer);
+    titleMarqueeTimer = null;
+    document.title = statusPrefix ? `${statusPrefix} ${DEFAULT_PAGE_TITLE}` : DEFAULT_PAGE_TITLE;
+  }
+
+  setInterval(() => {
+    const now = new Date();
+    document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
+  }, 1000);
+
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentUser = user;
@@ -345,92 +393,6 @@
   function logout() {
     auth.signOut();
   }
-  // ====== 6. Firebase 登入狀態監聽與會員驗證 ======
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      currentUser = user;
-      const displayEmail = user.isAnonymous ? '訪客體驗模式 (匿名雲端)' : user.email;
-      document.getElementById('authSection').classList.add('hidden');
-      document.getElementById('playerSection').classList.remove('hidden');
-      document.getElementById('userHeaderInfo').classList.remove('hidden');
-      document.getElementById('currentUserEmail').textContent = `👤 ${displayEmail}`;
-      await loadUserDataFromCloud(user.uid);
-    } else {
-      currentUser = null;
-      audio.pause();
-      if (hls) hls.destroy();
-      stopTitleMarquee();
-      document.getElementById('playerSection').classList.add('hidden');
-      document.getElementById('userHeaderInfo').classList.add('hidden');
-      document.getElementById('authSection').classList.remove('hidden');
-    }
-  });
-
-  function switchAuthView(boxId) {
-    ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
-    document.getElementById(boxId).classList.remove('hidden');
-  }
-
-  async function login() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPass').value;
-    if (!email || !pass) return alert('請輸入電子郵件與密碼');
-    try {
-      await auth.signInWithEmailAndPassword(email, pass);
-    } catch (err) {
-      alert('登入失敗：' + err.message);
-    }
-  }
-
-  async function quickDemoLogin() {
-    try {
-      await auth.signInAnonymously();
-    } catch (err) {
-      alert('快速體驗啟動失敗（請確認 Firebase Console 已開啟「匿名」登入）：\n' + err.message);
-    }
-  }
-
-  async function register() {
-    const email = document.getElementById('regEmail').value.trim();
-    const pass = document.getElementById('regPass').value;
-    if (!email || pass.length < 6) return alert('請輸入有效 Email 且密碼至少需 6 碼');
-    try {
-      await auth.createUserWithEmailAndPassword(email, pass);
-      alert('註冊成功！已為您自動登入並建立雲端資料庫。');
-    } catch (err) {
-      alert('註冊失敗：' + err.message);
-    }
-  }
-
-  async function resetPassword() {
-    const email = document.getElementById('resetEmail').value.trim();
-    if (!email) return alert('請輸入您註冊的電子郵件！');
-    try {
-      await auth.sendPasswordResetEmail(email);
-      alert('密碼重設信已寄出至您的信箱！請點擊信中連結設定新密碼後再登入。');
-      switchAuthView('loginBox');
-    } catch (err) {
-      alert('寄送重設信失敗：' + err.message);
-    }
-  }
-
-  async function updatePassword() {
-    if (!currentUser || currentUser.isAnonymous) return alert('訪客體驗帳號無法修改密碼，請先註冊正式帳號！');
-    const newPass = document.getElementById('newAccountPass').value;
-    if (newPass.length < 6) return alert('新密碼至少需 6 碼');
-    try {
-      await currentUser.updatePassword(newPass);
-      alert('帳號密碼已成功更新！');
-      document.getElementById('newAccountPass').value = '';
-    } catch (err) {
-      alert('更新密碼失敗（基於安全機制，若登入時間過久請先登出再重新登入後修改）：\n' + err.message);
-    }
-  }
-
-  function logout() {
-    auth.signOut();
-  }
-  // ====== 7. Cloud Firestore 雲端資料讀寫 ======
   async function loadUserDataFromCloud(uid) {
     try {
       const docRef = db.collection('users').doc(uid);
@@ -474,7 +436,6 @@
     }
   }
 
-  // ====== 8. 電臺清單、最愛、歷史紀錄與預設庫 ======
   function setFilter(filter, btnEl) {
     currentFilter = filter;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -594,7 +555,7 @@
     if (playHistory.length > 10) playHistory.pop();
     await saveData();
   }
-  // ====== 9. 播放核心、HLS 與斷線自動重連 ======
+
   function playSelectedStation() {
     const idx = document.getElementById('stationSelect').value;
     if (idx === '') return;
@@ -722,7 +683,6 @@
     audio.muted = !audio.muted;
     document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
   }
-  // ====== 10. 即時節目資訊 (ICY Metadata 解析) ======
   function startIcyPolling(st) {
     clearInterval(icyTimer);
     const icyEl = document.getElementById('icyMetadata');
@@ -770,13 +730,13 @@
         const metaBytes = fullBuf.slice(metaint + 1, metaint + 1 + metaLen);
         const metaStr = new TextDecoder('utf-8').decode(metaBytes);
         const match = metaStr.match(/StreamTitle='([^']*)';/);
-        if (match && match[1]) {
-          icyEl.textContent = `🎵 正在播放：${match[1]}`;
+        if (match && match) {
+          icyEl.textContent = `🎵 正在播放：${match}`;
           if (currentStationIndex >= 0 && stations[currentStationIndex]) {
-            startTitleMarquee(`${stations[currentStationIndex].name} - 🎵 ${match[1]}`);
+            startTitleMarquee(`${stations[currentStationIndex].name} - 🎵 ${match}`);
           }
           if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
-            navigator.mediaSession.metadata.title = match[1];
+            navigator.mediaSession.metadata.title = match;
           }
           return;
         }
@@ -787,7 +747,6 @@
     }
   }
 
-  // ====== 11. 即時錄音功能 (Stream Recorder) ======
   function toggleRecording() {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       stopRecording();
@@ -844,7 +803,7 @@
     btn.classList.remove('recording');
     document.getElementById('recTimer').textContent = '';
   }
-  // ====== 12. 系統媒體控制 & 鍵盤快捷鍵 ======
+
   function setupMediaSession(st) {
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -882,7 +841,6 @@
     }
   });
 
-  // ====== 13. 管理面板折疊與電臺 CRUD ======
   function toggleAdminPanel() {
     const content = document.getElementById('adminPanelContent');
     const arrow = document.getElementById('adminArrow');
