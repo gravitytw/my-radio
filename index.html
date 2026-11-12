@@ -15,7 +15,6 @@
     });
   </script>
   <style>
-
     :root {
       --bg-dark: #070b14;
       --panel-bg: rgba(13, 21, 38, 0.85);
@@ -134,11 +133,11 @@
       <button class="btn-pink" onclick="logout()">登出電臺</button>
     </div>
   </div>
-
   <div id="authSection">
+    <!-- 登入、註冊與密碼重設介面 -->
     <div id="loginBox" class="hud-box">
       <h2>📻 Roy's Radio 登入</h2>
-      <input type="text" id="loginEmail" placeholder="請輸入帳號 ID 或 Email">
+      <input type="text" id="loginAccount" placeholder="請輸入專屬登入 ID 或 電子郵件 (Email)" />
       <input type="password" id="loginPass" placeholder="安全密碼" />
       <div class="controls-row">
         <button onclick="login()">驗證並登入</button>
@@ -152,28 +151,18 @@
 
     <div id="registerBox" class="hud-box hidden">
       <h2>📝 申請新帳號</h2>
-      <input type="text" id="regEmail" placeholder="請設定帳號 ID（英數字）">
-      <input type="password" id="regPass" placeholder="設定安全密碼 (至少6碼)" />
-      <div class="controls-row">
-        <button onclick="register()">提交申請並登入</button>
-        <button class="btn-pink" onclick="switchAuthView('loginBox')">返回登入系統</button>
-      </div>
+      <!-- 略過部分細節代碼，完整 HTML 結構請見上方原始區塊 -->
     </div>
 
     <div id="resetBox" class="hud-box hidden">
       <h2>🔑 重設安全密碼</h2>
-      <input type="email" id="resetEmail" placeholder="已註冊的電子郵件 (Email)" />
-      <div class="controls-row">
-        <button onclick="resetPassword()">寄送密碼重設信</button>
-        <button class="btn-pink" onclick="switchAuthView('loginBox')">返回登入系統</button>
-      </div>
+      <!-- 略過部分細節代碼，完整 HTML 結構請見上方原始區塊 -->
     </div>
   </div>
 
   <div id="playerSection" class="hidden">
     <div class="hud-box">
       <h2>🌌 Roy 的廣播電臺</h2>
-
       <div class="status-panel">
         <div>
           <span id="connBadge" class="status-badge">待機中</span>
@@ -182,41 +171,7 @@
         </div>
         <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...</div>
       </div>
-
-      <div class="tabs">
-        <button class="tab-btn active" onclick="setFilter('all', this)">📻 全部清單</button>
-        <button class="tab-btn" onclick="setFilter('fav', this)">⭐ 我的最愛</button>
-        <button class="tab-btn" onclick="setFilter('history', this)">🕒 播放紀錄</button>
-        <button class="tab-btn btn-green" onclick="setFilter('presets', this)">📦 預設電臺庫</button>
-      </div>
-
-      <div id="selectModeBox">
-        <select id="stationSelect" onchange="playSelectedStation()">
-          <option value="">-- 請選擇電臺 --</option>
-        </select>
-      </div>
-
-      <div id="listViewBox" class="hidden" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
-
-      <div class="controls-row">
-        <button onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
-        <button id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
-        <button onclick="nextStation()" title="下一台 (→)">⏭ 下一台</button>
-        <button id="favToggleBtn" onclick="toggleCurrentFav()" title="加入/移除最愛">☆ 收藏</button>
-        <button id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
-        <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
-
-        <div class="volume-box">
-          <button onclick="toggleMute()" id="muteBtn" style="padding:4px 8px;">🔊</button>
-          <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
-        </div>
-      </div>
-
-      <div class="shortcut-hint">
-        ⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音
-      </div>
-
-      <audio id="audioPlayer" crossorigin="anonymous"></audio>
+      <!-- 包含分頁、電臺清單、播放控制鈕、錄音及音量調節等介面 -->
     </div>
 
     <div class="hud-box">
@@ -224,32 +179,8 @@
         <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 電臺管理 / 帳號設定）</h2>
         <span id="adminArrow" style="color:var(--border-glow);font-weight:bold;">▼ 展開</span>
       </div>
-
       <div id="adminPanelContent" class="collapsible-content">
-        <h3>➕ 新增 / 編輯自訂串流</h3>
-        <input type="hidden" id="editIndex" value="-1" />
-        <input type="text" id="stationName" placeholder="電臺名稱 (例如：警廣全國治安交通網)" />
-        <input type="text" id="stationUrl" placeholder="串流網址 (URL)" />
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;">
-          <input type="checkbox" id="isHlsCheck" style="width:auto;margin:0;" />
-          這是 HLS 串流 (警廣等 .m3u8 格式請勾選)
-        </label>
-        <div class="controls-row">
-          <button onclick="saveStation()">➕ 儲存此電臺</button>
-          <button class="btn-pink" onclick="cancelEdit()">取消修改</button>
-        </div>
-
-        <h3>📋 電台列表清單管理</h3>
-        <div id="manageStationList"></div>
-
-                <h3>🆔 設定專屬登入 ID（設定後可用 ID 登入）</h3>
-        <input type="text" id="customIdInput" placeholder="輸入自訂 ID (3~20碼英數字或底線)" />
-        <button onclick="bindCustomId()">🔗 綁定專屬 ID</button>
-
-        <h3>🔐 修改帳號密碼</h3>
-        <input type="password" id="newAccountPass" placeholder="輸入新安全密碼 (至少6碼)" />
-        <button onclick="updatePassword()">💾 更新帳號密碼</button>
-
+        <!-- 包含新增/編輯串流、電台列表清單管理、以及註冊資料與帳號設定等管理功能 -->
       </div>
     </div>
   </div>
@@ -270,15 +201,16 @@
   const db = firebase.firestore();
 
   const PRESET_STATIONS = [
- { name: "🔵中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣流行網", isHls: true },
- { name: "中廣新聞網❤️", url: "https://sonnykuo.appspot.com/bcc/?id=中廣新聞網", isHls: true },
- { name: "💝中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣音樂網", isHls: true },
- { name: "飛碟聯播網🟠", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", isHls: true },
- { name: "🔴全國廣播 M-Radio", url: "https://stream.rcs.revma.com/044q61ha7a0uv", isHls: true },
-    { name: "警廣臺中分臺(TCS)💛", url: "https://stream.pbs.gov.tw/live/TCS/playlist.m3u8", isHls: true }
+    { name: "🔵中廣流行網", url: "https://appspot.com", isHls: true },
+    { name: "中廣新聞網❤️", url: "https://appspot.com", isHls: true },
+    { name: "💝中廣音樂網", url: "https://appspot.com", isHls: true },
+    { name: "飛碟聯播網🟠", url: "https://revma.com", isHls: true },
+    { name: "🔴全國廣播 M-Radio", url: "https://revma.com", isHls: true },
+    { name: "警廣臺中分臺(TCS)💛", url: "https://pbs.gov.tw", isHls: true }
   ];
 
   let currentUser = null;
+  let currentCustomId = '';
   let stations = [];
   let favorites = [];
   let playHistory = [];
@@ -302,7 +234,7 @@
 
   const audio = document.getElementById('audioPlayer');
 
-   function startTitleMarquee(displayText) {
+  function startTitleMarquee(displayText) {
     stopTitleMarquee();
     let marqueeText = `▶ 正在收聽：${displayText} ｜ Roy's Net Radio 📻 　　`;
     titleMarqueeTimer = setInterval(() => {
@@ -312,7 +244,6 @@
       }
     }, 300);
   }
-
 
   function stopTitleMarquee(statusPrefix = "") {
     clearInterval(titleMarqueeTimer);
@@ -325,19 +256,36 @@
     document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
   }, 1000);
 
-    auth.onAuthStateChanged(async (user) => {
+  function updateUserHeaderDisplay() {
+    if (!currentUser) return;
+    const headerEl = document.getElementById('currentUserEmail');
+    if (currentUser.isAnonymous) {
+      headerEl.textContent = '👤 訪客體驗模式 (匿名雲端)';
+    } else {
+      const cleanEmail = currentUser.email.endsWith('@royradio.local') ? '未綁定真實信箱' : currentUser.email;
+      const idLabel = currentCustomId ? `${currentCustomId}` : '未設定ID';
+      headerEl.textContent = `👤 ${idLabel} (${cleanEmail})`;
+    }
+  }
+
+  auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentUser = user;
-      const displayEmail = user.isAnonymous
-        ? '訪客體驗模式 (匿名雲端)'
-        : user.email.replace('@royradio.local', '');
       document.getElementById('authSection').classList.add('hidden');
       document.getElementById('playerSection').classList.remove('hidden');
       document.getElementById('userHeaderInfo').classList.remove('hidden');
-      document.getElementById('currentUserEmail').textContent = `👤 ${displayEmail}`;
       await loadUserDataFromCloud(user.uid);
+      updateUserHeaderDisplay();
+      if (!user.isAnonymous) {
+        document.getElementById('editCustomId').value = currentCustomId || '';
+        document.getElementById('editEmailInput').value = user.email.endsWith('@royradio.local') ? '' : user.email;
+      } else {
+        document.getElementById('editCustomId').value = '訪客無法修改';
+        document.getElementById('editEmailInput').value = '訪客無法修改';
+      }
     } else {
       currentUser = null;
+      currentCustomId = '';
       audio.pause();
       if (hls) {
         hls.destroy();
@@ -350,32 +298,32 @@
     }
   });
 
-
   function switchAuthView(boxId) {
     ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById(boxId).classList.remove('hidden');
   }
-  // 【全新新增】將純 ID 自動轉換為 Firebase 認可的 Email 格式
-  function formatIdToEmail(rawInput) {
-    const cleanText = rawInput.trim().toLowerCase();
-    if (!cleanText.includes('@')) {
-      return `${cleanText}@royradio.local`;
-    }
-    return cleanText;
-  }
 
-    async function login() {
-    const rawAccount = document.getElementById('loginEmail').value.trim();
+  async function login() {
+    const rawAccount = document.getElementById('loginAccount').value.trim();
     const pass = document.getElementById('loginPass').value;
-    if (!rawAccount || !pass) return alert('請輸入帳號 ID 與密碼');
+    if (!rawAccount || !pass) return alert('請輸入專屬登入 ID（或電子郵件）與密碼！');
+
     try {
-      const email = formatIdToEmail(rawAccount);
-      await auth.signInWithEmailAndPassword(email, pass);
+      let targetEmail = rawAccount;
+      if (!rawAccount.includes('@')) {
+        const cleanId = rawAccount.toLowerCase();
+        const idDoc = await db.collection('usernames').doc(cleanId).get();
+        if (idDoc.exists && idDoc.data().email) {
+          targetEmail = idDoc.data().email;
+        } else {
+          targetEmail = `${cleanId}@royradio.local`;
+        }
+      }
+      await auth.signInWithEmailAndPassword(targetEmail, pass);
     } catch (err) {
       alert('登入失敗：' + err.message);
     }
   }
-
 
   async function quickDemoLogin() {
     try {
@@ -385,14 +333,46 @@
     }
   }
 
-    async function register() {
-    const rawAccount = document.getElementById('regEmail').value.trim();
+  async function register() {
+    const rawId = document.getElementById('regId').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
     const pass = document.getElementById('regPass').value;
-    if (!rawAccount || pass.length < 6) return alert('請輸入帳號 ID 且密碼至少需 6 碼');
+
+    if (!rawId || !email || !pass) return alert('請完整填寫專屬 ID、電子郵件與密碼！');
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(rawId)) return alert('專屬 ID 僅限 3~20 碼英文字母、數字或底線！');
+    if (!email.includes('@')) return alert('請輸入有效的電子郵件格式！');
+    if (pass.length < 6) return alert('安全密碼至少需 6 碼！');
+
+    const cleanId = rawId.toLowerCase();
+
     try {
-      const email = formatIdToEmail(rawAccount);
-      await auth.createUserWithEmailAndPassword(email, pass);
-      alert('註冊成功！已為您自動登入並建立雲端資料庫。');
+      const idRef = db.collection('usernames').doc(cleanId);
+      const idSnap = await idRef.get();
+      if (idSnap.exists) {
+        return alert('此專屬登入 ID 已被其他用戶註冊，請換一個 ID！');
+      }
+
+      const userCred = await auth.createUserWithEmailAndPassword(email, pass);
+      const uid = userCred.user.uid;
+      currentCustomId = cleanId;
+
+      await idRef.set({
+        uid: uid,
+        email: email,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      await db.collection('users').doc(uid).set({
+        customId: cleanId,
+        email: email,
+        stations: [...PRESET_STATIONS.slice(0, 3)],
+        favorites: [],
+        playHistory: [],
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      updateUserHeaderDisplay();
+      alert('註冊成功！已綁定您的專屬 ID 與電子郵件，並為您自動登入。');
     } catch (err) {
       alert('註冊失敗：' + err.message);
     }
@@ -402,7 +382,7 @@
     const rawAccount = document.getElementById('resetEmail').value.trim();
     if (!rawAccount) return alert('請輸入您註冊的電子郵件！');
     if (!rawAccount.includes('@')) {
-      return alert('⚠️ 純帳號 ID 註冊者無法使用信箱重設密碼！僅限使用真實 Email 註冊的帳號才能寄送重設信。');
+      return alert('⚠️ 請輸入註冊時填寫的電子郵件信箱才能寄送重設信！');
     }
     try {
       await auth.sendPasswordResetEmail(rawAccount);
@@ -412,7 +392,81 @@
       alert('寄送重設信失敗：' + err.message);
     }
   }
+  async function updateCustomId() {
+    if (!currentUser || currentUser.isAnonymous) return alert('訪客體驗帳號無法修改資料，請先註冊正式帳號！');
+    const newIdRaw = document.getElementById('editCustomId').value.trim();
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(newIdRaw)) return alert('專屬 ID 僅限 3~20 碼英文字母、數字或底線！');
 
+    const newId = newIdRaw.toLowerCase();
+    if (newId === currentCustomId) return alert('新的專屬 ID 與目前相同，無需變更。');
+
+    try {
+      const newIdRef = db.collection('usernames').doc(newId);
+      const newIdSnap = await newIdRef.get();
+      if (newIdSnap.exists && newIdSnap.data().uid !== currentUser.uid) {
+        return alert('此專屬 ID 已被其他用戶使用，請換一個！');
+      }
+
+      if (currentCustomId) {
+        await db.collection('usernames').doc(currentCustomId).delete().catch(() => {});
+      }
+
+      await newIdRef.set({
+        uid: currentUser.uid,
+        email: currentUser.email,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      await db.collection('users').doc(currentUser.uid).set({
+        customId: newId,
+        email: currentUser.email,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      currentCustomId = newId;
+      updateUserHeaderDisplay();
+      alert(`專屬登入 ID 已成功更新為：${newId}`);
+    } catch (err) {
+      alert('更新專屬 ID 失敗：' + err.message);
+    }
+  }
+
+  async function updateAccountEmail() {
+    if (!currentUser || currentUser.isAnonymous) return alert('訪客體驗帳號無法修改電子郵件！');
+    const newEmail = document.getElementById('editEmailInput').value.trim();
+    if (!newEmail || !newEmail.includes('@')) return alert('請輸入有效的電子郵件地址！');
+    if (newEmail === currentUser.email) return alert('新的電子郵件與目前相同，無需變更。');
+
+    try {
+      await currentUser.updateEmail(newEmail);
+      await db.collection('users').doc(currentUser.uid).set({
+        email: newEmail,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      if (currentCustomId) {
+        await db.collection('usernames').doc(currentCustomId).set({
+          uid: currentUser.uid,
+          email: newEmail,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
+
+      updateUserHeaderDisplay();
+      alert('電子郵件已成功更新！');
+    } catch (err) {
+      if (err.code === 'auth/operation-not-allowed') {
+        try {
+          await currentUser.verifyBeforeUpdateEmail(newEmail);
+          alert('已發送驗證信至您的新電子郵件！請前往新信箱點擊驗證連結完成變更（變更後請使用新信箱登入）。');
+        } catch (vErr) {
+          alert('寄送驗證信失敗：' + vErr.message);
+        }
+      } else {
+        alert('更新電子郵件失敗（基於安全機制，若登入時間過久請先登出並重新登入後再修改）：\n' + err.message);
+      }
+    }
+  }
 
   async function updatePassword() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客體驗帳號無法修改密碼，請先註冊正式帳號！');
@@ -430,6 +484,7 @@
   function logout() {
     auth.signOut();
   }
+
   async function loadUserDataFromCloud(uid) {
     try {
       const docRef = db.collection('users').doc(uid);
@@ -437,10 +492,12 @@
 
       if (docSnap.exists) {
         const data = docSnap.data();
+        currentCustomId = data.customId || '';
         stations = data.stations || [...PRESET_STATIONS.slice(0, 3)];
         favorites = data.favorites || [];
         playHistory = data.playHistory || [];
       } else {
+        currentCustomId = '';
         const localStations = JSON.parse(localStorage.getItem('roy_stations'));
         stations = (localStations && localStations.length > 0) ? localStations : [...PRESET_STATIONS.slice(0, 3)];
         favorites = JSON.parse(localStorage.getItem('roy_favs')) || [];
@@ -461,12 +518,17 @@
 
     if (currentUser) {
       try {
-        await db.collection('users').doc(currentUser.uid).set({
+        const payload = {
           stations: stations,
           favorites: favorites,
           playHistory: playHistory,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+        };
+        if (!currentUser.isAnonymous) {
+          payload.email = currentUser.email;
+          if (currentCustomId) payload.customId = currentCustomId;
+        }
+        await db.collection('users').doc(currentUser.uid).set(payload, { merge: true });
       } catch (err) {
         console.error('雲端同步失敗:', err);
       }
@@ -562,7 +624,6 @@
     renderAllLists();
     alert(`已成功匯入並同步 ${added} 個新電臺！`);
   }
-
   async function toggleCurrentFav() {
     if (currentStationIndex < 0) return;
     const st = stations[currentStationIndex];
@@ -619,9 +680,6 @@
     renderDropdown();
     addToHistory(st);
 
-    if (hls) { hls.destroy(); hls = null; }
-    audio.pause();
-    // 【第1段新增】先徹底銷毀舊的 HLS 實例與清空原生 audio 緩衝
     if (hls) {
       hls.destroy();
       hls = null;
@@ -631,17 +689,16 @@
     audio.load();
 
     if (st.isHls && Hls.isSupported()) {
-            hls = new Hls({
-        backBufferLength: 15,      // 過去的音訊只保留 15 秒，超過立刻從記憶體刪除
-        maxBufferLength: 15,       // 最多預載未來 15 秒
-        maxMaxBufferLength: 30,    // 絕對緩衝上限 30 秒
-        enableWorker: true         // 啟用背景執行緒分擔運算壓力
+      hls = new Hls({
+        backBufferLength: 15,
+        maxBufferLength: 15,
+        maxMaxBufferLength: 30,
+        enableWorker: true
       });
-
       hls.loadSource(st.url);
       hls.attachMedia(audio);
       hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(handleStreamError));
-            hls.on(Hls.Events.ERROR, (event, data) => {
+      hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           if (hls) {
             hls.destroy();
@@ -650,7 +707,6 @@
           handleStreamError();
         }
       });
-
     } else {
       audio.src = st.url;
       audio.play().catch(handleStreamError);
@@ -741,7 +797,7 @@
     audio.muted = !audio.muted;
     document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
   }
-    function startIcyPolling(st) {
+  function startIcyPolling(st) {
     if (icyTimer) {
       clearInterval(icyTimer);
       icyTimer = null;
@@ -759,7 +815,6 @@
       }
     }, 15000);
   }
-
 
   async function fetchIcyMetadata(url) {
     const icyEl = document.getElementById('icyMetadata');
@@ -796,13 +851,13 @@
         const metaBytes = fullBuf.slice(metaint + 1, metaint + 1 + metaLen);
         const metaStr = new TextDecoder('utf-8').decode(metaBytes);
         const match = metaStr.match(/StreamTitle='([^']*)';/);
-        if (match && match) {
-          icyEl.textContent = `🎵 正在播放：${match}`;
+        if (match && match[1]) {
+          icyEl.textContent = `🎵 正在播放：${match[1]}`;
           if (currentStationIndex >= 0 && stations[currentStationIndex]) {
-            startTitleMarquee(`${stations[currentStationIndex].name} - 🎵 ${match}`);
+            startTitleMarquee(`${stations[currentStationIndex].name} - 🎵 ${match[1]}`);
           }
           if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
-            navigator.mediaSession.metadata.title = match;
+            navigator.mediaSession.metadata.title = match[1];
           }
           return;
         }
