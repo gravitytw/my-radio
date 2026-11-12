@@ -1,652 +1,837 @@
 <!DOCTYPE html>
-<html lang="zh-Hant-TW">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Roy's 雲端網路廣播播放器 // CYBER HUD</title>
-  <!-- 載入科技字體與 HLS.js 串流播放核心 -->
-  <link href="https://googleapis.com" rel="stylesheet">
+  <title>Roy's 雲端網路廣播播放器 // CYBER HUD v2.0</title>
   <script src="https://jsdelivr.net"></script>
   <style>
-#radio-dashboard:not(.hidden) { display: flex; }
-
     :root {
-      --bg-void: #050811;
-      --panel-bg: rgba(12, 20, 38, 0.75);
-      --neon-cyan: #00f3ff;
-      --neon-purple: #bc13fe;
-      --neon-pink: #ff0055;
-      --text-main: #e2e8f0;
-      --text-dim: #7dd3fc;
-      --border-glow: rgba(0, 243, 255, 0.35);
+      --bg-dark: #070b14;
+      --panel-bg: rgba(13, 21, 38, 0.85);
+      --border-glow: #00f3ff;
+      --accent-pink: #ff007f;
+      --accent-green: #00ff9d;
+      --accent-yellow: #ffd000;
+      --text-main: #e2f1f8;
+      --text-dim: #7f9eb2;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft JhengHei', monospace; }
     body {
-      background-color: var(--bg-void);
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(188, 19, 254, 0.16), transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(0, 243, 255, 0.14), transparent 40%),
-        linear-gradient(rgba(0, 243, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 243, 255, 0.04) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      margin: 0; padding: 20px;
+      background: radial-gradient(circle at top, #101d36 0%, var(--bg-dark) 80%);
       color: var(--text-main);
-      font-family: 'Noto Sans TC', sans-serif;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 28px 16px;
     }
 
-    .hud-wrapper {
-      width: 100%;
-      max-width: 640px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .container { max-width: 860px; margin: 0 auto; }
 
-    .main-title {
-      font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
-      text-align: center;
-      font-size: 1.65rem;
-      font-weight: 900;
-      letter-spacing: 2px;
-      background: linear-gradient(90deg, var(--neon-cyan), #ffffff, var(--neon-purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 22px rgba(0, 243, 255, 0.45);
-      margin-bottom: 4px;
-    }
-    .hud-status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      background: rgba(0, 243, 255, 0.08);
-      border: 1px solid rgba(0, 243, 255, 0.35);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
-      font-size: 0.85rem;
-      color: var(--neon-cyan);
-      box-shadow: inset 0 0 12px rgba(0, 243, 255, 0.1);
-    }
-
-    .status-dot {
-      display: inline-block;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background-color: #64748b;
-      margin-right: 6px;
-    }
-
-    .status-dot.active {
-      background-color: #00ff88;
-      box-shadow: 0 0 10px #00ff88;
-    }
-
-    .cyber-card {
+    /* HUD 卡片樣式 */
+    .hud-box {
       background: var(--panel-bg);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      box-shadow: 0 0 18px rgba(0, 243, 255, 0.12), inset 0 0 12px rgba(0, 243, 255, 0.05);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    h1, h2, h3 { margin-top: 0; letter-spacing: 1px; }
+    h1 { color: var(--border-glow); text-shadow: 0 0 10px rgba(0, 243, 255, 0.6); font-size: 1.6rem; }
+    h2 { font-size: 1.15rem; color: #8be9fd; border-bottom: 1px solid rgba(0, 243, 255, 0.2); padding-bottom: 8px; }
+
+    .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .clock { color: var(--accent-green); font-weight: bold; }
+
+    /* 狀態列與即時資訊 */
+    .status-panel {
+      background: rgba(0, 0, 0, 0.45);
+      border-left: 4px solid var(--border-glow);
+      padding: 12px 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    .status-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 0.85rem; font-weight: bold; margin-right: 8px;
+      background: rgba(0, 243, 255, 0.15); color: var(--border-glow);
+    }
+    .status-badge.warn { background: rgba(255, 208, 0, 0.2); color: var(--accent-yellow); }
+    .status-badge.err { background: rgba(255, 0, 127, 0.2); color: var(--accent-pink); }
+    .status-badge.ok { background: rgba(0, 255, 157, 0.2); color: var(--accent-green); }
+
+    .icy-marquee {
+      margin-top: 8px; font-size: 0.92rem; color: var(--accent-yellow);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    /* 表單與按鈕 */
+    input, select {
+      width: 100%; padding: 10px 12px; margin: 6px 0 12px;
+      background: rgba(5, 10, 20, 0.8); border: 1px solid rgba(0, 243, 255, 0.4);
+      color: var(--text-main); border-radius: 4px; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--border-glow); box-shadow: 0 0 8px rgba(0, 243, 255, 0.4); }
+
+    button {
+      background: rgba(0, 243, 255, 0.15);
       border: 1px solid var(--border-glow);
-      border-radius: 12px;
-      padding: 22px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), inset 0 0 18px rgba(0, 243, 255, 0.06);
-      position: relative;
-      overflow: hidden;
+      color: var(--border-glow);
+      padding: 8px 14px; border-radius: 4px; cursor: pointer;
+      font-weight: bold; transition: all 0.2s;
     }
+    button:hover { background: var(--border-glow); color: #050a14; box-shadow: 0 0 12px var(--border-glow); }
+    button.btn-pink { border-color: var(--accent-pink); color: var(--accent-pink); background: rgba(255, 0, 127, 0.12); }
+    button.btn-pink:hover { background: var(--accent-pink); color: #fff; box-shadow: 0 0 12px var(--accent-pink); }
+    button.btn-green { border-color: var(--accent-green); color: var(--accent-green); background: rgba(0, 255, 157, 0.12); }
+    button.btn-green:hover { background: var(--accent-green); color: #050a14; }
+    button.recording { animation: pulse 1.2s infinite; background: var(--accent-pink); color: #fff; }
 
-    .cyber-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-purple), transparent);
-    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; } }
 
-    h2 {
-      font-size: 1.15rem;
-      color: var(--neon-cyan);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      letter-spacing: 1px;
-    }
+    .controls-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+    .volume-box { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+    .volume-box input[type="range"] { width: 100px; margin: 0; }
 
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      margin-bottom: 6px;
-      letter-spacing: 0.5px;
-    }
-
-    input[type="email"],
-    input[type="password"],
-    input[type="text"],
-    input[type="url"],
-    select {
-      width: 100%;
-      padding: 11px 14px;
-      background: rgba(5, 10, 22, 0.88);
-      border: 1px solid rgba(0, 243, 255, 0.3);
-      border-radius: 8px;
-      color: #ffffff;
-      font-size: 0.95rem;
-      outline: none;
-      transition: all 0.25s ease;
-    }
-
-    input:focus, select:focus {
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 12px rgba(0, 243, 255, 0.35);
-    }
-
-    .btn {
-      width: 100%;
-      padding: 11px 16px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: all 0.25s ease;
-      margin-top: 6px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(188, 19, 254, 0.25));
-      border: 1px solid var(--neon-cyan);
-      color: var(--neon-cyan);
-      box-shadow: 0 0 14px rgba(0, 243, 255, 0.2);
-    }
-
-    .btn-primary:hover {
-      background: var(--neon-cyan);
-      color: #050811;
-      box-shadow: 0 0 22px rgba(0, 243, 255, 0.65);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #cbd5e1;
-    }
-
-    .btn-secondary:hover {
-      border-color: #ffffff;
-      color: #ffffff;
-    }
-
-    .btn-danger {
-      background: rgba(255, 0, 85, 0.15);
-      border: 1px solid var(--neon-pink);
-      color: #ff4d88;
-    }
-
-    .btn-danger:hover {
-      background: var(--neon-pink);
-      color: #ffffff;
-      box-shadow: 0 0 18px rgba(255, 0, 85, 0.55);
-    }
-
-    .link-row {
-      margin-top: 14px;
-      text-align: center;
-      font-size: 0.88rem;
-      color: var(--text-dim);
-    }
-
-    .link-row span {
-      cursor: pointer;
-      text-decoration: underline;
-      margin: 0 6px;
-    }
-
-    .link-row span:hover {
-      color: var(--neon-cyan);
-    }
-
-    .visualizer {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 5px;
-      height: 36px;
-      margin: 14px 0;
-      padding: 6px;
-      background: rgba(0, 0, 0, 0.35);
-      border-radius: 8px;
-      border: 1px solid rgba(0, 243, 255, 0.15);
-    }
-
-    .bar {
-      width: 5px;
-      height: 6px;
-      background: linear-gradient(to top, var(--neon-purple), var(--neon-cyan));
-      border-radius: 3px;
-      transition: height 0.2s ease;
-    }
-
-    .playing .bar {
-      animation: eq 0.8s ease-in-out infinite alternate;
-    }
-
-    .playing .bar:nth-child(odd) { animation-duration: 0.55s; }
-    .playing .bar:nth-child(3n) { animation-duration: 0.95s; }
-    .playing .bar:nth-child(4n) { animation-duration: 0.65s; }
-
-    @keyframes eq {
-      0% { height: 5px; }
-      100% { height: 26px; }
-    }
-
-    .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 12px 0;
-      font-size: 0.88rem;
-      color: var(--text-dim);
-      cursor: pointer;
-    }
-
-    .checkbox-row input {
-      accent-color: var(--neon-cyan);
-      width: 16px;
-      height: 16px;
-    }
-
-    audio {
-      width: 100%;
-      margin-top: 10px;
-      filter: invert(92%) hue-rotate(155deg) brightness(1.05);
-      border-radius: 8px;
-    }
+    /* 標籤頁與清單 */
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .tab-btn.active { background: var(--border-glow); color: #050a14; }
 
     .station-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(0, 243, 255, 0.18);
-      border-radius: 8px;
-      margin-bottom: 8px;
-      font-size: 0.9rem;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      gap: 8px;
     }
+    .station-item:hover { background: rgba(0, 243, 255, 0.06); }
+    .star-btn { cursor: pointer; font-size: 1.2rem; color: var(--text-dim); user-select: none; }
+    .star-btn.fav { color: var(--accent-yellow); text-shadow: 0 0 8px var(--accent-yellow); }
 
-    .station-actions button {
-      padding: 4px 10px;
-      margin-left: 6px;
-      border-radius: 6px;
-      border: 1px solid var(--neon-cyan);
-      background: transparent;
-      color: var(--neon-cyan);
-      cursor: pointer;
-      font-size: 0.8rem;
+    /* 折疊面板 */
+    .collapsible-header {
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none;
     }
+    .collapsible-content { display: none; margin-top: 15px; }
+    .collapsible-content.open { display: block; }
 
-    .station-actions button.del {
-      border-color: var(--neon-pink);
-      color: var(--neon-pink);
-    }
-
+    .shortcut-hint { font-size: 0.8rem; color: var(--text-dim); margin-top: 10px; }
     .hidden { display: none !important; }
-    .btn-row { display: flex; gap: 10px; }
   </style>
 </head>
 <body>
-<div class="hud-wrapper">
-  <h1 class="main-title">⚡ Roy's Net Radio player</h1>
-  <div class="hud-status-bar">
-    <div id="hud-datetime">📅 載入時間中...</div>
-    <div><span class="status-dot" id="status-dot"></span><span id="now-playing-text">待機中 (未選擇電臺)</span></div>
-  </div>
-
-    <div id="login-section" class="cyber-card">
-    <h2>📻 Roy's Radio 登入</h2>
-    <div class="form-group">
-      <label>電子郵件 (Email)</label>
-      <input type="email" id="login-email" placeholder="輸入您的 Email" />
+<div class="container">
+  <!-- 頂部標題與時鐘 -->
+  <div class="hud-box top-bar">
+    <div>
+      <h1>⚡ Roy's Net Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v2.0</small></h1>
+      <div class="clock" id="clockDisplay">📅 載入時間中...</div>
     </div>
-    <div class="form-group">
-      <label>安全密碼</label>
-      <input type="password" id="login-password" placeholder="輸入安全密碼" />
-    </div>
-    <button class="btn btn-primary" onclick="handleLogin()">驗證並登入</button>
-    <div class="link-row">
-      <span onclick="switchView('register-section')">申請註冊新帳號</span> | 
-      <span onclick="switchView('reset-section')">忘記密碼？</span>
+    <div id="userHeaderInfo" class="hidden">
+      <span id="currentUserEmail" style="color:var(--accent-green);margin-right:10px;"></span>
+      <button class="btn-pink" onclick="logout()">登出電臺</button>
     </div>
   </div>
 
-  <div id="register-section" class="cyber-card hidden">
-    <h2>📝 申請新帳號</h2>
-    <div class="form-group">
-      <label>設定電子郵件 (Email)</label>
-      <input type="email" id="reg-email" placeholder="輸入新帳號 Email" />
+  <!-- 1. 登入 / 註冊 / 忘記密碼區塊 -->
+  <div id="authSection">
+    <div id="loginBox" class="hud-box">
+      <h2>📻 Roy's Radio 登入</h2>
+      <input type="email" id="loginEmail" placeholder="電子郵件 (Email)" />
+      <input type="password" id="loginPass" placeholder="安全密碼" />
+      <div class="controls-row">
+        <button onclick="login()">驗證並登入</button>
+        <button class="btn-green" onclick="quickDemoLogin()">快速體驗模式</button>
+      </div>
+      <p style="font-size:0.9rem;margin-top:12px;">
+        <a href="#" style="color:var(--border-glow);" onclick="switchAuthView('registerBox')">申請註冊新帳號</a> | 
+        <a href="#" style="color:var(--accent-yellow);" onclick="switchAuthView('resetBox')">忘記密碼？</a>
+      </p>
     </div>
-    <div class="form-group">
-      <label>設定安全密碼 (至少6碼)</label>
-      <input type="password" id="reg-password" placeholder="設定至少6碼密碼" />
+
+    <div id="registerBox" class="hud-box hidden">
+      <h2>📝 申請新帳號</h2>
+      <input type="email" id="regEmail" placeholder="設定電子郵件 (Email)" />
+      <input type="password" id="regPass" placeholder="設定安全密碼 (至少6碼)" />
+      <div class="controls-row">
+        <button onclick="register()">提交申請並登入</button>
+        <button class="btn-pink" onclick="switchAuthView('loginBox')">返回登入系統</button>
+      </div>
     </div>
-    <button class="btn btn-primary" onclick="handleRegister()">提交申請並登入</button>
-    <button class="btn btn-secondary" onclick="switchView('login-section')">返回登入系統</button>
-  </div>
-  <div id="reset-section" class="cyber-card hidden">
-    <h2>🔑 重設安全密碼</h2>
-    <div class="form-group">
-      <label>已註冊的電子郵件 (Email)</label>
-      <input type="email" id="reset-email" placeholder="輸入註冊時的 Email" />
+
+    <div id="resetBox" class="hud-box hidden">
+      <h2>🔑 重設安全密碼</h2>
+      <input type="email" id="resetEmail" placeholder="已註冊的電子郵件 (Email)" />
+      <input type="password" id="resetPass1" placeholder="設定新密碼 (至少6碼)" />
+      <input type="password" id="resetPass2" placeholder="再次確認新密碼" />
+      <div class="controls-row">
+        <button onclick="resetPassword()">重設密碼並返回登入</button>
+        <button class="btn-pink" onclick="switchAuthView('loginBox')">返回登入系統</button>
+      </div>
     </div>
-    <div class="form-group">
-      <label>設定新密碼 (至少6碼)</label>
-      <input type="password" id="reset-new-pass" placeholder="輸入新密碼" />
-    </div>
-    <div class="form-group">
-      <label>再次確認新密碼</label>
-      <input type="password" id="reset-confirm-pass" placeholder="再次輸入新密碼" />
-    </div>
-    <button class="btn btn-primary" onclick="handleReset()">重設密碼並返回登入</button>
-    <button class="btn btn-secondary" onclick="switchView('login-section')">返回登入系統</button>
   </div>
 
-  <div id="radio-dashboard" class="hidden" style="flex-direction:column; gap:20px;">
-    <div class="cyber-card">
-      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:8px;">歡迎來到 Roy 的廣播電臺，請選擇電臺開始收聽...</p>
+  <!-- 2. 主播放器介面 -->
+  <div id="playerSection" class="hidden">
+    <div class="hud-box">
       <h2>🌌 Roy 的廣播電臺</h2>
 
-      <div class="visualizer" id="visualizer">
-        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <!-- 狀態與 ICY 即時節目資訊 -->
+      <div class="status-panel">
+        <div>
+          <span id="connBadge" class="status-badge">待機中</span>
+          <strong id="nowPlayingTitle">未選擇電臺</strong>
+          <span id="bufferSpinner" style="color:var(--accent-yellow);margin-left:8px;"></span>
+        </div>
+        <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...</div>
       </div>
-      <div class="form-group">
-        <label>📻 收聽清單</label>
-        <select id="station-select" onchange="playSelectedStation()">
+
+      <!-- 篩選分頁：全部 / 我的最愛 / 播放紀錄 / 預設電臺庫 -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setFilter('all', this)">📻 全部清單</button>
+        <button class="tab-btn" onclick="setFilter('fav', this)">⭐ 我的最愛</button>
+        <button class="tab-btn" onclick="setFilter('history', this)">🕒 播放紀錄</button>
+        <button class="tab-btn btn-green" onclick="setFilter('presets', this)">📦 預設電臺庫</button>
+      </div>
+
+      <!-- 電臺下拉選單 (全部/最愛模式) -->
+      <div id="selectModeBox">
+        <select id="stationSelect" onchange="playSelectedStation()">
           <option value="">-- 請選擇電臺 --</option>
         </select>
       </div>
-      <audio id="audio-player" controls></audio>
-    </div>
-    <div class="cyber-card">
-      <h2>🛠 管理面板 (新增自訂串流)</h2>
-      <div class="form-group">
-        <label>電臺名稱</label>
-        <input type="text" id="station-name" placeholder="例如：警廣全國治安交通網" />
+
+      <!-- 清單檢視區 (播放紀錄 / 預設電臺庫) -->
+      <div id="listViewBox" class="hidden" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
+
+      <!-- 播放控制列與錄音 -->
+      <div class="controls-row">
+        <button onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
+        <button id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
+        <button onclick="nextStation()" title="下一台 (→)">⏭ 下一台</button>
+        <button id="favToggleBtn" onclick="toggleCurrentFav()" title="加入/移除最愛">☆ 收藏</button>
+        <button id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
+        <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
+
+        <div class="volume-box">
+          <button onclick="toggleMute()" id="muteBtn" style="padding:4px 8px;">🔊</button>
+          <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
+        </div>
       </div>
-      <div class="form-group">
-        <label>串流網址 (URL)</label>
-        <input type="url" id="station-url" placeholder="https://... (.m3u8 或 .mp3)" />
+
+      <div class="shortcut-hint">
+        ⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音
       </div>
-      <label class="checkbox-row">
-        <input type="checkbox" id="is-hls" />
-        <span>這是 HLS 串流 (警廣等 .m3u8 格式請勾選)</span>
-      </label>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="save-station-btn" onclick="saveStation()">➕ 新增此電臺</button>
-        <button class="btn btn-secondary hidden" id="cancel-edit-btn" onclick="cancelEdit()">取消修改</button>
-      </div>
+
+      <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
 
-    <div class="cyber-card">
-      <h2>📋 電台列表清單管理</h2>
-      <div id="station-list-container"></div>
-    </div>
-
-    <div class="cyber-card">
-      <h2>🔐 修改帳號密碼 (<span id="current-user-email"></span>)</h2>
-      <div class="form-group">
-        <input type="password" id="new-user-pass" placeholder="輸入新密碼 (至少6碼)" />
+    <!-- 3. 可折疊管理面板 -->
+    <div class="hud-box">
+      <div class="collapsible-header" onclick="toggleAdminPanel()">
+        <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 電臺管理 / 帳號設定）</h2>
+        <span id="adminArrow" style="color:var(--border-glow);font-weight:bold;">▼ 展開</span>
       </div>
-      <button class="btn btn-primary" onclick="updatePassword()">💾 更新帳號密碼</button>
-      <button class="btn btn-danger" style="margin-top:12px;" onclick="handleLogout()">登出電臺</button>
+
+      <div id="adminPanelContent" class="collapsible-content">
+        <h3>➕ 新增 / 編輯自訂串流</h3>
+        <input type="hidden" id="editIndex" value="-1" />
+        <input type="text" id="stationName" placeholder="電臺名稱 (例如：警廣全國治安交通網)" />
+        <input type="text" id="stationUrl" placeholder="串流網址 (URL)" />
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;">
+          <input type="checkbox" id="isHlsCheck" style="width:auto;margin:0;" />
+          這是 HLS 串流 (警廣等 .m3u8 格式請勾選)
+        </label>
+        <div class="controls-row">
+          <button onclick="saveStation()">➕ 儲存此電臺</button>
+          <button class="btn-pink" onclick="cancelEdit()">取消修改</button>
+        </div>
+
+        <h3>📋 電台列表清單管理</h3>
+        <div id="manageStationList"></div>
+
+        <h3>🔐 修改帳號密碼</h3>
+        <input type="password" id="newAccountPass" placeholder="輸入新安全密碼 (至少6碼)" />
+        <button onclick="updatePassword()">💾 更新帳號密碼</button>
+      </div>
     </div>
   </div>
 </div>
 <script>
-  const defaultStations = [
-    { name: "🔵中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣流行網", isHls: true },
- { name: "中廣新聞網❤️", url: "https://sonnykuo.appspot.com/bcc/?id=中廣新聞網", isHls: true },
- { name: "💝中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣音樂網", isHls: true },
- { name: "飛碟聯播網🟠", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", isHls: true },
- { name: "🔴全國廣播 M-Radio", url: "https://stream.rcs.revma.com/044q61ha7a0uv", isHls: true },
-    { name: "警廣臺中分臺(TCS)💛", url: "https://stream.pbs.gov.tw/live/TCS/playlist.m3u8", isHls: true }
+  // ====== 預設電臺庫資料 ======
+  const PRESET_STATIONS = [
+    { name: "警廣 全國治安交通網 (HLS)", url: "https://pbs.gov.tw", isHls: true },
+    { name: "ICRT 台北國際社區廣播電台", url: "https://leanstream.co", isHls: false },
+    { name: "SomaFM Groove Salad (環境音樂)", url: "https://somafm.com", isHls: false },
+    { name: "SomaFM Synthwave (賽博龐克電子)", url: "https://somafm.com", isHls: false },
+    { name: "Linn Jazz 英國爵士電台", url: "http://linn.co.uk", isHls: false }
   ];
 
-  let stations = JSON.parse(localStorage.getItem('roy_radio_stations')) || defaultStations;
-  let editIndex = -1;
-  let hlsInstance = null;
+  // ====== 狀態與儲存初始化 (暫用 localStorage) ======
+  let stations = JSON.parse(localStorage.getItem('roy_stations')) || [...PRESET_STATIONS.slice(0, 3)];
+  let favorites = JSON.parse(localStorage.getItem('roy_favs')) || [];
+  let playHistory = JSON.parse(localStorage.getItem('roy_history')) || [];
+  let currentFilter = 'all';
+  let currentStationIndex = -1;
+  let hls = null;
 
-  const audio = document.getElementById('audio-player');
-  const visualizer = document.getElementById('visualizer');
+  // 斷線重連變數
+  let retryCount = 0;
+  const MAX_RETRIES = 5;
+  let retryTimer = null;
+  let isUserPaused = true;
 
-  audio.addEventListener('play', () => visualizer.classList.add('playing'));
-  audio.addEventListener('pause', () => visualizer.classList.remove('playing'));
-  audio.addEventListener('ended', () => visualizer.classList.remove('playing'));
+  // 錄音變數
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recInterval = null;
+  let recSeconds = 0;
 
-  function switchView(viewId) {
-    ['login-section', 'register-section', 'reset-section', 'radio-dashboard'].forEach(id => {
-      document.getElementById(id).classList.add('hidden');
-    });
-    document.getElementById(viewId).classList.remove('hidden');
+  // ICY Metadata 輪詢計時器
+  let icyTimer = null;
+
+  const audio = document.getElementById('audioPlayer');
+
+  // ====== 時鐘更新 ======
+  setInterval(() => {
+    const now = new Date();
+    document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
+  }, 1000);
+
+  // ====== 帳號系統 (前端模擬，未來可串接後端 API) ======
+  function switchAuthView(boxId) {
+    ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById(boxId).classList.remove('hidden');
   }
 
-  function handleLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const pass = document.getElementById('login-password').value;
-    if (!email || pass.length < 6) { alert('請輸入有效的 Email 與至少 6 碼密碼'); return; }
-    localStorage.setItem('roy_radio_user', email);
-    document.getElementById('current-user-email').textContent = email;
-    switchView('radio-dashboard');
-    renderStations();
+  function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    if (!email || pass.length < 6) return alert('請輸入有效的 Email 與至少 6 碼密碼');
+    enterPlayer(email);
   }
 
-  function handleRegister() {
-    const email = document.getElementById('reg-email').value.trim();
-    const pass = document.getElementById('reg-password').value;
-    if (!email || pass.length < 6) { alert('請設定有效 Email 與至少 6 碼密碼'); return; }
-    localStorage.setItem('roy_radio_user', email);
-    document.getElementById('current-user-email').textContent = email;
-    alert('帳號申請成功並已自動登入！');
-    switchView('radio-dashboard');
-    renderStations();
+  function quickDemoLogin() { enterPlayer('cyber_guest@roysradio.net'); }
+
+  function register() {
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value;
+    if (!email || pass.length < 6) return alert('設定密碼需至少 6 碼');
+    enterPlayer(email);
   }
 
-  function handleReset() {
-    const email = document.getElementById('reset-email').value.trim();
-    const p1 = document.getElementById('reset-new-pass').value;
-    const p2 = document.getElementById('reset-confirm-pass').value;
-    if (!email || p1.length < 6 || p1 !== p2) { alert('請確認資料填寫正確且兩次密碼一致'); return; }
-    alert('安全密碼已重設！請使用新密碼登入。');
-    switchView('login-section');
+  function resetPassword() {
+    const p1 = document.getElementById('resetPass1').value;
+    const p2 = document.getElementById('resetPass2').value;
+    if (p1.length < 6 || p1 !== p2) return alert('兩次密碼不一致或長度不足 6 碼');
+    alert('密碼已重設，請重新登入！');
+    switchAuthView('loginBox');
   }
 
   function updatePassword() {
-    const newPass = document.getElementById('new-user-pass').value;
-    if (newPass.length < 6) { alert('新密碼至少需要 6 碼'); return; }
-    document.getElementById('new-user-pass').value = '';
-    alert('帳號密碼已成功更新！');
+    const p = document.getElementById('newAccountPass').value;
+    if (p.length < 6) return alert('新密碼至少需 6 碼');
+    alert('帳號密碼已更新！');
+    document.getElementById('newAccountPass').value = '';
   }
 
-  function handleLogout() {
+  function enterPlayer(email) {
+    document.getElementById('authSection').classList.add('hidden');
+    document.getElementById('playerSection').classList.remove('hidden');
+    document.getElementById('userHeaderInfo').classList.remove('hidden');
+    document.getElementById('currentUserEmail').textContent = `👤 ${email}`;
+    renderAllLists();
+  }
+
+  function logout() {
     audio.pause();
-    localStorage.removeItem('roy_radio_user');
-    switchView('login-section');
+    if (hls) hls.destroy();
+    document.getElementById('playerSection').classList.add('hidden');
+    document.getElementById('userHeaderInfo').classList.add('hidden');
+    document.getElementById('authSection').classList.remove('hidden');
   }
-  function renderStations() {
-    const select = document.getElementById('station-select');
-    const list = document.getElementById('station-list-container');
-    select.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
-    list.innerHTML = '';
 
+  // ====== 電臺清單、最愛、歷史紀錄與預設庫 ======
+  function saveData() {
+    localStorage.setItem('roy_stations', JSON.stringify(stations));
+    localStorage.setItem('roy_favs', JSON.stringify(favorites));
+    localStorage.setItem('roy_history', JSON.stringify(playHistory));
+  }
+
+  function setFilter(filter, btnEl) {
+    currentFilter = filter;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    const selectBox = document.getElementById('selectModeBox');
+    const listBox = document.getElementById('listViewBox');
+
+    if (filter === 'all' || filter === 'fav') {
+      selectBox.classList.remove('hidden');
+      listBox.classList.add('hidden');
+      renderDropdown();
+    } else {
+      selectBox.classList.add('hidden');
+      listBox.classList.remove('hidden');
+      if (filter === 'history') renderHistory();
+      if (filter === 'presets') renderPresets();
+    }
+  }
+
+  function renderDropdown() {
+    const sel = document.getElementById('stationSelect');
+    sel.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
     stations.forEach((st, idx) => {
+      const isFav = favorites.includes(st.url);
+      if (currentFilter === 'fav' && !isFav) return;
       const opt = document.createElement('option');
       opt.value = idx;
-      opt.textContent = st.name;
-      select.appendChild(opt);
-
-      const item = document.createElement('div');
-      item.className = 'station-item';
-      item.innerHTML = `
-        <span>${st.name} ${st.isHls ? '<small style="color:var(--neon-cyan)">[HLS]</small>' : ''}</span>
-        <div class="station-actions">
-          <button onclick="editStation(${idx})">編輯</button>
-          <button class="del" onclick="deleteStation(${idx})">刪除</button>
-        </div>
-      `;
-      list.appendChild(item);
+      opt.textContent = `${isFav ? '⭐ ' : ''}${st.name} ${st.isHls ? '[HLS]' : ''}`;
+      if (idx === currentStationIndex) opt.selected = true;
+      sel.appendChild(opt);
     });
-    localStorage.setItem('roy_radio_stations', JSON.stringify(stations));
   }
 
+  function renderHistory() {
+    const box = document.getElementById('listViewBox');
+    if (playHistory.length === 0) {
+      box.innerHTML = '<div style="color:var(--text-dim);padding:10px;">尚無播放紀錄</div>';
+      return;
+    }
+    box.innerHTML = playHistory.map(h => `
+      <div class="station-item">
+        <div>
+          <strong>${h.name}</strong>
+          <div style="font-size:0.78rem;color:var(--text-dim);">🕒 ${h.time}</div>
+        </div>
+        <button onclick="playByUrl('${h.url}')">▶ 收聽</button>
+      </div>
+    `).join('');
+  }
+
+  function renderPresets() {
+    const box = document.getElementById('listViewBox');
+    box.innerHTML = `
+      <div style="margin-bottom:8px;text-align:right;">
+        <button class="btn-green" onclick="importAllPresets()">⚡ 一鍵匯入全部預設電臺</button>
+      </div>
+    ` + PRESET_STATIONS.map((p, i) => `
+      <div class="station-item">
+        <div>
+          <strong>${p.name}</strong>
+          <div style="font-size:0.78rem;color:var(--text-dim);">${p.url}</div>
+        </div>
+        <button onclick="importPreset(${i})">➕ 匯入</button>
+      </div>
+    `).join('');
+  }
+
+  function importPreset(idx) {
+    const p = PRESET_STATIONS[idx];
+    if (stations.some(s => s.url === p.url)) return alert('此電臺已在清單中！');
+    stations.push({ ...p });
+    saveData();
+    renderAllLists();
+    alert(`已匯入：${p.name}`);
+  }
+
+  function importAllPresets() {
+    let added = 0;
+    PRESET_STATIONS.forEach(p => {
+      if (!stations.some(s => s.url === p.url)) {
+        stations.push({ ...p });
+        added++;
+      }
+    });
+    saveData();
+    renderAllLists();
+    alert(`已成功匯入 ${added} 個新電臺！`);
+  }
+
+  function toggleCurrentFav() {
+    if (currentStationIndex < 0) return;
+    const st = stations[currentStationIndex];
+    const pos = favorites.indexOf(st.url);
+    if (pos >= 0) favorites.splice(pos, 1);
+    else favorites.push(st.url);
+    saveData();
+    updateFavButton();
+    renderAllLists();
+  }
+
+  function updateFavButton() {
+    const btn = document.getElementById('favToggleBtn');
+    if (currentStationIndex < 0) return;
+    const isFav = favorites.includes(stations[currentStationIndex].url);
+    btn.textContent = isFav ? '⭐ 已收藏' : '☆ 收藏';
+    btn.style.color = isFav ? 'var(--accent-yellow)' : '';
+  }
+
+  function addToHistory(st) {
+    playHistory = playHistory.filter(h => h.url !== st.url);
+    playHistory.unshift({
+      name: st.name,
+      url: st.url,
+      time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
+    });
+    if (playHistory.length > 10) playHistory.pop();
+    saveData();
+  }
+  // ====== 播放核心、HLS 與斷線自動重連 ======
   function playSelectedStation() {
-    const idx = document.getElementById('station-select').value;
+    const idx = document.getElementById('stationSelect').value;
     if (idx === '') return;
+    startStream(parseInt(idx, 10));
+  }
+
+  function playByUrl(url) {
+    const idx = stations.findIndex(s => s.url === url);
+    if (idx >= 0) startStream(idx);
+    else alert('此電臺已不在清單中');
+  }
+
+  function startStream(idx) {
+    clearTimeout(retryTimer);
+    retryCount = 0;
+    isUserPaused = false;
+    currentStationIndex = idx;
     const st = stations[idx];
 
-    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    document.getElementById('nowPlayingTitle').textContent = st.name;
+    setStatus('連線中...', 'warn', '⏳ 載入串流...');
+    updateFavButton();
+    renderDropdown();
+    addToHistory(st);
+
+    if (hls) { hls.destroy(); hls = null; }
+    audio.pause();
 
     if (st.isHls && Hls.isSupported()) {
-      hlsInstance = new Hls();
-      hlsInstance.loadSource(st.url);
-      hlsInstance.attachMedia(audio);
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => audio.play());
+      hls = new Hls();
+      hls.loadSource(st.url);
+      hls.attachMedia(audio);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(handleStreamError));
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) handleStreamError();
+      });
     } else {
       audio.src = st.url;
-      audio.play();
+      audio.play().catch(handleStreamError);
     }
+
+    setupMediaSession(st);
+    startIcyPolling(st);
+  }
+
+  function setStatus(badgeText, type, spinnerText = '') {
+    const badge = document.getElementById('connBadge');
+    badge.textContent = badgeText;
+    badge.className = `status-badge ${type}`;
+    document.getElementById('bufferSpinner').textContent = spinnerText;
+  }
+
+  // 音訊事件監聽：緩衝與斷線重連
+  audio.addEventListener('playing', () => {
+    retryCount = 0;
+    setStatus('LIVE 直播中', 'ok', '');
+    document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
+  });
+
+  audio.addEventListener('waiting', () => {
+    if (!isUserPaused) setStatus('緩衝中', 'warn', '⏳ 網路緩衝中...');
+  });
+
+  audio.addEventListener('stalled', () => {
+    if (!isUserPaused) setStatus('訊號不穩', 'warn', '⚠️ 串流停滯...');
+  });
+
+  audio.addEventListener('error', () => {
+    if (!isUserPaused) handleStreamError();
+  });
+
+  function handleStreamError() {
+    if (isUserPaused || currentStationIndex < 0) return;
+    if (retryCount >= MAX_RETRIES) {
+      setStatus('連線失敗', 'err', '❌ 已達最大重連次數，請檢查網址或手動重試');
+      return;
+    }
+    retryCount++;
+    setStatus('斷線重連中', 'err', `🔄 3秒後進行第 ${retryCount}/${MAX_RETRIES} 次重連...`);
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => {
+      if (!isUserPaused) startStream(currentStationIndex);
+    }, 3000);
+  }
+
+  function togglePlay() {
+    if (currentStationIndex < 0 && stations.length > 0) return startStream(0);
+    if (audio.paused) {
+      isUserPaused = false;
+      audio.play();
+      document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
+    } else {
+      isUserPaused = true;
+      clearTimeout(retryTimer);
+      audio.pause();
+      setStatus('已暫停', '', '');
+      document.getElementById('playPauseBtn').textContent = '▶ 播放';
+    }
+  }
+
+  function prevStation() {
+    if (stations.length === 0) return;
+    const nextIdx = (currentStationIndex - 1 + stations.length) % stations.length;
+    startStream(nextIdx);
+  }
+
+  function nextStation() {
+    if (stations.length === 0) return;
+    const nextIdx = (currentStationIndex + 1) % stations.length;
+    startStream(nextIdx);
+  }
+
+  function changeVolume(val) {
+    audio.volume = val;
+    document.getElementById('muteBtn').textContent = val == 0 ? '🔇' : '🔊';
+  }
+
+  function toggleMute() {
+    audio.muted = !audio.muted;
+    document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
+  }
+
+  // ====== 即時節目資訊 (ICY Metadata 解析) ======
+  function startIcyPolling(st) {
+    clearInterval(icyTimer);
+    const icyEl = document.getElementById('icyMetadata');
+    if (st.isHls) {
+      icyEl.textContent = `🎵 HLS 串流直播中：${st.name}`;
+      return;
+    }
+    icyEl.textContent = '🎵 正在偵測 ICY 節目曲目資訊...';
+    fetchIcyMetadata(st.url);
+    icyTimer = setInterval(() => fetchIcyMetadata(st.url), 15000);
+  }
+
+  async function fetchIcyMetadata(url) {
+    const icyEl = document.getElementById('icyMetadata');
+    try {
+      const controller = new AbortController();
+      const res = await fetch(url, {
+        headers: { 'Icy-MetaData': '1' },
+        signal: controller.signal
+      });
+      const metaint = parseInt(res.headers.get('icy-metaint'), 10);
+      const stationGenre = res.headers.get('icy-genre') || '';
+      if (!metaint || !res.body) {
+        icyEl.textContent = `🎵 正在收聽直播串流 ${stationGenre ? `(${stationGenre})` : ''}`;
+        controller.abort();
+        return;
+      }
+      const reader = res.body.getReader();
+      let received = 0;
+      let chunks = [];
+      while (received < metaint + 512) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+      }
+      controller.abort();
+
+      const fullBuf = new Uint8Array(received);
+      let offset = 0;
+      for (const c of chunks) { fullBuf.set(c, offset); offset += c.length; }
+
+      const metaLen = fullBuf[metaint] * 16;
+      if (metaLen > 0) {
+        const metaBytes = fullBuf.slice(metaint + 1, metaint + 1 + metaLen);
+        const metaStr = new TextDecoder('utf-8').decode(metaBytes);
+        const match = metaStr.match(/StreamTitle='([^']*)';/);
+        if (match && match) {
+          icyEl.textContent = `🎵 正在播放：${match}`;
+          if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+            navigator.mediaSession.metadata.title = match;
+          }
+          return;
+        }
+      }
+      icyEl.textContent = `🎵 電臺直播中 (無曲目資訊)`;
+    } catch (e) {
+      icyEl.textContent = `🎵 串流播放中（此電臺未開放跨網域曲目讀取）`;
+    }
+  }
+  // ====== 即時錄音功能 (Stream Recorder) ======
+  function toggleRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }
+
+  function startRecording() {
+    if (audio.paused) return alert('請先開始播放電臺再進行錄音！');
+    try {
+      const stream = audio.captureStream ? audio.captureStream() : audio.mozCaptureStream();
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const stName = stations[currentStationIndex]?.name || 'Radio';
+        a.href = url;
+        a.download = `${stName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      mediaRecorder.start();
+      const btn = document.getElementById('recordBtn');
+      btn.textContent = '⏹ 停止並下載';
+      btn.classList.add('recording');
+
+      recSeconds = 0;
+      document.getElementById('recTimer').textContent = '00:00';
+      recInterval = setInterval(() => {
+        recSeconds++;
+        const m = String(Math.floor(recSeconds / 60)).padStart(2, '0');
+        const s = String(recSeconds % 60).padStart(2, '0');
+        document.getElementById('recTimer').textContent = `${m}:${s}`;
+      }, 1000);
+    } catch (err) {
+      alert('無法啟動錄音：此電臺串流伺服器限制了跨網域音訊擷取 (CORS)。');
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder) mediaRecorder.stop();
+    clearInterval(recInterval);
+    const btn = document.getElementById('recordBtn');
+    btn.textContent = '⏺ 開始錄音';
+    btn.classList.remove('recording');
+    document.getElementById('recTimer').textContent = '';
+  }
+
+  // ====== 系統媒體控制 (Media Session API) & 鍵盤快捷鍵 ======
+  function setupMediaSession(st) {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: st.name,
+        artist: "Roy's Net Radio",
+        album: 'CYBER HUD STREAM'
+      });
+      navigator.mediaSession.setActionHandler('play', togglePlay);
+      navigator.mediaSession.setActionHandler('pause', togglePlay);
+      navigator.mediaSession.setActionHandler('previoustrack', prevStation);
+      navigator.mediaSession.setActionHandler('nexttrack', nextStation);
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (document.getElementById('playerSection').classList.contains('hidden')) return;
+
+    switch (e.code) {
+      case 'Space':
+        e.preventDefault();
+        togglePlay();
+        break;
+      case 'ArrowLeft':
+        prevStation();
+        break;
+      case 'ArrowRight':
+        nextStation();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        audio.volume = Math.min(1, +(audio.volume + 0.05).toFixed(2));
+        document.getElementById('volumeSlider').value = audio.volume;
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        audio.volume = Math.max(0, +(audio.volume - 0.05).toFixed(2));
+        document.getElementById('volumeSlider').value = audio.volume;
+        break;
+      case 'KeyM':
+        toggleMute();
+        break;
+      case 'KeyR':
+        toggleRecording();
+        break;
+    }
+  });
+
+  // ====== 管理面板折疊與電臺 CRUD ======
+  function toggleAdminPanel() {
+    const content = document.getElementById('adminPanelContent');
+    const arrow = document.getElementById('adminArrow');
+    content.classList.toggle('open');
+    arrow.textContent = content.classList.contains('open') ? '▲ 收合' : '▼ 展開';
+  }
+
+  function renderAllLists() {
+    renderDropdown();
+    const manageBox = document.getElementById('manageStationList');
+    manageBox.innerHTML = stations.map((st, idx) => `
+      <div class="station-item">
+        <div>
+          <strong>${st.name}</strong> ${st.isHls ? '<span style="color:var(--accent-green);">[HLS]</span>' : ''}
+          <div style="font-size:0.78rem;color:var(--text-dim);">${st.url}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="editStation(${idx})">✏️ 編輯</button>
+          <button class="btn-pink" onclick="deleteStation(${idx})">🗑 刪除</button>
+        </div>
+      </div>
+    `).join('');
   }
 
   function saveStation() {
-    const name = document.getElementById('station-name').value.trim();
-    const url = document.getElementById('station-url').value.trim();
-    const isHls = document.getElementById('is-hls').checked;
-    if (!name || !url) { alert('請填寫電臺名稱與串流網址'); return; }
+    const name = document.getElementById('stationName').value.trim();
+    const url = document.getElementById('stationUrl').value.trim();
+    const isHls = document.getElementById('isHlsCheck').checked;
+    const editIdx = parseInt(document.getElementById('editIndex').value, 10);
 
-    if (editIndex >= 0) {
-      stations[editIndex] = { name, url, isHls };
-      cancelEdit();
+    if (!name || !url) return alert('請填寫電臺名稱與串流網址！');
+
+    if (editIdx >= 0) {
+      stations[editIdx] = { name, url, isHls };
     } else {
       stations.push({ name, url, isHls });
     }
-    document.getElementById('station-name').value = '';
-    document.getElementById('station-url').value = '';
-    document.getElementById('is-hls').checked = false;
-    renderStations();
+    saveData();
+    cancelEdit();
+    renderAllLists();
   }
 
   function editStation(idx) {
-    editIndex = idx;
-    document.getElementById('station-name').value = stations[idx].name;
-    document.getElementById('station-url').value = stations[idx].url;
-    document.getElementById('is-hls').checked = stations[idx].isHls;
-    document.getElementById('save-station-btn').textContent = '💾 儲存修改';
-    document.getElementById('cancel-edit-btn').classList.remove('hidden');
+    const st = stations[idx];
+    document.getElementById('editIndex').value = idx;
+    document.getElementById('stationName').value = st.name;
+    document.getElementById('stationUrl').value = st.url;
+    document.getElementById('isHlsCheck').checked = st.isHls;
   }
 
   function cancelEdit() {
-    editIndex = -1;
-    document.getElementById('station-name').value = '';
-    document.getElementById('station-url').value = '';
-    document.getElementById('is-hls').checked = false;
-    document.getElementById('save-station-btn').textContent = '➕ 新增此電臺';
-    document.getElementById('cancel-edit-btn').classList.add('hidden');
+    document.getElementById('editIndex').value = -1;
+    document.getElementById('stationName').value = '';
+    document.getElementById('stationUrl').value = '';
+    document.getElementById('isHlsCheck').checked = false;
   }
 
   function deleteStation(idx) {
-    if (!confirm('確定要刪除此電臺嗎？')) return;
+    if (!confirm(`確定要刪除「${stations[idx].name}」嗎？`)) return;
     stations.splice(idx, 1);
-    renderStations();
+    saveData();
+    renderAllLists();
   }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const savedUser = localStorage.getItem('roy_radio_user');
-    if (savedUser) {
-      document.getElementById('current-user-email').textContent = savedUser;
-      switchView('radio-dashboard');
-      renderStations();
-    }
-  });
-  let currentStationName = '未選擇電臺';
-
-  function updateClock() {
-    const now = new Date();
-    const days = ['日', '一', '二', '三', '四', '五', '六'];
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const w = days[now.getDay()];
-    const time = now.toTimeString().split(' ')[0];
-    document.getElementById('hud-datetime').textContent = `📅 ${y}年${m}月${d}日 (週${w}) ${time}`;
-  }
-  setInterval(updateClock, 1000);
-  updateClock();
-
-  function updateNowPlayingUI(isPlaying) {
-    const dot = document.getElementById('status-dot');
-    const text = document.getElementById('now-playing-text');
-    if (isPlaying) {
-      dot.classList.add('active');
-      text.textContent = `正在播放：${currentStationName}`;
-      document.title = `▶ ${currentStationName} | Roy's Radio`;
-    } else {
-      dot.classList.remove('active');
-      text.textContent = currentStationName === '未選擇電臺' ? '待機中 (未選擇電臺)' : `已暫停：${currentStationName}`;
-      document.title = `⏸ ${currentStationName} | Roy's Radio`;
-    }
-  }
-
-  audio.addEventListener('play', () => {
-    visualizer.classList.add('playing');
-    updateNowPlayingUI(true);
-  });
-  audio.addEventListener('pause', () => {
-    visualizer.classList.remove('playing');
-    updateNowPlayingUI(false);
-  });
-  audio.addEventListener('ended', () => {
-    visualizer.classList.remove('playing');
-    updateNowPlayingUI(false);
-  });
-
-  function playSelectedStation() {
-    const idx = document.getElementById('station-select').value;
-    if (idx === '') return;
-    const st = stations[idx];
-    currentStationName = st.name;
-
-    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-
-    if (st.isHls && Hls.isSupported()) {
-      hlsInstance = new Hls();
-      hlsInstance.loadSource(st.url);
-      hlsInstance.attachMedia(audio);
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => audio.play());
-    } else {
-      audio.src = st.url;
-      audio.play();
-    }
-  }
-
 </script>
 </body>
 </html>
