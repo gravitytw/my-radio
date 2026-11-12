@@ -833,6 +833,40 @@
     saveData();
     renderAllLists();
   }
+  // ====== 視窗標題列跑馬燈功能 ======
+  let titleMarqueeTimer = null;
+  const BASE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v2.0";
+
+  function runTitleMarquee(stationName) {
+    clearInterval(titleMarqueeTimer);
+    let text = `▶ 正在收聽：${stationName} ｜ Roy's Net Radio 📻 　　`;
+    titleMarqueeTimer = setInterval(() => {
+      text = text.slice(1) + text[0];
+      document.title = text;
+    }, 300);
+  }
+
+  function resetTitleMarquee(prefix = "") {
+    clearInterval(titleMarqueeTimer);
+    titleMarqueeTimer = null;
+    document.title = prefix ? `${prefix} ${BASE_TITLE}` : BASE_TITLE;
+  }
+
+  // 自動監聽播放器狀態來啟動/停止跑馬燈
+  audio.addEventListener('playing', () => {
+    if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+      runTitleMarquee(stations[currentStationIndex].name);
+    }
+  });
+
+  audio.addEventListener('pause', () => {
+    resetTitleMarquee("⏸ [已暫停]");
+  });
+
+  audio.addEventListener('ended', () => {
+    resetTitleMarquee();
+  });
 </script>
+
 </body>
 </html>
