@@ -138,7 +138,7 @@
   <div id="authSection">
     <div id="loginBox" class="hud-box">
       <h2>📻 Roy's Radio 登入</h2>
-      <input type="email" id="loginEmail" placeholder="電子郵件 (Email)" />
+      <input type="text" id="loginEmail" placeholder="請輸入帳號 ID 或 Email">
       <input type="password" id="loginPass" placeholder="安全密碼" />
       <div class="controls-row">
         <button onclick="login()">驗證並登入</button>
@@ -152,7 +152,7 @@
 
     <div id="registerBox" class="hud-box hidden">
       <h2>📝 申請新帳號</h2>
-      <input type="email" id="regEmail" placeholder="設定電子郵件 (Email)" />
+      <input type="text" id="regEmail" placeholder="請設定帳號 ID（英數字）">
       <input type="password" id="regPass" placeholder="設定安全密碼 (至少6碼)" />
       <div class="controls-row">
         <button onclick="register()">提交申請並登入</button>
@@ -265,11 +265,12 @@
   const db = firebase.firestore();
 
   const PRESET_STATIONS = [
-    { name: "警廣 全國治安交通網 (HLS)", url: "https://pbs.gov.tw", isHls: true },
-    { name: "ICRT 台北國際社區廣播電台", url: "https://leanstream.co", isHls: false },
-    { name: "SomaFM Groove Salad (環境音樂)", url: "https://somafm.com", isHls: false },
-    { name: "SomaFM Synthwave (賽博龐克電子)", url: "https://somafm.com", isHls: false },
-    { name: "Linn Jazz 英國爵士電台", url: "http://linn.co.uk", isHls: false }
+ { name: "🔵中廣流行網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣流行網", isHls: true },
+ { name: "中廣新聞網❤️", url: "https://sonnykuo.appspot.com/bcc/?id=中廣新聞網", isHls: true },
+ { name: "💝中廣音樂網", url: "https://sonnykuo.appspot.com/bcc/?id=中廣音樂網", isHls: true },
+ { name: "飛碟聯播網🟠", url: "https://stream.rcs.revma.com/em90w4aeewzuv.m4a", isHls: true },
+ { name: "🔴全國廣播 M-Radio", url: "https://stream.rcs.revma.com/044q61ha7a0uv", isHls: true },
+    { name: "警廣臺中分臺(TCS)💛", url: "https://stream.pbs.gov.tw/live/TCS/playlist.m3u8", isHls: true }
   ];
 
   let currentUser = null;
@@ -319,10 +320,12 @@
     document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
   }, 1000);
 
-  auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentUser = user;
-      const displayEmail = user.isAnonymous ? '訪客體驗模式 (匿名雲端)' : user.email;
+      const displayEmail = user.isAnonymous
+        ? '訪客體驗模式 (匿名雲端)'
+        : user.email.replace('@royradio.local', '');
       document.getElementById('authSection').classList.add('hidden');
       document.getElementById('playerSection').classList.remove('hidden');
       document.getElementById('userHeaderInfo').classList.remove('hidden');
@@ -331,7 +334,10 @@
     } else {
       currentUser = null;
       audio.pause();
-      if (hls) hls.destroy();
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
       stopTitleMarquee();
       document.getElementById('playerSection').classList.add('hidden');
       document.getElementById('userHeaderInfo').classList.add('hidden');
@@ -339,21 +345,32 @@
     }
   });
 
+
   function switchAuthView(boxId) {
     ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById(boxId).classList.remove('hidden');
   }
+  // 【全新新增】將純 ID 自動轉換為 Firebase 認可的 Email 格式
+  function formatIdToEmail(rawInput) {
+    const cleanText = rawInput.trim().toLowerCase();
+    if (!cleanText.includes('@')) {
+      return `${cleanText}@royradio.local`;
+    }
+    return cleanText;
+  }
 
-  async function login() {
-    const email = document.getElementById('loginEmail').value.trim();
+    async function login() {
+    const rawAccount = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPass').value;
-    if (!email || !pass) return alert('請輸入電子郵件與密碼');
+    if (!rawAccount || !pass) return alert('請輸入帳號 ID 與密碼');
     try {
+      const email = formatIdToEmail(rawAccount);
       await auth.signInWithEmailAndPassword(email, pass);
     } catch (err) {
       alert('登入失敗：' + err.message);
     }
   }
+
 
   async function quickDemoLogin() {
     try {
@@ -363,11 +380,12 @@
     }
   }
 
-  async function register() {
-    const email = document.getElementById('regEmail').value.trim();
+    async function register() {
+    const rawAccount = document.getElementById('regEmail').value.trim();
     const pass = document.getElementById('regPass').value;
-    if (!email || pass.length < 6) return alert('請輸入有效 Email 且密碼至少需 6 碼');
+    if (!rawAccount || pass.length < 6) return alert('請輸入帳號 ID 且密碼至少需 6 碼');
     try {
+      const email = formatIdToEmail(rawAccount);
       await auth.createUserWithEmailAndPassword(email, pass);
       alert('註冊成功！已為您自動登入並建立雲端資料庫。');
     } catch (err) {
@@ -376,16 +394,20 @@
   }
 
   async function resetPassword() {
-    const email = document.getElementById('resetEmail').value.trim();
-    if (!email) return alert('請輸入您註冊的電子郵件！');
+    const rawAccount = document.getElementById('resetEmail').value.trim();
+    if (!rawAccount) return alert('請輸入您註冊的電子郵件！');
+    if (!rawAccount.includes('@')) {
+      return alert('⚠️ 純帳號 ID 註冊者無法使用信箱重設密碼！僅限使用真實 Email 註冊的帳號才能寄送重設信。');
+    }
     try {
-      await auth.sendPasswordResetEmail(email);
+      await auth.sendPasswordResetEmail(rawAccount);
       alert('密碼重設信已寄出至您的信箱！請點擊信中連結設定新密碼後再登入。');
       switchAuthView('loginBox');
     } catch (err) {
       alert('寄送重設信失敗：' + err.message);
     }
   }
+
 
   async function updatePassword() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客體驗帳號無法修改密碼，請先註冊正式帳號！');
