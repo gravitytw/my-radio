@@ -189,7 +189,7 @@
     </div>
   </div>
   <!-- 播放器主介面與管理面板 HTML 結構 -->
-  <div id="playerSection" class="hidden">
+    <div id="playerSection" class="hidden">
     <div class="hud-box">
       <h2>🌌 Roy 的廣播電臺</h2>
       <div class="status-panel">
@@ -200,21 +200,96 @@
         </div>
         <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...</div>
       </div>
-      <!-- 播放控制、清單與管理面板請參閱完整原始程式碼架構 -->
-    </div>
-  </div>
-  <div id="playerSection" class="hidden">
-    <!-- 播放器與管理面板 HTML 結構，包含電臺清單、播放控制、最愛/錄音功能及帳號設定等完整欄位，詳細程式碼可參閱原始碼文件 -->
-    <div class="hud-box">
-      <h2>🌌 Roy 的廣播電臺</h2>
-      <!-- 播放器狀態與控制介面 -->
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setFilter('all', this)">📻 全部清單</button>
+        <button class="tab-btn" onclick="setFilter('fav', this)">⭐ 我的最愛</button>
+        <button class="tab-btn" onclick="setFilter('history', this)">🕒 播放紀錄</button>
+        <button class="tab-btn btn-green" onclick="setFilter('presets', this)">📦 預設電臺庫</button>
+      </div>
+
+      <div id="selectModeBox">
+        <select id="stationSelect" onchange="playSelectedStation()">
+          <option value="">-- 請選擇電臺 --</option>
+        </select>
+      </div>
+
+      <div id="listViewBox" class="hidden" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
+
+      <div class="controls-row">
+        <button onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
+        <button id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
+        <button onclick="nextStation()" title="下一台 (→)">⏭ 下一台</button>
+        <button id="favToggleBtn" onclick="toggleCurrentFav()" title="加入/移除最愛">☆ 收藏</button>
+        <button id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
+        <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
+        <div class="volume-box">
+          <button onclick="toggleMute()" id="muteBtn" style="padding:4px 8px;">🔊</button>
+          <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
+        </div>
+      </div>
+
+      <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
       <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
+
     <div class="hud-box">
-      <!-- 管理面板與個人資料設定 -->
+      <div class="collapsible-header" onclick="toggleAdminPanel()">
+        <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 電臺管理 / 個人資料與帳號設定）</h2>
+        <span id="adminArrow" style="color:var(--border-glow);font-weight:bold;">▼ 展開</span>
+      </div>
+
+      <div id="adminPanelContent" class="collapsible-content">
+        <h3>➕ 新增 / 編輯自訂串流</h3>
+        <input type="hidden" id="editIndex" value="-1" />
+        <input type="text" id="stationName" placeholder="電臺名稱 (例如：警廣全國治安交通網)" />
+        <input type="text" id="stationUrl" placeholder="串流網址 (URL)" />
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;">
+          <input type="checkbox" id="isHlsCheck" style="width:auto;margin:0;" />
+          這是 HLS 串流 (警廣等 .m3u8 格式請勾選)
+        </label>
+        <div class="controls-row">
+          <button onclick="saveStation()">➕ 儲存此電臺</button>
+          <button class="btn-pink" onclick="cancelEdit()">取消修改</button>
+        </div>
+
+        <h3>📋 電台列表清單管理</h3>
+        <div id="manageStationList"></div>
+
+        <h3>👤 個人資料與帳號設定</h3>
+        <div class="profile-card">
+          <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
+          <div class="profile-row">
+            <input type="text" id="profileNicknameInput" placeholder="輸入顯示暱稱" />
+            <button class="btn-green" onclick="updateNickname()">💾 更新暱稱</button>
+          </div>
+
+          <label class="field-label">🆔 專屬登入 ID（修改後可用新 ID 搭配原密碼登入）</label>
+          <div class="profile-row">
+            <input type="text" id="profileCustomIdInput" placeholder="輸入專屬 ID (3~20碼英數字或底線)" />
+            <button onclick="updateCustomId()">🔗 更新專屬 ID</button>
+          </div>
+
+          <label class="field-label" style="color:var(--accent-yellow);">🔐 安全性驗證（修改「電子郵件」或「密碼」前請先輸入目前密碼）</label>
+          <input type="password" id="currentVerifyPass" placeholder="請輸入目前使用的密碼以驗證身分" />
+
+          <label class="field-label">📧 綁定電子郵件 Email（修改後可用新 Email 搭配原密碼登入）</label>
+          <div class="profile-row">
+            <input type="email" id="profileEmailInput" placeholder="輸入新的電子郵件 Email" />
+            <button onclick="updateAccountEmail()">📧 更新 Email</button>
+          </div>
+
+          <label class="field-label">🔑 修改登入密碼（至少 6 碼，修改後 ID 與 Email 皆使用此新密碼登入）</label>
+          <div class="profile-row">
+            <input type="password" id="newAccountPass" placeholder="輸入新安全密碼 (至少6碼)" />
+            <button class="btn-pink" onclick="updatePassword()">💾 更新密碼</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
