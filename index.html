@@ -500,18 +500,52 @@
     ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById(boxId).classList.remove('hidden');
   }
+  // 權限控管：切換本地體驗模式與登入會員模式的 UI
+  function applyAccessModeUI(isLoggedIn) {
+    const adminPanel = document.querySelector('#playerSection .hud-box:nth-child(2)');
+    const recBtn = document.getElementById('recordBtn');
+    const favBtn = document.getElementById('favToggleBtn');
+    const tabBtns = document.querySelectorAll('.tabs .tab-btn');
+
+    if (isLoggedIn) {
+      if (adminPanel) adminPanel.classList.remove('hidden');
+      if (recBtn) recBtn.classList.remove('hidden');
+      if (favBtn) favBtn.classList.remove('hidden');
+      tabBtns.forEach((btn, idx) => {
+        btn.classList.remove('hidden');
+        if (idx === 0) btn.textContent = '📻 全部清單';
+      });
+    } else {
+      // 本地體驗模式：隱藏管理面板、錄音、收藏與進階分頁
+      if (adminPanel) adminPanel.classList.add('hidden');
+      if (recBtn) recBtn.classList.add('hidden');
+      if (favBtn) favBtn.classList.add('hidden');
+      tabBtns.forEach((btn, idx) => {
+        if (idx === 0) {
+          btn.textContent = '📦 預設電臺庫（登入解鎖完整功能）';
+          btn.classList.add('active');
+        } else {
+          btn.classList.add('hidden');
+        }
+      });
+    }
+  }
+
   function updateHeaderNicknameUI() {
     const el = document.getElementById('currentUserNickname');
     const openBtn = document.getElementById('openAuthBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     if (!currentUser) {
-      el.textContent = '👤 本地體驗模式';
+      el.textContent = '👤 本地體驗模式（僅限預設電臺）';
       openBtn.classList.remove('hidden');
       logoutBtn.classList.add('hidden');
+      applyAccessModeUI(false);
       return;
     }
     openBtn.classList.add('hidden');
     logoutBtn.classList.remove('hidden');
+    applyAccessModeUI(true);
+
     if (currentUser.isAnonymous) {
       el.textContent = '👤 訪客雲端模式';
       return;
@@ -521,12 +555,17 @@
   }
 
   function loadLocalData() {
-    const localStations = JSON.parse(localStorage.getItem('roy_stations'));
-    stations = (localStations && localStations.length > 0) ? localStations : [...PRESET_STATIONS];
-    favorites = JSON.parse(localStorage.getItem('roy_favs')) || [];
-    playHistory = JSON.parse(localStorage.getItem('roy_history')) || [];
+    // 未登入時強制僅載入預設電臺庫
+    stations = [...PRESET_STATIONS];
+    favorites = [];
+    playHistory = [];
+    currentFilter = 'all';
+    document.getElementById('selectModeBox').classList.remove('hidden');
+    document.getElementById('listViewBox').classList.add('hidden');
+    applyAccessModeUI(false);
     renderAllLists();
   }
+
 
   auth.onAuthStateChanged(async (user) => {
     if (user) {
@@ -686,12 +725,9 @@
       if (docSnap.exists) {
         const data = docSnap.data();
         const cloudStations = data.stations || [];
-        // 合併本地新增的電臺（避免登入覆蓋訪客期間新增的頻道）
-        const merged = [...cloudStations];
-        stations.forEach(ls => { if (!merged.some(cs => cs.url === ls.url)) merged.push(ls); });
-        stations = merged.length ? merged : [...PRESET_STATIONS];
-        favorites = Array.from(new Set([...(data.favorites || []), ...favorites]));
-        playHistory = data.playHistory || playHistory;
+        stations = cloudStations.length ? cloudStations : [...PRESET_STATIONS];
+        favorites = data.favorites || [];
+        playHistory = data.playHistory || [];
 
         userProfile.customId = data.customId || '';
         userProfile.nickname = data.nickname || data.customId || '';
@@ -703,14 +739,29 @@
           document.getElementById('profileEmailInput').value = userProfile.email.endsWith('@royradio.local') ? '' : userProfile.email;
         }
         updateHeaderNicknameUI();
-        await saveData();
       } else {
+        stations = [...PRESET_STATIONS];
+        favorites = [];
+        playHistory = [];
         await saveData();
       }
       renderAllLists();
     } catch (err) {
       console.error('讀取雲端資料失敗:', err);
     }
+  }
+
+  async function saveData() {
+    if (!currentUser) return; // 未登入體驗模式不寫入雲端與自訂資料
+    localStorage.setItem('roy_stations', JSON.stringify(stations));
+    localStorage.setItem('roy_favs', JSON.stringify(favorites));
+    localStorage.setItem('roy_history', JSON.stringify(playHistory));
+    try {
+      await db.collection('users').doc(currentUser.uid).set({
+        stations, favorites, playHistory,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (err) { console.error('雲端同步失敗:', err); }
   }
 
   async function saveData() {
@@ -833,7 +884,8 @@
     alert(`已成功匯入 ${added} 個新電臺！`);
   }
 
-  async function toggleCurrentFav() {
+   async function toggleCurrentFav() {
+    if (!currentUser) return alert('🔒 請先登入帳號才能使用「我的最愛」收藏功能！');
     if (currentStationIndex < 0) return;
     const st = stations[currentStationIndex];
     const pos = favorites.indexOf(st.url);
@@ -843,6 +895,7 @@
     updateFavButton();
     renderAllLists();
   }
+
 
   function updateFavButton() {
     const btn = document.getElementById('favToggleBtn');
@@ -1056,10 +1109,12 @@
     }
   }
   // 即時錄音與暫存試聽區
-  function toggleRecording() {
+    function toggleRecording() {
+    if (!currentUser) return alert('🔒 請先登入帳號才能使用「即時錄音」功能！');
     if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
     else startRecording();
   }
+
 
   function startRecording() {
     if (audio.paused) return alert('請先開始播放電臺再進行錄音！');
@@ -1186,7 +1241,8 @@
     }).join('');
   }
 
-  async function saveStation() {
+    async function saveStation() {
+    if (!currentUser) return alert('🔒 請先登入帳號才能新增或編輯電臺！');
     const name = document.getElementById('stationName').value.trim();
     const url = document.getElementById('stationUrl').value.trim();
     const category = document.getElementById('stationCategory').value;
@@ -1203,6 +1259,7 @@
   }
 
   function editStation(idx) {
+    if (!currentUser) return alert('🔒 請先登入帳號才能編輯電臺！');
     const st = stations[idx];
     document.getElementById('editIndex').value = idx;
     document.getElementById('stationName').value = st.name;
@@ -1218,6 +1275,7 @@
   }
 
   async function deleteStation(idx) {
+    if (!currentUser) return alert('🔒 請先登入帳號才能刪除電臺！');
     if (!confirm(`確定要刪除「${stations[idx].name}」嗎？`)) return;
     const removedUrl = stations[idx].url;
     stations.splice(idx, 1);
@@ -1231,6 +1289,7 @@
     renderAllLists();
   }
 
+
   // JSON 與 M3U 批次匯入 / 匯出
   function exportStationsJSON() {
     const blob = new Blob([JSON.stringify(stations, null, 2)], { type: 'application/json' });
@@ -1242,7 +1301,8 @@
     URL.revokeObjectURL(url);
   }
 
-  function handleImportFile(event) {
+    function handleImportFile(event) {
+    if (!currentUser) return alert('🔒 請先登入帳號才能匯入電臺清單！');
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -1254,7 +1314,6 @@
           const parsed = JSON.parse(content);
           if (Array.isArray(parsed)) imported = parsed.filter(item => item.name && item.url);
         } else {
-          // 解析標準 .m3u / .m3u8 播放清單
           const lines = content.split(/\r?\n/);
           let pendingName = '';
           for (const line of lines) {
@@ -1285,6 +1344,7 @@
     };
     reader.readAsText(file);
   }
+
 
   // 頁面啟動時先載入本地清單，讓訪客無需登入即可立即使用
   loadLocalData();
