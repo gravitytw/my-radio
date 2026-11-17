@@ -169,10 +169,8 @@
     .shortcut-hint { font-size: 0.8rem; color: var(--text-dim); margin-top: 10px; }
     .hidden { display: none !important; }
   </style>
-</head>
 <body>
 <div class="container">
-  <!-- 頂部狀態列 -->
   <div class="hud-box top-bar">
     <div>
       <h1>⚡ Roy's Net Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v3.0</small></h1>
@@ -185,17 +183,47 @@
     </div>
   </div>
 
-  <!-- 登入 / 註冊 / 重設密碼 彈窗 -->
   <dialog id="authModal">
-    <!-- 含登入、註冊與密碼重設等表單區塊，請見原始文件 -->
     <div class="modal-close-bar">
       <span style="color:var(--border-glow);font-weight:bold;">📡 CYBER HUD 雲端帳號系統</span>
       <button class="btn-pink" style="padding:4px 10px;" onclick="closeAuthModal()">✕ 關閉</button>
     </div>
-    <!-- 登入與表單詳細內容請參閱完整原始程式碼 -->
+
+    <div id="loginBox">
+      <h2>📻 Roy's Radio 登入</h2>
+      <input type="text" id="loginAccount" placeholder="請輸入專屬登入 ID 或 電子郵件 (Email)">
+      <input type="password" id="loginPass" placeholder="安全密碼" />
+      <div class="controls-row">
+        <button onclick="login()">驗證並登入</button>
+        <button class="btn-green" onclick="quickDemoLogin()">Firebase 匿名雲端試用</button>
+      </div>
+      <p style="font-size:0.9rem;margin-top:12px;">
+        <a href="#" style="color:var(--border-glow);" onclick="switchAuthView('registerBox')">申請註冊新帳號</a> | 
+        <a href="#" style="color:var(--accent-yellow);" onclick="switchAuthView('resetBox')">忘記密碼？</a>
+      </p>
+    </div>
+    <div id="registerBox" class="hidden">
+      <h2>📝 申請新帳號（Email 與專屬 ID 綁定）</h2>
+      <input type="email" id="regEmail" placeholder="電子郵件 Email（必填，可用於登入與重設密碼）" />
+      <input type="text" id="regCustomId" placeholder="專屬登入 ID（必填，3~20碼英數字或底線）" />
+      <input type="text" id="regNickname" placeholder="顯示暱稱（選填，未填預設為 ID）" />
+      <input type="password" id="regPass" placeholder="設定安全密碼 (至少6碼)" />
+      <div class="controls-row">
+        <button onclick="register()">提交申請並登入</button>
+        <button class="btn-pink" onclick="switchAuthView('loginBox')">返回登入</button>
+      </div>
+    </div>
+
+    <div id="resetBox" class="hidden">
+      <h2>🔑 重設安全密碼</h2>
+      <input type="email" id="resetEmail" placeholder="已註冊的電子郵件 (Email)" />
+      <div class="controls-row">
+        <button onclick="resetPassword()">寄送密碼重設信</button>
+        <button class="btn-pink" onclick="switchAuthView('loginBox')">返回登入</button>
+      </div>
+    </div>
   </dialog>
 
-  <!-- 播放器主介面 -->
   <div id="playerSection">
     <div class="hud-box">
       <h2>🌌 Roy 的廣播電臺</h2>
@@ -207,23 +235,69 @@
         </div>
         <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...</div>
       </div>
-
-      <!-- 霓虹音訊頻譜視覺化與播放控制面板 -->
       <div class="visualizer-wrap">
         <span class="vis-tag" id="visModeTag">HUD SPECTRUM // STANDBY</span>
         <canvas id="visualizerCanvas" width="800" height="54"></canvas>
       </div>
 
-      <!-- 頁籤與搜尋列、控制按鈕等介面，完整 HTML 結構請參閱原始碼 -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setFilter('all', this)">📻 全部清單</button>
+        <button class="tab-btn" onclick="setFilter('fav', this)">⭐ 我的最愛</button>
+        <button class="tab-btn" onclick="setFilter('history', this)">🕒 播放紀錄</button>
+        <button class="tab-btn btn-green" onclick="setFilter('presets', this)">📦 預設電臺庫</button>
+      </div>
+
+      <div class="filter-toolbar">
+        <input type="search" id="searchInput" placeholder="🔍 搜尋電臺名稱或關鍵字..." oninput="applySearchFilter()" />
+        <select id="categoryFilter" onchange="applySearchFilter()">
+          <option value="ALL">📂 全部分類</option>
+          <option value="綜合">綜合</option>
+          <option value="新聞交通">新聞交通</option>
+          <option value="音樂">音樂</option>
+          <option value="警廣">警廣</option>
+          <option value="外語">外語</option>
+        </select>
+      </div>
+
+      <div id="selectModeBox">
+        <select id="stationSelect" onchange="playSelectedStation()">
+          <option value="">-- 請選擇電臺 --</option>
+        </select>
+      </div>
+
+      <div id="listViewBox" class="hidden" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
+
       <div class="controls-row">
         <button onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
         <button id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
         <button onclick="nextStation()" title="下一台 (→)">⏭ 下一台</button>
         <button id="favToggleBtn" onclick="toggleCurrentFav()" title="加入/移除最愛">☆ 收藏</button>
         <button id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
+        <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
+
+        <select id="sleepSelect" onchange="setSleepTimer(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="睡眠定時器">
+          <option value="0">⏲ 睡眠定時：關閉</option>
+          <option value="15">⏲ 15 分鐘後停止</option>
+          <option value="30">⏲ 30 分鐘後停止</option>
+          <option value="60">⏲ 60 分鐘後停止</option>
+        </select>
+        <span id="sleepCountdown" style="color:var(--accent-yellow);font-size:0.85rem;font-weight:bold;"></span>
+
+        <div class="volume-box">
+          <button onclick="toggleMute()" id="muteBtn" style="padding:4px 8px;">🔊</button>
+          <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
+        </div>
       </div>
+
+      <div id="recordingVault" class="rec-vault hidden">
+        <div style="font-size:0.88rem;color:var(--accent-pink);font-weight:bold;margin-bottom:8px;">🎙️ 本次錄音暫存清單（可線上試聽或下載）：</div>
+        <div id="recordingList"></div>
+      </div>
+
+      <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
       <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
+
     <!-- 管理面板 -->
     <div class="hud-box">
       <div class="collapsible-header" onclick="toggleAdminPanel()">
