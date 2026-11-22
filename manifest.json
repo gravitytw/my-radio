@@ -1,0 +1,18 @@
+{
+  "name": "Roy's Radio // CYBER HUD",
+  "short_name": "Roy's Radio",
+  "description": "Roy 的網路廣播播放器",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
