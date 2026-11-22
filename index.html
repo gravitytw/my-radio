@@ -345,15 +345,34 @@
         </div>
         <h3>📋 電台列表清單管理</h3>
         <div id="manageStationList"></div>
-        <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
+               <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
         <div class="profile-card">
-          <!-- 包含暱稱、專屬 ID、密碼驗證、Email 與密碼更新等設定欄位 -->
-          <label class="field-label">✨ 顯示暱稱</label>
+          <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
           <div class="profile-row">
             <input type="text" id="profileNicknameInput" placeholder="輸入顯示暱稱" />
-            <button class="btn-green" onclick="updateNickname()">💾 更新暱稱</button>
+            <button type="button" class="btn-green" onclick="updateNickname()">💾 更新暱稱</button>
           </div>
-          <!-- (其餘個人資料與雲端登入、註冊、重設密碼彈窗 HTML 結構請參照完整原始碼部署) -->
+
+          <label class="field-label">🆔 專屬登入 ID（修改後可用新 ID 搭配原密碼登入）</label>
+          <div class="profile-row">
+            <input type="text" id="profileCustomIdInput" placeholder="輸入專屬 ID (3~20碼英數字或底線)" />
+            <button type="button" onclick="updateCustomId()">🔗 更新專屬 ID</button>
+          </div>
+
+          <label class="field-label" style="color:var(--accent-yellow);">🔐 安全性驗證（修改「電子郵件」或「密碼」前請先輸入目前密碼）</label>
+          <input type="password" id="currentVerifyPass" placeholder="請輸入目前使用的密碼以驗證身分" />
+
+          <label class="field-label">📧 綁定電子郵件 Email</label>
+          <div class="profile-row">
+            <input type="email" id="profileEmailInput" placeholder="輸入新的電子郵件 Email" />
+            <button type="button" onclick="updateAccountEmail()">📧 更新 Email</button>
+          </div>
+
+          <label class="field-label">🔑 修改登入密碼（至少 6 碼）</label>
+          <div class="profile-row">
+            <input type="password" id="newAccountPass" placeholder="輸入新安全密碼 (至少6碼)" />
+            <button type="button" class="btn-pink" onclick="updatePassword()">💾 更新密碼</button>
+          </div>
         </div>
       </div>
     </div>
