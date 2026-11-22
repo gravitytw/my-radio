@@ -2,8 +2,15 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Roy's Radio" />
+  <meta name="theme-color" content="#070b14" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>Roy的網路廣播播放器 // CYBER HUD v3.0</title>
+
   <script>
     [
       "https://" + "cdn.jsdelivr.net/npm/hls.js@latest",
@@ -29,13 +36,25 @@
       --text-dim: #7f9eb2;
     }
 
-    * { box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft JhengHei', monospace; }
+        * { 
+      box-sizing: border-box; 
+      font-family: 'Segoe UI', 'Microsoft JhengHei', monospace;
+      -webkit-tap-highlight-color: transparent;
+    }
     body {
-      margin: 0; padding: 20px;
+      margin: 0; 
+      padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
       background: radial-gradient(circle at top, #101d36 0%, var(--bg-dark) 80%);
       color: var(--text-main);
       min-height: 100vh;
+      touch-action: manipulation;
     }
+    @media (max-width: 600px) {
+      #nowPlayingTitle { font-size: 1.5rem; }
+      button { min-height: 42px; }
+      input, select { font-size: 16px; } /* 防止 iOS 點擊輸入框自動放大畫面 */
+    }
+
 
     .container { max-width: 900px; margin: 0 auto; }
 
@@ -912,8 +931,13 @@
     audio.removeAttribute('src');
     audio.load();
 
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const useHls = forceHls || st.isHls || st.url.toLowerCase().includes('.m3u8');
-    if (useHls && Hls.isSupported()) {
+
+    if (useHls && isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
+      audio.src = st.url;
+      audio.play().catch(handleStreamError);
+    } else if (useHls && Hls.isSupported()) {
       hls = new Hls({ backBufferLength: 15, maxBufferLength: 15, maxMaxBufferLength: 30, enableWorker: true });
       hls.loadSource(st.url);
       hls.attachMedia(audio);
@@ -924,6 +948,14 @@
           handleStreamError();
         }
       });
+    } else {
+      audio.src = st.url;
+      audio.play().catch(() => {
+        if (!useHls && Hls.isSupported()) startStream(idx, true);
+        else handleStreamError();
+      });
+    }
+
     } else {
       audio.src = st.url;
       audio.play().catch(() => {
@@ -1083,18 +1115,29 @@
     else startRecording();
   }
 
-  function startRecording() {
+    function startRecording() {
     if (audio.paused) return alert('請先開始播放電臺再進行錄音！');
+    if (typeof MediaRecorder === 'undefined') return alert('此裝置的瀏覽器不支援網頁錄音功能。');
     try {
-      const stream = audio.captureStream ? audio.captureStream() : audio.mozCaptureStream();
+      const stream = audio.captureStream ? audio.captureStream() : (audio.mozCaptureStream ? audio.mozCaptureStream() : null);
+      if (!stream) return alert('iOS Safari 目前不支援直接擷取串流音訊錄音，建議使用電腦版 Chrome/Edge 進行錄音。');
+
+      const mimeTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
+      let selectedType = '';
+      for (const t of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(t)) { selectedType = t; break; }
+      }
+
       recordedChunks = [];
-      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder = selectedType ? new MediaRecorder(stream, { mimeType: selectedType }) : new MediaRecorder(stream);
+      const ext = selectedType.includes('mp4') ? 'm4a' : 'webm';
+
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const blob = new Blob(recordedChunks, { type: selectedType || 'audio/webm' });
         const url = URL.createObjectURL(blob);
         const stName = stations[currentStationIndex]?.name || 'Radio';
-        const fileName = `${stName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.webm`;
+        const fileName = `${stName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
         savedRecordings.unshift({ name: fileName, url, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
         renderRecordingVault();
       };
@@ -1112,6 +1155,7 @@
       alert('無法啟動錄音：此電臺串流伺服器限制了跨網域音訊擷取 (CORS)。');
     }
   }
+
 
   function stopRecording() {
     if (mediaRecorder) mediaRecorder.stop();
@@ -1148,17 +1192,21 @@
     renderRecordingVault();
   }
 
-  function setupMediaSession(st) {
+    function setupMediaSession(st) {
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: st.name, artist: "Roy's Net Radio", album: 'CYBER HUD v3.0'
+        title: st.name,
+        artist: "Roy's Net Radio",
+        album: 'CYBER HUD v3.0',
+        artwork: [{ src: './icon-512.png', sizes: '512x512', type: 'image/png' }]
       });
-      navigator.mediaSession.setActionHandler('play', togglePlay);
-      navigator.mediaSession.setActionHandler('pause', togglePlay);
+      navigator.mediaSession.setActionHandler('play', () => { if (audio.paused) togglePlay(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (!audio.paused) togglePlay(); });
       navigator.mediaSession.setActionHandler('previoustrack', prevStation);
       navigator.mediaSession.setActionHandler('nexttrack', nextStation);
     }
   }
+
 
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
@@ -1308,8 +1356,15 @@
     reader.readAsText(file);
   }
 
-  // 頁面啟動時先載入本地清單，讓訪客無需登入即可立即使用
+    // 頁面啟動時先載入本地清單，讓訪客無需登入即可立即使用
   loadLocalData();
+
+  // 註冊 PWA Service Worker（讓 iPhone 可安裝成獨立全螢幕 App）
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
 </script>
 </body>
 </html>
