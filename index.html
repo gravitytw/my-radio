@@ -326,11 +326,14 @@
         <button type="button" class="btn-green" style="padding:5px 12px;min-height:auto;white-space:nowrap;" onclick="resumeLastStation()">▶ 一鍵續播</button>
       </div>
 
-      <div id="selectModeBox">
+            <div id="selectModeBox">
         <select id="stationSelect" onchange="playSelectedStation()">
           <option value="">-- 請選擇電臺 --</option>
         </select>
-        <div id="quickStationGrid" class="quick-grid"></div>
+        <div style="margin-bottom:10px;text-align:right;">
+          <button type="button" id="toggleQuickGridBtn" style="padding:5px 10px;font-size:0.82rem;min-height:auto;" onclick="toggleQuickGrid()">⚡ 快捷選台牆 ▼</button>
+        </div>
+        <div id="quickStationGrid" class="quick-grid hidden"></div>
       </div>
 
       <div id="listViewBox" class="hidden" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
@@ -914,16 +917,14 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       visibleList.push({ st, idx, isFav });
     });
 
-    if (quickGrid) {
-      // 最愛電台排在最前面，最多顯示 8 個單手快捷按鈕
+        if (quickGrid) {
       const sorted = [...visibleList].sort((a, b) => (b.isFav ? 1 : 0) - (a.isFav ? 1 : 0)).slice(0, 8);
       quickGrid.innerHTML = sorted.map(item => `
-        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx})" title="${item.st.name}">
+        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx}); toggleQuickGrid();" title="${item.st.name}">
           ${item.isFav ? '⭐' : '📻'} ${item.st.name}
         </div>
       `).join('');
     }
-  }
 
   function renderHistory() {
     const box = document.getElementById('listViewBox');
@@ -1372,6 +1373,15 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       case 'KeyR': toggleRecording(); break;
     }
   });
+    function toggleQuickGrid() {
+    const grid = document.getElementById('quickStationGrid');
+    const btn = document.getElementById('toggleQuickGridBtn');
+    if (!grid || !btn) return;
+    grid.classList.toggle('hidden');
+    const isHidden = grid.classList.contains('hidden');
+    btn.textContent = isHidden ? '⚡ 快捷選台牆 ▼' : '⚡ 快捷選台牆 ▲';
+  }
+
   function toggleAdminPanel() {
     const content = document.getElementById('adminPanelContent');
     const arrow = document.getElementById('adminArrow');
