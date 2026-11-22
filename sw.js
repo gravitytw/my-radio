@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roys-radio-hud-v6';
+const CACHE_NAME = 'roys-radio-hud-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
