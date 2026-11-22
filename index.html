@@ -1242,13 +1242,13 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     savedRecordings.splice(idx, 1);
     renderRecordingVault();
   }
-
-    function setupMediaSession(st, songTitle = '') {
+      function setupMediaSession(st, songTitle = '') {
     if ('mediaSession' in navigator) {
       const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+      navigator.mediaSession.metadata = null;
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: songTitle ? `${st.name}｜${songTitle}` : st.name,
-        artist: songTitle ? st.name : "Roy's Net Radio // LIVE",
+        title: st.name,
+        artist: songTitle ? `🎵 ${songTitle}` : "Roy's Net Radio // LIVE",
         album: 'CYBER HUD v3.0',
         artwork: [
           { src: baseUrl + 'icon-512.png', sizes: '512x512', type: 'image/png' }
@@ -1261,8 +1261,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       navigator.mediaSession.setActionHandler('nexttrack', nextStation);
     }
   }
-
-
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
     if (document.getElementById('authModal').classList.contains('show')) return;
