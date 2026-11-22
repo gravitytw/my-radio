@@ -204,7 +204,42 @@
 
     .shortcut-hint { font-size: 0.8rem; color: var(--text-dim); margin-top: 10px; }
     .hidden { display: none !important; }
-  </style>
+    .hidden { display: none !important; }
+    .modal-close-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(0, 243, 255, 0.25);
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+    .shortcut-hint {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+    dialog#authModal {
+      display: none;
+      background: #0b1324;
+      color: var(--text-main);
+      border: 1px solid var(--border-glow);
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+      max-width: 460px;
+      width: 92%;
+      padding: 22px;
+      z-index: 99999;
+    }
+    dialog#authModal[open] {
+      display: block;
+    }
+    dialog#authModal::backdrop {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+    }
+ 
+ </style>
 <body>
 <div class="container">
   <div class="hud-box top-bar">
@@ -523,11 +558,34 @@
     titleMarqueeTimer = null;
     document.title = statusPrefix ? `${statusPrefix} ${DEFAULT_PAGE_TITLE}` : DEFAULT_PAGE_TITLE;
   }
-
-  setInterval(() => {
-    const now = new Date();
-    document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
-  }, 1000);
+  // Modal 彈窗與免登入模式控制（徹底解決 iOS PWA 被 backdrop-filter 遮擋問題）
+  function openAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.margin = '0';
+    modal.style.zIndex = '99999';
+    if (typeof modal.showModal === 'function' && !modal.open) {
+      try { modal.showModal(); } catch (e) { modal.setAttribute('open', ''); }
+    } else {
+      modal.setAttribute('open', '');
+    }
+  }
+  function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (typeof modal.close === 'function' && modal.open) {
+      try { modal.close(); } catch (e) { modal.removeAttribute('open'); }
+    } else {
+      modal.removeAttribute('open');
+    }
+    modal.style.display = 'none';
+  }
 
   // Modal 彈窗與免登入模式控制
     // Modal 彈窗與免登入模式控制（相容 iOS Safari / PWA）
@@ -796,15 +854,20 @@
 
     if (filter === 'all' || filter === 'fav') {
       selectBox.classList.remove('hidden');
+      selectBox.style.display = 'block';
       listBox.classList.add('hidden');
+      listBox.style.display = 'none';
       renderDropdown();
     } else {
       selectBox.classList.add('hidden');
+      selectBox.style.display = 'none';
       listBox.classList.remove('hidden');
+      listBox.style.display = 'block';
       if (filter === 'history') renderHistory();
       if (filter === 'presets') renderPresets();
     }
   }
+
 
   function applySearchFilter() {
     if (currentFilter === 'all' || currentFilter === 'fav') renderDropdown();
