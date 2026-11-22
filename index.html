@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>Roy的網路廣播播放器 // CYBER HUD v3.0</title>
 
-    <script>
+  <script>
     (function() {
       var base = "https:" + "//cdn.jsdelivr.net/npm/";
       var libs = [
@@ -34,6 +34,7 @@
       loadNext(0);
     })();
   </script>
+
   <style>
     :root {
       --bg-dark: #070b14;
@@ -48,7 +49,7 @@
 
     * {
       box-sizing: border-box;
-      font-family: 'Segoe UI', 'Microsoft JhengHei', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", monospace;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -82,7 +83,6 @@
 
     .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .clock { color: var(--accent-green); font-weight: bold; font-size: 0.92rem; }
-
     .status-panel {
       background: rgba(0, 0, 0, 0.5);
       border-left: 4px solid var(--border-glow);
@@ -100,14 +100,13 @@
     .status-badge.ok { background: rgba(0, 255, 157, 0.2); color: var(--accent-green); }
 
     #nowPlayingTitle {
-      font-family: 'Orbitron', 'Zen Maru Gothic', '微軟正黑體', sans-serif;
-      font-size: 2.1rem;
+      font-size: 1.9rem;
       font-weight: 800;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       background: linear-gradient(180deg, #ffffff 15%, #38b6ff 65%, #0066ff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px rgba(0, 140, 255, 0.7));
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95));
       vertical-align: middle;
       line-height: 1.3;
       display: inline-block;
@@ -218,7 +217,7 @@
       box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
       max-width: 460px; width: 100%; padding: 22px; max-height: 90vh; overflow-y: auto;
     }
-    /* ⚡ 快速選台卡片牆 */
+
     .quick-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
@@ -240,17 +239,12 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .quick-chip:hover {
-      background: rgba(0, 243, 255, 0.22);
-      border-color: var(--border-glow);
-    }
     .quick-chip.active {
       background: linear-gradient(90deg, rgba(0, 243, 255, 0.28), rgba(0, 255, 157, 0.22));
       border-color: var(--accent-green);
       color: var(--accent-green);
       box-shadow: 0 0 10px rgba(0, 255, 157, 0.35);
     }
-    /* 上次收聽一鍵續播提示條 */
     .resume-banner {
       display: flex;
       justify-content: space-between;
@@ -302,6 +296,7 @@
         <span class="vis-tag" id="visModeTag">HUD SPECTRUM // STANDBY</span>
         <canvas id="visualizerCanvas" width="800" height="54"></canvas>
       </div>
+
       <div class="tabs">
         <button class="tab-btn active" onclick="setFilter('all', this)">📻 全部清單</button>
         <button class="tab-btn" onclick="setFilter('fav', this)">⭐ 我的最愛</button>
@@ -321,12 +316,12 @@
         </select>
       </div>
 
-           <div id="resumeBanner" class="resume-banner hidden">
+      <div id="resumeBanner" class="resume-banner hidden">
         <span id="resumeText" style="color:var(--accent-green);font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
         <button type="button" class="btn-green" style="padding:5px 12px;min-height:auto;white-space:nowrap;" onclick="resumeLastStation()">▶ 一鍵續播</button>
       </div>
 
-            <div id="selectModeBox">
+      <div id="selectModeBox">
         <select id="stationSelect" onchange="playSelectedStation()">
           <option value="">-- 請選擇電臺 --</option>
         </select>
@@ -337,13 +332,12 @@
       </div>
 
       <div id="listViewBox" class="hidden" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
-
       <div class="controls-row">
-        <button onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
-        <button id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
-        <button onclick="nextStation()" title="下一台 (→)">⏭ 下一台</button>
-        <button id="favToggleBtn" onclick="toggleCurrentFav()" title="加入/移除最愛">☆ 收藏</button>
-        <button id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
+        <button type="button" onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
+        <button type="button" id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
+        <button type="button" onclick="nextStation()" title="下一台 (→)">⏭ 下一台</button>
+        <button type="button" id="favToggleBtn" onclick="toggleCurrentFav()" title="加入/移除最愛">☆ 收藏</button>
+        <button type="button" id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
         <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
 
         <select id="sleepSelect" onchange="setSleepTimer(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="睡眠定時器">
@@ -355,7 +349,7 @@
         <span id="sleepCountdown" style="color:var(--accent-yellow);font-size:0.85rem;font-weight:bold;"></span>
 
         <div class="volume-box">
-          <button onclick="toggleMute()" id="muteBtn" style="padding:4px 8px;">🔊</button>
+          <button type="button" onclick="toggleMute()" id="muteBtn" style="padding:4px 8px;">🔊</button>
           <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
         </div>
       </div>
@@ -368,6 +362,7 @@
       <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
       <audio id="audioPlayer" crossorigin="anonymous"></audio>
     </div>
+
     <div class="hud-box">
       <div class="collapsible-header" onclick="toggleAdminPanel()">
         <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 匯入匯出 / 電臺管理 / 個人設定）</h2>
@@ -387,19 +382,20 @@
           <option value="外語">分類：外語</option>
         </select>
         <div class="controls-row">
-          <button onclick="saveStation()">➕ 儲存此電臺</button>
-          <button class="btn-pink" onclick="cancelEdit()">取消修改</button>
+          <button type="button" onclick="saveStation()">➕ 儲存此電臺</button>
+          <button type="button" class="btn-pink" onclick="cancelEdit()">取消修改</button>
         </div>
 
         <h3>📂 批次匯入 / 匯出電臺清單（支援 .json 與 .m3u）</h3>
         <div class="controls-row">
-          <button class="btn-green" onclick="exportStationsJSON()">📤 匯出 JSON 備份</button>
-          <button onclick="document.getElementById('importFileInput').click()">📥 匯入 JSON / M3U 清單</button>
+          <button type="button" class="btn-green" onclick="exportStationsJSON()">📤 匯出 JSON 備份</button>
+          <button type="button" onclick="document.getElementById('importFileInput').click()">📥 匯入 JSON / M3U 清單</button>
           <input type="file" id="importFileInput" accept=".json,.m3u,.m3u8" class="hidden" onchange="handleImportFile(event)" />
         </div>
         <h3>📋 電台列表清單管理</h3>
         <div id="manageStationList"></div>
-               <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
+
+        <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
         <div class="profile-card">
           <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
           <div class="profile-row">
@@ -438,7 +434,7 @@
   <div class="custom-modal-box">
     <div class="modal-close-bar">
       <span style="color:var(--border-glow);font-weight:bold;">📡 CYBER HUD 雲端帳號系統</span>
-      <button class="btn-pink" style="padding:4px 10px;" onclick="closeAuthModal()">✕ 關閉</button>
+      <button type="button" class="btn-pink" style="padding:4px 10px;min-height:auto;" onclick="closeAuthModal()">✕ 關閉</button>
     </div>
 
     <div id="loginBox">
@@ -477,7 +473,6 @@
     </div>
   </div>
 </div>
-
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
@@ -489,10 +484,12 @@
     measurementId: "G-2N69W5VK65"
   };
 
-   let auth = null;
+  let auth = null;
   let db = null;
   function initFirebaseSafe() {
-    if (!window.firebase) return false;
+    if (!window.firebase || typeof firebase.auth !== 'function' || typeof firebase.firestore !== 'function') {
+      return false;
+    }
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     if (!auth) {
       auth = firebase.auth();
@@ -513,11 +510,11 @@
     }
     return true;
   }
-  initFirebaseSafe();
-  window.addEventListener('DOMContentLoaded', initFirebaseSafe);
+  const fbBootTimer = setInterval(() => {
+    if (initFirebaseSafe()) clearInterval(fbBootTimer);
+  }, 500);
 
-
-    const _H = "https:" + "//";
+  const _H = "https:" + "//";
   const _R = _H + "://revma.com";
   const _P = _H + "stream.pbs.gov.tw/live/";
   const PRESET_STATIONS = [
@@ -529,7 +526,6 @@
     { name: "警廣臺中分臺(TCS)💛", url: _P + "TCS/playlist.m3u8", category: "警廣" },
     { name: "❤️警廣全國治安交通網(PBS)", url: _P + "PBS/playlist.m3u8", category: "警廣" }
   ];
-
 
   let currentUser = null;
   let userProfile = { customId: '', nickname: '', email: '' };
@@ -544,6 +540,7 @@
   const MAX_RETRIES = 5;
   let retryTimer = null;
   let isUserPaused = true;
+  let stallDebounceTimer = null;
 
   let mediaRecorder = null;
   let recordedChunks = [];
@@ -559,8 +556,6 @@
   const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v3.0";
 
   const audio = document.getElementById('audioPlayer');
-
-  // 霓虹音波頻譜視覺化引擎
   let audioCtx = null, analyser = null, visDataArray = null, isVisSimulated = false, visInitialized = false;
   function initVisualizer() {
     if (visInitialized) {
@@ -635,17 +630,13 @@
     document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
   }, 1000);
 
-  // 全新 div 彈窗控制（100% 相容所有 iOS Safari 與 PWA 模式）
-  function openAuthModal() {
-    document.getElementById('authModal').classList.add('show');
-  }
-  function closeAuthModal() {
-    document.getElementById('authModal').classList.remove('show');
-  }
+  function openAuthModal() { document.getElementById('authModal').classList.add('show'); }
+  function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
   function switchAuthView(boxId) {
     ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById(boxId).classList.remove('hidden');
   }
+
   function updateHeaderNicknameUI() {
     const el = document.getElementById('currentUserNickname');
     const openBtn = document.getElementById('openAuthBtn');
@@ -674,10 +665,8 @@
     renderAllLists();
   }
 
-  
-
   async function login() {
-if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
+    if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('loginAccount').value.trim();
     const pass = document.getElementById('loginPass').value;
     if (!rawAccount || !pass) return alert('請輸入專屬 ID 或 Email 與密碼');
@@ -694,16 +683,15 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
   }
 
   async function quickDemoLogin() {
- if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
+    if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     try {
       await auth.signInAnonymously();
     } catch (err) {
       alert('雲端試用啟動失敗：\n' + err.message);
     }
   }
-
   async function register() {
-if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
+    if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const email = document.getElementById('regEmail').value.trim().toLowerCase();
     const customId = document.getElementById('regCustomId').value.trim().toLowerCase();
     const rawNickname = document.getElementById('regNickname').value.trim();
@@ -738,7 +726,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
   }
 
   async function resetPassword() {
- if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
+    if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('resetEmail').value.trim();
     if (!rawAccount || !rawAccount.includes('@')) return alert('請輸入完整的電子郵件 (Email)！');
     try {
@@ -816,7 +804,8 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     } catch (err) { alert('更新密碼失敗：\n' + err.message); }
   }
 
-  function logout() { auth.signOut(); }
+  function logout() { if (auth) auth.signOut(); }
+
   async function loadUserDataFromCloud(uid) {
     try {
       const docSnap = await db.collection('users').doc(uid).get();
@@ -834,9 +823,12 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
         userProfile.email = data.email || currentUser.email || '';
 
         if (!currentUser.isAnonymous) {
-          document.getElementById('profileNicknameInput').value = userProfile.nickname;
-          document.getElementById('profileCustomIdInput').value = userProfile.customId;
-          document.getElementById('profileEmailInput').value = userProfile.email.endsWith('@royradio.local') ? '' : userProfile.email;
+          const nickIn = document.getElementById('profileNicknameInput');
+          const idIn = document.getElementById('profileCustomIdInput');
+          const mailIn = document.getElementById('profileEmailInput');
+          if (nickIn) nickIn.value = userProfile.nickname;
+          if (idIn) idIn.value = userProfile.customId;
+          if (mailIn) mailIn.value = userProfile.email.endsWith('@royradio.local') ? '' : userProfile.email;
         }
         updateHeaderNicknameUI();
         await saveData();
@@ -853,7 +845,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     localStorage.setItem('roy_stations', JSON.stringify(stations));
     localStorage.setItem('roy_favs', JSON.stringify(favorites));
     localStorage.setItem('roy_history', JSON.stringify(playHistory));
-    if (currentUser) {
+    if (currentUser && db) {
       try {
         await db.collection('users').doc(currentUser.uid).set({
           stations, favorites, playHistory,
@@ -862,7 +854,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       } catch (err) { console.error('雲端同步失敗:', err); }
     }
   }
-
   function setFilter(filter, btnEl) {
     currentFilter = filter;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -898,7 +889,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     return true;
   }
 
-    function renderDropdown() {
+  function renderDropdown() {
     const sel = document.getElementById('stationSelect');
     const quickGrid = document.getElementById('quickStationGrid');
     sel.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
@@ -917,7 +908,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       visibleList.push({ st, idx, isFav });
     });
 
-        if (quickGrid) {
+    if (quickGrid) {
       const sorted = [...visibleList].sort((a, b) => (b.isFav ? 1 : 0) - (a.isFav ? 1 : 0)).slice(0, 8);
       quickGrid.innerHTML = sorted.map(item => `
         <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx}); toggleQuickGrid();" title="${item.st.name}">
@@ -925,6 +916,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
         </div>
       `).join('');
     }
+  }
 
   function renderHistory() {
     const box = document.getElementById('listViewBox');
@@ -939,12 +931,12 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
           <strong>${h.name}</strong>
           <div style="font-size:0.78rem;color:var(--text-dim);">🕒 ${h.time}</div>
         </div>
-        <button onclick="playByUrl('${h.url}')">▶ 收聽</button>
+        <button type="button" onclick="playByUrl('${h.url}')">▶ 收聽</button>
       </div>
     `).join('');
   }
 
-   function renderPresets() {
+  function renderPresets() {
     const selectBox = document.getElementById('selectModeBox');
     const box = document.getElementById('listViewBox');
     if (selectBox) selectBox.classList.add('hidden');
@@ -974,7 +966,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       </div>
     `).join('');
   }
- 
 
   async function importPreset(idx) {
     const p = PRESET_STATIONS[idx];
@@ -1040,7 +1031,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     const st = stations[idx];
     initVisualizer();
 
-        document.getElementById('nowPlayingTitle').textContent = st.name;
+    document.getElementById('nowPlayingTitle').textContent = st.name;
     setStatus('連線中...', 'warn', '⏳ 載入串流...');
     stopTitleMarquee("⏳ [連線中]");
     updateFavButton();
@@ -1083,7 +1074,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     setupMediaSession(st);
     startIcyPolling(st, useHls);
   }
-
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
     badge.textContent = badgeText;
@@ -1091,7 +1081,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     document.getElementById('bufferSpinner').textContent = spinnerText;
   }
 
-    let stallDebounceTimer = null;
   audio.addEventListener('playing', () => {
     clearTimeout(stallDebounceTimer);
     retryCount = 0;
@@ -1139,7 +1128,8 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => { if (!isUserPaused) startStream(currentStationIndex); }, 3000);
   }
-   function togglePlay() {
+
+  function togglePlay() {
     if (currentStationIndex < 0 && stations.length > 0) return startStream(0);
     if (audio.paused) {
       isUserPaused = false;
@@ -1169,7 +1159,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     localStorage.setItem('roy_saved_volume', val);
     document.getElementById('muteBtn').textContent = val == 0 ? '🔇' : '🔊';
   }
-  
   function toggleMute() {
     audio.muted = !audio.muted;
     document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
@@ -1201,7 +1190,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     const s = String(sleepRemainingSec % 60).padStart(2, '0');
     document.getElementById('sleepCountdown').textContent = `⏳ ${m}:${s}`;
   }
-
   function startIcyPolling(st, isHls) {
     if (icyTimer) { clearInterval(icyTimer); icyTimer = null; }
     const icyEl = document.getElementById('icyMetadata');
@@ -1211,7 +1199,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     icyTimer = setInterval(() => { if (!document.hidden && !audio.paused) fetchIcyMetadata(st.url); }, 15000);
   }
 
-    async function fetchIcyMetadata(url) {
+  async function fetchIcyMetadata(url) {
     const icyEl = document.getElementById('icyMetadata');
     try {
       const controller = new AbortController();
@@ -1253,6 +1241,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       icyEl.textContent = `🎵 串流播放中（此電臺未開放跨網域曲目讀取）`;
     }
   }
+
   function toggleRecording() {
     if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
     else startRecording();
@@ -1333,7 +1322,8 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     savedRecordings.splice(idx, 1);
     renderRecordingVault();
   }
-      function setupMediaSession(st, songTitle = '') {
+
+  function setupMediaSession(st, songTitle = '') {
     if ('mediaSession' in navigator) {
       const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
       navigator.mediaSession.metadata = null;
@@ -1352,6 +1342,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       navigator.mediaSession.setActionHandler('nexttrack', nextStation);
     }
   }
+
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
     if (document.getElementById('authModal').classList.contains('show')) return;
@@ -1373,7 +1364,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       case 'KeyR': toggleRecording(); break;
     }
   });
-    function toggleQuickGrid() {
+  function toggleQuickGrid() {
     const grid = document.getElementById('quickStationGrid');
     const btn = document.getElementById('toggleQuickGridBtn');
     if (!grid || !btn) return;
@@ -1401,8 +1392,8 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
           <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${st.url}</div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button onclick="editStation(${idx})">✏️ 編輯</button>
-          <button class="btn-pink" onclick="deleteStation(${idx})">🗑 刪除</button>
+          <button type="button" onclick="editStation(${idx})">✏️ 編輯</button>
+          <button type="button" class="btn-pink" onclick="deleteStation(${idx})">🗑 刪除</button>
         </div>
       </div>`;
     }).join('');
@@ -1507,8 +1498,6 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
   }
 
   loadLocalData();
-
-    loadLocalData();
 
   (function restoreLastSession() {
     const savedVol = localStorage.getItem('roy_saved_volume');
