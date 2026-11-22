@@ -28,6 +28,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('.m3u8') || 
       event.request.url.includes('.ts') || 
       event.request.url.includes('googleapis.com') ||
+      event.request.url.includes('gstatic.com') ||
       event.request.url.includes('stream')) {
     return;
   }
