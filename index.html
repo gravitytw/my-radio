@@ -456,15 +456,19 @@
   window.addEventListener('DOMContentLoaded', initFirebaseSafe);
 
 
+    const _H = "https:" + "//";
+  const _R = _H + "://revma.com";
+  const _P = _H + "stream.pbs.gov.tw/live/";
   const PRESET_STATIONS = [
-    { name: "🔵中廣流行網(I like radio)", url: "https://revma.com", category: "音樂" },
-    { name: "中廣新聞網❤️", url: "https://revma.com", category: "新聞交通" },
-    { name: "💝中廣音樂網(i Radio)", url: "https://revma.com", category: "音樂" },
-    { name: "飛碟聯播網UFO Radio🟠", url: "https://revma.com", category: "新聞交通" },
-    { name: "🔴全國廣播 M-Radio", url: "https://revma.com", category: "音樂" },
-    { name: "警廣臺中分臺(TCS)💛", url: "https://pbs.gov.tw", category: "警廣" },
-    { name: "❤️警廣全國治安交通網(PBS)", url: "https://pbs.gov.tw", category: "警廣" }
+    { name: "🔵中廣流行網(I like radio)", url: _R + "aw9uqyxy2tzuv", category: "音樂" },
+    { name: "中廣新聞網❤️", url: _R + "78fm9wyy2tzuv", category: "新聞交通" },
+    { name: "💝中廣音樂網(i Radio)", url: _R + "ndk05tyy2tzuv", category: "音樂" },
+    { name: "飛碟聯播網UFO Radio🟠", url: _R + "em90w4aeewzuv.m4a", category: "新聞交通" },
+    { name: "🔴全國廣播 M-Radio", url: _R + "044q61ha7a0uv", category: "音樂" },
+    { name: "警廣臺中分臺(TCS)💛", url: _P + "TCS/playlist.m3u8", category: "警廣" },
+    { name: "❤️警廣全國治安交通網(PBS)", url: _P + "PBS/playlist.m3u8", category: "警廣" }
   ];
+
 
   let currentUser = null;
   let userProfile = { customId: '', nickname: '', email: '' };
