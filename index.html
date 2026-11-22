@@ -218,6 +218,51 @@
       box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
       max-width: 460px; width: 100%; padding: 22px; max-height: 90vh; overflow-y: auto;
     }
+    /* ⚡ 快速選台卡片牆 */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .quick-chip {
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: bold;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-chip:hover {
+      background: rgba(0, 243, 255, 0.22);
+      border-color: var(--border-glow);
+    }
+    .quick-chip.active {
+      background: linear-gradient(90deg, rgba(0, 243, 255, 0.28), rgba(0, 255, 157, 0.22));
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      box-shadow: 0 0 10px rgba(0, 255, 157, 0.35);
+    }
+    /* 上次收聽一鍵續播提示條 */
+    .resume-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 255, 157, 0.12);
+      border: 1px solid rgba(0, 255, 157, 0.45);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      font-size: 0.88rem;
+      gap: 8px;
+    }
 
     @media (max-width: 600px) {
       body { padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)) 12px; }
@@ -276,10 +321,16 @@
         </select>
       </div>
 
+           <div id="resumeBanner" class="resume-banner hidden">
+        <span id="resumeText" style="color:var(--accent-green);font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <button type="button" class="btn-green" style="padding:5px 12px;min-height:auto;white-space:nowrap;" onclick="resumeLastStation()">▶ 一鍵續播</button>
+      </div>
+
       <div id="selectModeBox">
         <select id="stationSelect" onchange="playSelectedStation()">
           <option value="">-- 請選擇電臺 --</option>
         </select>
+        <div id="quickStationGrid" class="quick-grid"></div>
       </div>
 
       <div id="listViewBox" class="hidden" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
@@ -844,9 +895,12 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     return true;
   }
 
-  function renderDropdown() {
+    function renderDropdown() {
     const sel = document.getElementById('stationSelect');
+    const quickGrid = document.getElementById('quickStationGrid');
     sel.innerHTML = '<option value="">-- 請選擇電臺 --</option>';
+    const visibleList = [];
+
     stations.forEach((st, idx) => {
       const isFav = favorites.includes(st.url);
       if (currentFilter === 'fav' && !isFav) return;
@@ -857,7 +911,18 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
       opt.textContent = `${isFav ? '⭐ ' : ''}[${st.category || '綜合'}] ${st.name} ${isHls ? '[HLS]' : ''}`;
       if (idx === currentStationIndex) opt.selected = true;
       sel.appendChild(opt);
+      visibleList.push({ st, idx, isFav });
     });
+
+    if (quickGrid) {
+      // 最愛電台排在最前面，最多顯示 8 個單手快捷按鈕
+      const sorted = [...visibleList].sort((a, b) => (b.isFav ? 1 : 0) - (a.isFav ? 1 : 0)).slice(0, 8);
+      quickGrid.innerHTML = sorted.map(item => `
+        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx})" title="${item.st.name}">
+          ${item.isFav ? '⭐' : '📻'} ${item.st.name}
+        </div>
+      `).join('');
+    }
   }
 
   function renderHistory() {
@@ -974,12 +1039,15 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     const st = stations[idx];
     initVisualizer();
 
-    document.getElementById('nowPlayingTitle').textContent = st.name;
+        document.getElementById('nowPlayingTitle').textContent = st.name;
     setStatus('連線中...', 'warn', '⏳ 載入串流...');
     stopTitleMarquee("⏳ [連線中]");
     updateFavButton();
     renderDropdown();
     addToHistory(st);
+    localStorage.setItem('roy_last_station_url', st.url);
+    const rb = document.getElementById('resumeBanner');
+    if (rb) rb.classList.add('hidden');
 
     if (hls) { hls.destroy(); hls = null; }
     audio.pause();
@@ -1022,20 +1090,40 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     document.getElementById('bufferSpinner').textContent = spinnerText;
   }
 
+    let stallDebounceTimer = null;
   audio.addEventListener('playing', () => {
-  retryCount = 0;
-  setStatus('LIVE 直播中', 'ok', '');
-  document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
-  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-  if (currentStationIndex >= 0 && stations[currentStationIndex]) {
-    startTitleMarquee(stations[currentStationIndex].name);
-    setupMediaSession(stations[currentStationIndex]);
-  }
-});
-
-  audio.addEventListener('waiting', () => { if (!isUserPaused) setStatus('緩衝中', 'warn', '⏳ 網路緩衝中...'); });
-  audio.addEventListener('stalled', () => { if (!isUserPaused) setStatus('訊號不穩', 'warn', '⚠️ 串流停滯...'); });
+    clearTimeout(stallDebounceTimer);
+    retryCount = 0;
+    setStatus('LIVE 直播中', 'ok', '');
+    document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+      startTitleMarquee(stations[currentStationIndex].name);
+      setupMediaSession(stations[currentStationIndex]);
+    }
+  });
+  audio.addEventListener('waiting', () => {
+    if (isUserPaused) return;
+    clearTimeout(stallDebounceTimer);
+    stallDebounceTimer = setTimeout(() => {
+      if (!isUserPaused && audio.readyState < 3) setStatus('緩衝中', 'warn', '⏳ 網路緩衝中...');
+    }, 1800);
+  });
+  audio.addEventListener('stalled', () => {
+    if (isUserPaused) return;
+    clearTimeout(stallDebounceTimer);
+    stallDebounceTimer = setTimeout(() => {
+      if (!isUserPaused && audio.paused) setStatus('訊號不穩', 'warn', '⚠️ 串流停滯...');
+    }, 2000);
+  });
   audio.addEventListener('error', () => { if (!isUserPaused) handleStreamError(); });
+
+  window.addEventListener('online', () => {
+    if (!isUserPaused && currentStationIndex >= 0 && audio.paused) {
+      setStatus('網路已恢復', 'warn', '🔄 正在自動重連電臺...');
+      startStream(currentStationIndex);
+    }
+  });
 
   function handleStreamError() {
     if (isUserPaused || currentStationIndex < 0) return;
@@ -1077,8 +1165,10 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
   }
   function changeVolume(val) {
     audio.volume = val;
+    localStorage.setItem('roy_saved_volume', val);
     document.getElementById('muteBtn').textContent = val == 0 ? '🔇' : '🔊';
   }
+  
   function toggleMute() {
     audio.muted = !audio.muted;
     document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
@@ -1407,6 +1497,35 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
   }
 
   loadLocalData();
+
+    loadLocalData();
+
+  (function restoreLastSession() {
+    const savedVol = localStorage.getItem('roy_saved_volume');
+    if (savedVol !== null) {
+      audio.volume = parseFloat(savedVol);
+      const slider = document.getElementById('volumeSlider');
+      if (slider) slider.value = savedVol;
+    }
+    const lastUrl = localStorage.getItem('roy_last_station_url');
+    if (lastUrl && stations.length > 0) {
+      const foundIdx = stations.findIndex(s => s.url === lastUrl);
+      if (foundIdx >= 0) {
+        const banner = document.getElementById('resumeBanner');
+        const txt = document.getElementById('resumeText');
+        if (banner && txt) {
+          txt.textContent = `🎧 上次收聽：${stations[foundIdx].name}`;
+          banner.classList.remove('hidden');
+        }
+      }
+    }
+  })();
+
+  function resumeLastStation() {
+    const lastUrl = localStorage.getItem('roy_last_station_url');
+    const foundIdx = stations.findIndex(s => s.url === lastUrl);
+    if (foundIdx >= 0) startStream(foundIdx);
+  }
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
