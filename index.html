@@ -11,10 +11,11 @@
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>Roy的網路廣播播放器 // CYBER HUD v3.0</title>
 
-      <script defer src="https://jsdelivr.net"></script>
-  <script defer src="https://gstatic.com"></script>
-  <script defer src="https://gstatic.com"></script>
-  <script defer src="https://gstatic.com"></script>
+   <script src="https://jsdelivr.net"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+
 
 
   <style>
@@ -399,11 +400,12 @@
     measurementId: "G-2N69W5VK65"
   };
 
-  let auth = null;
+   let auth = null;
   let db = null;
   function initFirebaseSafe() {
-    if (window.firebase && !auth) {
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    if (!window.firebase) return false;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    if (!auth) {
       auth = firebase.auth();
       db = firebase.firestore();
       auth.onAuthStateChanged(async (user) => {
@@ -420,8 +422,11 @@
         }
       });
     }
+    return true;
   }
+  initFirebaseSafe();
   window.addEventListener('DOMContentLoaded', initFirebaseSafe);
+
 
   const PRESET_STATIONS = [
     { name: "🔵中廣流行網(I like radio)", url: "https://revma.com", category: "音樂" },
@@ -579,6 +584,7 @@
   
 
   async function login() {
+if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('loginAccount').value.trim();
     const pass = document.getElementById('loginPass').value;
     if (!rawAccount || !pass) return alert('請輸入專屬 ID 或 Email 與密碼');
@@ -595,6 +601,7 @@
   }
 
   async function quickDemoLogin() {
+ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     try {
       await auth.signInAnonymously();
     } catch (err) {
@@ -603,6 +610,7 @@
   }
 
   async function register() {
+if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const email = document.getElementById('regEmail').value.trim().toLowerCase();
     const customId = document.getElementById('regCustomId').value.trim().toLowerCase();
     const rawNickname = document.getElementById('regNickname').value.trim();
@@ -637,6 +645,7 @@
   }
 
   async function resetPassword() {
+ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('resetEmail').value.trim();
     if (!rawAccount || !rawAccount.includes('@')) return alert('請輸入完整的電子郵件 (Email)！');
     try {
