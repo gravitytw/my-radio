@@ -352,9 +352,44 @@
       <span style="color:var(--border-glow);font-weight:bold;">📡 CYBER HUD 雲端帳號系統</span>
       <button class="btn-pink" style="padding:4px 10px;" onclick="closeAuthModal()">✕ 關閉</button>
     </div>
-    <!-- 包含登入 (loginBox)、註冊 (registerBox) 與重設密碼 (resetBox) 完整表單元件 -->
+
+    <div id="loginBox">
+      <h2>📻 Roy's Radio 登入</h2>
+      <input type="text" id="loginAccount" placeholder="請輸入專屬登入 ID 或 電子郵件 (Email)" />
+      <input type="password" id="loginPass" placeholder="安全密碼" />
+      <div class="controls-row">
+        <button type="button" onclick="login()">驗證並登入</button>
+        <button type="button" class="btn-green" onclick="quickDemoLogin()">Firebase 匿名雲端試用</button>
+      </div>
+      <p style="font-size:0.9rem;margin-top:12px;">
+        <a href="javascript:void(0)" style="color:var(--border-glow);" onclick="switchAuthView('registerBox')">申請註冊新帳號</a> | 
+        <a href="javascript:void(0)" style="color:var(--accent-yellow);" onclick="switchAuthView('resetBox')">忘記密碼？</a>
+      </p>
+    </div>
+
+    <div id="registerBox" class="hidden">
+      <h2>📝 申請新帳號（Email 與專屬 ID 綁定）</h2>
+      <input type="email" id="regEmail" placeholder="電子郵件 Email（必填，可用於登入與重設密碼）" />
+      <input type="text" id="regCustomId" placeholder="專屬登入 ID（必填，3~20碼英數字或底線）" />
+      <input type="text" id="regNickname" placeholder="顯示暱稱（選填，未填預設為 ID）" />
+      <input type="password" id="regPass" placeholder="設定安全密碼 (至少6碼)" />
+      <div class="controls-row">
+        <button type="button" onclick="register()">提交申請並登入</button>
+        <button type="button" class="btn-pink" onclick="switchAuthView('loginBox')">返回登入</button>
+      </div>
+    </div>
+
+    <div id="resetBox" class="hidden">
+      <h2>🔑 重設安全密碼</h2>
+      <input type="email" id="resetEmail" placeholder="已註冊的電子郵件 (Email)" />
+      <div class="controls-row">
+        <button type="button" onclick="resetPassword()">寄送密碼重設信</button>
+        <button type="button" class="btn-pink" onclick="switchAuthView('loginBox')">返回登入</button>
+      </div>
+    </div>
   </div>
 </div>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
@@ -789,21 +824,25 @@
     `).join('');
   }
 
-  function renderPresets() {
+   function renderPresets() {
+    const selectBox = document.getElementById('selectModeBox');
     const box = document.getElementById('listViewBox');
+    if (selectBox) selectBox.classList.add('hidden');
+    box.classList.remove('hidden');
+
     const cat = document.getElementById('categoryFilter')?.value || 'ALL';
     const filtered = PRESET_STATIONS
       .map((p, i) => ({ ...p, origIdx: i }))
       .filter(p => cat === 'ALL' || (p.category || '綜合') === cat);
 
     if (filtered.length === 0) {
-      box.innerHTML = '<div style="color:var(--text-dim);padding:10px;">此分類目前無預設電臺</div>';
+      box.innerHTML = '<div style="color:var(--text-dim);padding:10px;">此分類目前無預設電臺，請上方選擇「📂 全部分類」。</div>';
       return;
     }
 
     box.innerHTML = `
       <div style="margin-bottom:8px;text-align:right;">
-        <button class="btn-green" onclick="importAllPresets()">⚡ 一鍵匯入全部預設電臺 (${filtered.length}台)</button>
+        <button type="button" class="btn-green" onclick="importAllPresets()">⚡ 一鍵匯入全部預設電臺 (${filtered.length}台)</button>
       </div>
     ` + filtered.map(p => `
       <div class="station-item">
@@ -811,10 +850,12 @@
           <strong>${p.name}</strong><span class="cat-tag">${p.category || '綜合'}</span>
           <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${p.url}</div>
         </div>
-        <button onclick="importPreset(${p.origIdx})">➕ 匯入</button>
+        <button type="button" onclick="importPreset(${p.origIdx})">➕ 匯入</button>
       </div>
     `).join('');
   }
+ 
+
   async function importPreset(idx) {
     const p = PRESET_STATIONS[idx];
     if (stations.some(s => s.url === p.url)) return alert('此電臺已在清單中！');
