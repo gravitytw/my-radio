@@ -315,8 +315,10 @@
         <label>安全密碼</label>
         <input type="password" id="login-pass" placeholder="請輸入密碼">
     </div>
-    <button class="auth-btn" onclick="handleLogin()">驗證並登入</button>
+       <button class="auth-btn" onclick="handleLogin()">驗證並登入</button>
+    <button class="auth-btn" style="background: linear-gradient(45deg, #00b894, #00cec9); margin-top: 12px;" onclick="enterGuestMode()">🎧 免登入直接收聽（本地模式）</button>
     <div class="auth-links">
+
         <a onclick="switchPanel('forgot')">忘記/修改密碼？</a>
         <a onclick="switchPanel('register')">申請註冊新帳號</a>
     </div>
@@ -478,7 +480,32 @@
             .catch(err => alert('發送失敗: ' + err.message));
     }
 
-    function handleLogout() { auth.signOut(); }
+       function handleLogout() { 
+        auth.signOut(); 
+        document.getElementById('player-panel').style.display = 'none';
+        document.getElementById('login-panel').style.display = 'block';
+        audio.pause();
+        audio.src = '';
+    }
+
+    // 🌟 免登入直接進入本地體驗模式
+    function enterGuestMode() {
+        document.getElementById('login-panel').style.display = 'none';
+        document.getElementById('register-panel').style.display = 'none';
+        document.getElementById('forgot-panel').style.display = 'none';
+        document.getElementById('player-panel').style.display = 'block';
+        initPlayer();
+    }
+
+    // 🌟 免登入直接進入本地體驗模式
+    function enterGuestMode() {
+        document.getElementById('login-panel').style.display = 'none';
+        document.getElementById('register-panel').style.display = 'none';
+        document.getElementById('forgot-panel').style.display = 'none';
+        document.getElementById('player-panel').style.display = 'block';
+        initPlayer();
+    }
+
     function initPlayer() {
         const savedBg = localStorage.getItem('roy_radio_bg');
         if (savedBg) document.body.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.8)), url('${savedBg}')`;
