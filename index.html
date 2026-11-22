@@ -11,13 +11,11 @@
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>Roy的網路廣播播放器 // CYBER HUD v3.0</title>
 
-  <script src="https://jsdelivr.net"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
+    <script defer src="https://jsdelivr.net"></script>
+  <script defer src="https://gstatic.com"></script>
+  <script defer src="https://gstatic.com"></script>
+  <script defer src="https://gstatic.com"></script>
 
-  <link rel="preconnect" href="https://googleapis.com">
-  <link href="https://googleapis.com/css2?family=Orbitron:wght@600;800&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -391,6 +389,7 @@
 </div>
 
 <script>
+ <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
     authDomain: "://firebaseapp.com",
@@ -401,9 +400,30 @@
     measurementId: "G-2N69W5VK65"
   };
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+  let auth = null;
+  let db = null;
+  function initFirebaseSafe() {
+    if (window.firebase && !auth) {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          currentUser = user;
+          closeAuthModal();
+          updateHeaderNicknameUI();
+          await loadUserDataFromCloud(user.uid);
+        } else {
+          currentUser = null;
+          userProfile = { customId: '', nickname: '', email: '' };
+          updateHeaderNicknameUI();
+          loadLocalData();
+        }
+      });
+    }
+  }
+  window.addEventListener('DOMContentLoaded', initFirebaseSafe);
+
 
   const PRESET_STATIONS = [
     { name: "🔵中廣流行網(I like radio)", url: "https://revma.com", category: "音樂" },
@@ -558,19 +578,7 @@
     renderAllLists();
   }
 
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      currentUser = user;
-      closeAuthModal();
-      updateHeaderNicknameUI();
-      await loadUserDataFromCloud(user.uid);
-    } else {
-      currentUser = null;
-      userProfile = { customId: '', nickname: '', email: '' };
-      updateHeaderNicknameUI();
-      loadLocalData();
-    }
-  });
+  
 
   async function login() {
     const rawAccount = document.getElementById('loginAccount').value.trim();
