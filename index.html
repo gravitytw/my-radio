@@ -535,8 +535,31 @@
   }, 1000);
 
   // Modal 彈窗與免登入模式控制
-  function openAuthModal() { document.getElementById('authModal').showModal(); }
-  function closeAuthModal() { document.getElementById('authModal').close(); }
+    // Modal 彈窗與免登入模式控制（相容 iOS Safari / PWA）
+  function openAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (typeof modal.showModal === 'function' && !modal.open) {
+      try { modal.showModal(); } catch (e) { modal.setAttribute('open', ''); }
+    } else {
+      modal.setAttribute('open', '');
+    }
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.zIndex = '9999';
+  }
+  function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (typeof modal.close === 'function' && modal.open) {
+      try { modal.close(); } catch (e) { modal.removeAttribute('open'); }
+    } else {
+      modal.removeAttribute('open');
+    }
+    modal.style.display = 'none';
+  }
+
   function switchAuthView(boxId) {
     ['loginBox', 'registerBox', 'resetBox'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById(boxId).classList.remove('hidden');
@@ -837,18 +860,29 @@
     `).join('');
   }
 
-  function renderPresets() {
+    function renderPresets() {
     const box = document.getElementById('listViewBox');
-    const filtered = PRESET_STATIONS.map((p, i) => ({ ...p, origIdx: i })).filter(matchesSearch);
+    box.classList.remove('hidden');
+    box.style.display = 'block';
+    const cat = document.getElementById('categoryFilter')?.value || 'ALL';
+    const filtered = PRESET_STATIONS
+      .map((p, i) => ({ ...p, origIdx: i }))
+      .filter(p => cat === 'ALL' || (p.category || '綜合') === cat);
+
+    if (filtered.length === 0) {
+      box.innerHTML = '<div style="color:var(--text-dim);padding:10px;">此分類目前無預設電臺，請將上方分類切換回「全部分類」。</div>';
+      return;
+    }
+
     box.innerHTML = `
       <div style="margin-bottom:8px;text-align:right;">
-        <button class="btn-green" onclick="importAllPresets()">⚡ 一鍵匯入全部預設電臺</button>
+        <button class="btn-green" onclick="importAllPresets()">⚡ 一鍵匯入全部預設電臺 (${filtered.length}台)</button>
       </div>
     ` + filtered.map(p => `
       <div class="station-item">
         <div>
           <strong>${p.name}</strong><span class="cat-tag">${p.category || '綜合'}</span>
-          <div style="font-size:0.78rem;color:var(--text-dim);">${p.url}</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${p.url}</div>
         </div>
         <button onclick="importPreset(${p.origIdx})">➕ 匯入</button>
       </div>
