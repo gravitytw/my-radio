@@ -1023,11 +1023,16 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
   }
 
   audio.addEventListener('playing', () => {
-    retryCount = 0;
-    setStatus('LIVE 直播中', 'ok', '');
-    document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
-    if (currentStationIndex >= 0 && stations[currentStationIndex]) startTitleMarquee(stations[currentStationIndex].name);
-  });
+  retryCount = 0;
+  setStatus('LIVE 直播中', 'ok', '');
+  document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+    startTitleMarquee(stations[currentStationIndex].name);
+    setupMediaSession(stations[currentStationIndex]);
+  }
+});
+
   audio.addEventListener('waiting', () => { if (!isUserPaused) setStatus('緩衝中', 'warn', '⏳ 網路緩衝中...'); });
   audio.addEventListener('stalled', () => { if (!isUserPaused) setStatus('訊號不穩', 'warn', '⚠️ 串流停滯...'); });
   audio.addEventListener('error', () => { if (!isUserPaused) handleStreamError(); });
@@ -1045,17 +1050,19 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => { if (!isUserPaused) startStream(currentStationIndex); }, 3000);
   }
-  function togglePlay() {
+   function togglePlay() {
     if (currentStationIndex < 0 && stations.length > 0) return startStream(0);
     if (audio.paused) {
       isUserPaused = false;
       initVisualizer();
       audio.play();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
       document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
     } else {
       isUserPaused = true;
       clearTimeout(retryTimer);
       audio.pause();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       setStatus('已暫停', '', '');
       stopTitleMarquee("⏸ [已暫停]");
       document.getElementById('playPauseBtn').textContent = '▶ 播放';
@@ -1113,7 +1120,7 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     icyTimer = setInterval(() => { if (!document.hidden && !audio.paused) fetchIcyMetadata(st.url); }, 15000);
   }
 
-  async function fetchIcyMetadata(url) {
+    async function fetchIcyMetadata(url) {
     const icyEl = document.getElementById('icyMetadata');
     try {
       const controller = new AbortController();
@@ -1143,8 +1150,10 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
         const match = metaStr.match(/StreamTitle='([^']*)';/);
         if (match && match[1]) {
           icyEl.textContent = `🎵 正在播放：${match[1]}`;
-          if (currentStationIndex >= 0 && stations[currentStationIndex]) startTitleMarquee(`${stations[currentStationIndex].name} - 🎵 ${match[1]}`);
-          if ('mediaSession' in navigator && navigator.mediaSession.metadata) navigator.mediaSession.metadata.title = match[1];
+          if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+            startTitleMarquee(`${stations[currentStationIndex].name} - 🎵 ${match[1]}`);
+            setupMediaSession(stations[currentStationIndex], match[1]);
+          }
           return;
         }
       }
@@ -1234,20 +1243,25 @@ if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒�
     renderRecordingVault();
   }
 
-  function setupMediaSession(st) {
+    function setupMediaSession(st, songTitle = '') {
     if ('mediaSession' in navigator) {
+      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: st.name,
-        artist: "Roy's Net Radio",
+        title: songTitle ? `${st.name}｜${songTitle}` : st.name,
+        artist: songTitle ? st.name : "Roy's Net Radio // LIVE",
         album: 'CYBER HUD v3.0',
-        artwork: [{ src: './icon-512.png', sizes: '512x512', type: 'image/png' }]
+        artwork: [
+          { src: baseUrl + 'icon-512.png', sizes: '512x512', type: 'image/png' }
+        ]
       });
+      navigator.mediaSession.playbackState = audio.paused ? 'paused' : 'playing';
       navigator.mediaSession.setActionHandler('play', () => { if (audio.paused) togglePlay(); });
       navigator.mediaSession.setActionHandler('pause', () => { if (!audio.paused) togglePlay(); });
       navigator.mediaSession.setActionHandler('previoustrack', prevStation);
       navigator.mediaSession.setActionHandler('nexttrack', nextStation);
     }
   }
+
 
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
