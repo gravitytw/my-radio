@@ -1058,3 +1058,254 @@
       icyEl.textContent = `🎵 串流播放中（此電臺未開放跨網域曲目讀取）`;
     }
   }
+  function toggleRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
+    else startRecording();
+  }
+
+  function startRecording() {
+    if (audio.paused) return alert('請先開始播放電臺再進行錄音！');
+    if (typeof MediaRecorder === 'undefined') return alert('此裝置的瀏覽器不支援網頁錄音功能。');
+    try {
+      const stream = audio.captureStream ? audio.captureStream() : (audio.mozCaptureStream ? audio.mozCaptureStream() : null);
+      if (!stream) return alert('iOS Safari 目前不支援直接擷取串流音訊錄音，建議使用電腦版 Chrome/Edge 進行錄音。');
+
+      const mimeTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
+      let selectedType = '';
+      for (const t of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(t)) { selectedType = t; break; }
+      }
+
+      recordedChunks = [];
+      mediaRecorder = selectedType ? new MediaRecorder(stream, { mimeType: selectedType }) : new MediaRecorder(stream);
+      const ext = selectedType.includes('mp4') ? 'm4a' : 'webm';
+
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: selectedType || 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const stName = stations[currentStationIndex]?.name || 'Radio';
+        const fileName = `${stName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
+        savedRecordings.unshift({ name: fileName, url, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
+        renderRecordingVault();
+      };
+      mediaRecorder.start();
+      const btn = document.getElementById('recordBtn');
+      btn.textContent = '⏹ 停止錄音';
+      btn.classList.add('recording');
+      recSeconds = 0;
+      document.getElementById('recTimer').textContent = '00:00';
+      recInterval = setInterval(() => {
+        recSeconds++;
+        document.getElementById('recTimer').textContent = `${String(Math.floor(recSeconds / 60)).padStart(2, '0')}:${String(recSeconds % 60).padStart(2, '0')}`;
+      }, 1000);
+    } catch (err) {
+      alert('無法啟動錄音：此電臺串流伺服器限制了跨網域音訊擷取 (CORS)。');
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder) mediaRecorder.stop();
+    clearInterval(recInterval);
+    const btn = document.getElementById('recordBtn');
+    btn.textContent = '⏺ 開始錄音';
+    btn.classList.remove('recording');
+    document.getElementById('recTimer').textContent = '';
+  }
+
+  function renderRecordingVault() {
+    const vault = document.getElementById('recordingVault');
+    const list = document.getElementById('recordingList');
+    if (!savedRecordings.length) { vault.classList.add('hidden'); return; }
+    vault.classList.remove('hidden');
+    list.innerHTML = savedRecordings.map((rec, i) => `
+      <div class="rec-item">
+        <div style="flex:1;min-width:160px;">
+          <strong style="font-size:0.88rem;">${rec.name}</strong>
+          <div style="font-size:0.75rem;color:var(--text-dim);">錄製時間：${rec.time}</div>
+        </div>
+        <audio controls src="${rec.url}"></audio>
+        <div style="display:flex;gap:6px;">
+          <a href="${rec.url}" download="${rec.name}"><button class="btn-green" type="button">⬇ 下載</button></a>
+          <button class="btn-pink" type="button" onclick="deleteRecording(${i})">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function deleteRecording(idx) {
+    URL.revokeObjectURL(savedRecordings[idx].url);
+    savedRecordings.splice(idx, 1);
+    renderRecordingVault();
+  }
+
+  function setupMediaSession(st) {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: st.name,
+        artist: "Roy's Net Radio",
+        album: 'CYBER HUD v3.0',
+        artwork: [{ src: './icon-512.png', sizes: '512x512', type: 'image/png' }]
+      });
+      navigator.mediaSession.setActionHandler('play', () => { if (audio.paused) togglePlay(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (!audio.paused) togglePlay(); });
+      navigator.mediaSession.setActionHandler('previoustrack', prevStation);
+      navigator.mediaSession.setActionHandler('nexttrack', nextStation);
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (document.getElementById('authModal').classList.contains('show')) return;
+    switch (e.code) {
+      case 'Space': e.preventDefault(); togglePlay(); break;
+      case 'ArrowLeft': prevStation(); break;
+      case 'ArrowRight': nextStation(); break;
+      case 'ArrowUp':
+        e.preventDefault();
+        audio.volume = Math.min(1, +(audio.volume + 0.05).toFixed(2));
+        document.getElementById('volumeSlider').value = audio.volume;
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        audio.volume = Math.max(0, +(audio.volume - 0.05).toFixed(2));
+        document.getElementById('volumeSlider').value = audio.volume;
+        break;
+      case 'KeyM': toggleMute(); break;
+      case 'KeyR': toggleRecording(); break;
+    }
+  });
+  function toggleAdminPanel() {
+    const content = document.getElementById('adminPanelContent');
+    const arrow = document.getElementById('adminArrow');
+    content.classList.toggle('open');
+    arrow.textContent = content.classList.contains('open') ? '▲ 收合' : '▼ 展開';
+  }
+
+  function renderAllLists() {
+    applySearchFilter();
+    const manageBox = document.getElementById('manageStationList');
+    manageBox.innerHTML = stations.map((st, idx) => {
+      const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
+      return `
+      <div class="station-item">
+        <div>
+          <strong>${st.name}</strong><span class="cat-tag">${st.category || '綜合'}</span> ${isHls ? '<span style="color:var(--accent-green);">[HLS]</span>' : ''}
+          <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${st.url}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="editStation(${idx})">✏️ 編輯</button>
+          <button class="btn-pink" onclick="deleteStation(${idx})">🗑 刪除</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function saveStation() {
+    const name = document.getElementById('stationName').value.trim();
+    const url = document.getElementById('stationUrl').value.trim();
+    const category = document.getElementById('stationCategory').value;
+    const editIdx = parseInt(document.getElementById('editIndex').value, 10);
+    if (!name || !url) return alert('請填寫電臺名稱與串流網址！');
+
+    const item = { name, url, category, isHls: url.toLowerCase().includes('.m3u8') };
+    if (editIdx >= 0) stations[editIdx] = item;
+    else stations.push(item);
+
+    await saveData();
+    cancelEdit();
+    renderAllLists();
+  }
+
+  function editStation(idx) {
+    const st = stations[idx];
+    document.getElementById('editIndex').value = idx;
+    document.getElementById('stationName').value = st.name;
+    document.getElementById('stationUrl').value = st.url;
+    document.getElementById('stationCategory').value = st.category || '綜合';
+  }
+
+  function cancelEdit() {
+    document.getElementById('editIndex').value = '-1';
+    document.getElementById('stationName').value = '';
+    document.getElementById('stationUrl').value = '';
+    document.getElementById('stationCategory').value = '綜合';
+  }
+
+  async function deleteStation(idx) {
+    if (!confirm(`確定要刪除「${stations[idx].name}」嗎？`)) return;
+    const removedUrl = stations[idx].url;
+    stations.splice(idx, 1);
+    favorites = favorites.filter(f => f !== removedUrl);
+    if (currentStationIndex === idx) {
+      audio.pause();
+      currentStationIndex = -1;
+      document.getElementById('nowPlayingTitle').textContent = '未選擇電臺';
+    }
+    await saveData();
+    renderAllLists();
+  }
+
+  function exportStationsJSON() {
+    const blob = new Blob([JSON.stringify(stations, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Roys_Radio_Stations_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const content = e.target.result;
+      let imported = [];
+      try {
+        if (file.name.toLowerCase().endsWith('.json')) {
+          const parsed = JSON.parse(content);
+          if (Array.isArray(parsed)) imported = parsed.filter(item => item.name && item.url);
+        } else {
+          const lines = content.split(/\r?\n/);
+          let pendingName = '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('#EXTINF:')) {
+              const commaIdx = trimmed.indexOf(',');
+              pendingName = commaIdx !== -1 ? trimmed.slice(commaIdx + 1).trim() : '匯入電臺';
+            } else if (trimmed && !trimmed.startsWith('#')) {
+              imported.push({ name: pendingName || '匯入電臺', url: trimmed, category: '綜合', isHls: trimmed.toLowerCase().includes('.m3u8') });
+              pendingName = '';
+            }
+          }
+        }
+        let added = 0;
+        imported.forEach(item => {
+          if (!stations.some(s => s.url === item.url)) {
+            stations.push({ name: item.name, url: item.url, category: item.category || '綜合', isHls: item.url.toLowerCase().includes('.m3u8') });
+            added++;
+          }
+        });
+        await saveData();
+        renderAllLists();
+        alert(`📥 匯入完成！共新增 ${added} 個不重複電臺。`);
+      } catch (err) {
+        alert('檔案格式解析失敗：' + err.message);
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  loadLocalData();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
