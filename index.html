@@ -1291,8 +1291,7 @@
     let recAbortController = null;
   let isDirectStreamRec = false;
 
-  async function startRecording() {
-    // 1. 檢查目前正在使用的播放器（audio 或 nativeAudio）是否正在播放
+    async function startRecording() {
     if (activeAudio.paused || currentStationIndex < 0) {
       return alert('請先開始播放電臺再進行錄音！');
     }
@@ -1302,7 +1301,6 @@
     const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
     const CORS_PROXY = "https://workers.dev";
 
-    // 更新錄音按鈕與計時器 UI 狀態
     const setRecUI = (active) => {
       const btn = document.getElementById('recordBtn');
       if (active) {
@@ -1322,7 +1320,7 @@
       }
     };
 
-    // 【方案 A】iOS 手機 & 非 HLS 串流：直接透過 Fetch 擷取原始音訊流，並存為 iPhone 可直接播放的 .aac 格式
+    // 【方案 A】iOS 手機 & 非 HLS 串流：先試直連抓取，失敗再自動走代理
     if (isIOS || !isHls) {
       if (isHls && isIOS) {
         return alert('提醒：警廣 (.m3u8) 串流受限於台灣政府主機 IP 防護與 iOS 系統限制，目前 iPhone 僅支援收聽；中廣、飛碟等一般電台皆可正常錄音！');
@@ -1331,13 +1329,25 @@
       isDirectStreamRec = true;
       recordedChunks = [];
       recAbortController = new AbortController();
-      const fetchUrl = CORS_PROXY + encodeURIComponent(st.url);
+
+      // 雙軌備援抓取：先試直連（避免代理超時），失敗再切 Cloudflare Worker 代理
+      const tryFetchStream = async () => {
+        try {
+          const directRes = await fetch(st.url, { signal: recAbortController.signal });
+          if (directRes.ok && directRes.body) return directRes;
+        } catch (e) {
+          if (e.name === 'AbortError') throw e;
+        }
+        const proxyRes = await fetch(CORS_PROXY + encodeURIComponent(st.url), { signal: recAbortController.signal });
+        if (!proxyRes.ok || !proxyRes.body) {
+          throw new Error(`HTTP ${proxyRes.status} 串流伺服器拒絕連線`);
+        }
+        return proxyRes;
+      };
 
       try {
-        const response = await fetch(fetchUrl, { signal: recAbortController.signal });
-        if (!response.ok || !response.body) throw new Error('串流伺服器無回應');
+        const response = await tryFetchStream();
 
-        // 關鍵修正：Revma 等電台原始串流為 ADTS AAC，存成 .aac (audio/aac) 才能在 iPhone 播出聲音！
         const contentType = (response.headers.get('Content-Type') || '').toLowerCase();
         const isAac = contentType.includes('aac') || contentType.includes('mp4') || st.url.includes('revma.com') || st.url.includes('.m4a');
         const ext = isAac ? 'aac' : 'mp3';
@@ -1354,7 +1364,7 @@
               if (value && value.length > 0) recordedChunks.push(value);
             }
           } catch (e) {
-            // 按下停止錄音時觸發 AbortError，屬於正常結束流程
+            // 按下停止錄音時觸發 AbortError，屬於正常結束
           } finally {
             if (recordedChunks.length > 0) {
               const blob = new Blob(recordedChunks, { type: finalMime });
@@ -1432,6 +1442,7 @@
     btn.classList.remove('recording');
     document.getElementById('recTimer').textContent = '';
   }
+
 
      function shareRecording(idx) {
     const rec = savedRecordings[idx];
