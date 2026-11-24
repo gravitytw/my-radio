@@ -1020,16 +1020,16 @@
     else alert('此電臺已不在清單中');
   }
     
-  function startStream(idx, forceHls = false, useProxy = false) {
+   function startStream(idx, forceHls = false, bypassProxy = false) {
     clearTimeout(retryTimer);
-    if (!forceHls && !useProxy) retryCount = 0;
+    if (!forceHls && !bypassProxy) retryCount = 0;
     isUserPaused = false;
     currentStationIndex = idx;
     const st = stations[idx];
     initVisualizer();
 
     document.getElementById('nowPlayingTitle').textContent = st.name;
-    setStatus('連線中...', 'warn', useProxy ? '⏳ 透過代理連線中...' : '⏳ 載入串流...');
+    setStatus('連線中...', 'warn', '⏳ 載入串流...');
     stopTitleMarquee("⏳ [連線中]");
     updateFavButton();
     renderDropdown();
@@ -1047,18 +1047,18 @@
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const useHls = forceHls || st.isHls || st.url.toLowerCase().includes('.m3u8');
 
-    const needProxyByDefault = st.url.includes('pbs.gov.tw') || st.url.startsWith('http://');
-    const shouldUseProxy = useProxy || needProxyByDefault;
+    // iOS 必須強制走代理取得 CORS 標頭，錄音才會有聲音（若代理被擋才自動退回直連）
+    const shouldUseProxy = !bypassProxy && (isIOS || st.url.includes('pbs.gov.tw') || st.url.startsWith('http://'));
 
     const playUrl = (shouldUseProxy && !st.url.startsWith(CORS_PROXY))
       ? CORS_PROXY + encodeURIComponent(st.url)
       : st.url;
 
     const onPlayFail = () => {
-      if (!shouldUseProxy) {
+      if (shouldUseProxy) {
         startStream(idx, forceHls, true);
       } else if (!useHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
-        startStream(idx, true, shouldUseProxy);
+        startStream(idx, true, bypassProxy);
       } else {
         handleStreamError();
       }
@@ -1091,7 +1091,7 @@
     setupMediaSession(st);
     startIcyPolling({ ...st, url: playUrl }, useHls);
   }
-
+ 
 
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
