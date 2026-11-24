@@ -1283,9 +1283,12 @@
     }
   }
 
-  function toggleRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
-    else startRecording();
+    function toggleRecording() {
+    if ((mediaRecorder && mediaRecorder.state === 'recording') || isDirectStreamRec) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   }
 
     let recAbortController = null;
@@ -1300,6 +1303,8 @@
     const st = stations[currentStationIndex];
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const CORS_PROXY = "https://workers.dev";
+
+
 
     // 自動修復雲端舊資料中殘缺的網址（解決全國廣播 M-Radio 報錯 URL is not valid）
     let targetUrl = (st.url || '').trim();
