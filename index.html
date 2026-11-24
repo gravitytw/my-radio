@@ -1290,6 +1290,7 @@
 
     let recAbortController = null;
   let isDirectStreamRec = false;
+  let activeStreamReader = null;
 
   async function startRecording() {
     if (activeAudio.paused || currentStationIndex < 0) {
@@ -1429,6 +1430,7 @@
         setRecUI(true);
 
         const reader = response.body.getReader();
+activeStreamReader = reader;
         (async () => {
           try {
             while (true) {
@@ -1502,12 +1504,17 @@
     }
   }
 
-
   function stopRecording() {
-    if (isDirectStreamRec && recAbortController) {
+    isDirectStreamRec = false;
+    if (activeStreamReader) {
+      activeStreamReader.cancel().catch(() => {});
+      activeStreamReader = null;
+    }
+    if (recAbortController) {
       recAbortController.abort();
       recAbortController = null;
-    } else if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    }
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
     }
     clearInterval(recInterval);
@@ -1517,6 +1524,7 @@
     document.getElementById('recTimer').textContent = '';
   }
 
+  
 
      function shareRecording(idx) {
     const rec = savedRecordings[idx];
