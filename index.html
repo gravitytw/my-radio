@@ -1337,18 +1337,24 @@
       }
     };
 
-    // 雙軌連線函式：先試直連，被 CORS 擋住再自動切 Cloudflare Worker 代理
+        // 雙軌連線函式：支援 302 節點跳轉，先試直連、失敗再自動切 Cloudflare Worker 代理
     const fetchWithFallback = async (fetchTarget, signal) => {
+      let err1 = '';
       try {
-        const res1 = await fetch(fetchTarget, { signal });
-        if (res1.ok) return res1;
+        const res1 = await fetch(fetchTarget, { signal, redirect: 'follow' });
+        if (res1.ok && res1.body) return res1;
+        err1 = `直連狀態 ${res1.status}`;
       } catch (e) {
         if (e.name === 'AbortError') throw e;
+        err1 = e.message;
       }
-      const res2 = await fetch(CORS_PROXY + encodeURIComponent(fetchTarget), { signal });
-      if (!res2.ok) throw new Error(`HTTP ${res2.status} 串流伺服器拒絕連線`);
+      const res2 = await fetch(CORS_PROXY + encodeURIComponent(fetchTarget), { signal, redirect: 'follow' });
+      if (!res2.ok || !res2.body) {
+        throw new Error(`直連失敗(${err1}) / 代理失敗(HTTP ${res2.status})，網址：${fetchTarget}`);
+      }
       return res2;
     };
+
 
     // 【方案 A】iOS 專用警廣 (.m3u8) 切片錄音器：背景自動解析清單並下載合併音訊切片
     if (isIOS && isHls) {
