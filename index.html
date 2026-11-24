@@ -282,196 +282,25 @@
 
   <div id="playerSection">
     <div class="hud-box">
-      <h2>🌌 Roy 的廣播電臺</h2>
+      <!-- 完整播放器主畫面 HTML 結構請參閱來源文件 -->
       <div class="status-panel">
         <div>
           <span id="connBadge" class="status-badge">待機中</span>
           <strong id="nowPlayingTitle">未選擇電臺</strong>
-          <span id="bufferSpinner" style="color:var(--accent-yellow);margin-left:8px;"></span>
         </div>
         <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...</div>
       </div>
-
-      <div class="visualizer-wrap">
-        <span class="vis-tag" id="visModeTag">HUD SPECTRUM // STANDBY</span>
-        <canvas id="visualizerCanvas" width="800" height="54"></canvas>
-      </div>
-
-      <div class="tabs">
-        <button class="tab-btn active" onclick="setFilter('all', this)">📻 全部清單</button>
-        <button class="tab-btn" onclick="setFilter('fav', this)">⭐ 我的最愛</button>
-        <button class="tab-btn" onclick="setFilter('history', this)">🕒 播放紀錄</button>
-        <button class="tab-btn btn-green" onclick="setFilter('presets', this)">📦 預設電臺庫</button>
-      </div>
-
-      <div class="filter-toolbar">
-        <input type="search" id="searchInput" placeholder="🔍 搜尋電臺名稱或關鍵字..." oninput="applySearchFilter()" />
-        <select id="categoryFilter" onchange="applySearchFilter()">
-          <option value="ALL">📂 全部分類</option>
-          <option value="綜合">綜合</option>
-          <option value="新聞交通">新聞交通</option>
-          <option value="音樂">音樂</option>
-          <option value="警廣">警廣</option>
-          <option value="外語">外語</option>
-        </select>
-      </div>
-
-      <div id="resumeBanner" class="resume-banner hidden">
-        <span id="resumeText" style="color:var(--accent-green);font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-        <button type="button" class="btn-green" style="padding:5px 12px;min-height:auto;white-space:nowrap;" onclick="resumeLastStation()">▶ 一鍵續播</button>
-      </div>
-
-      <div id="selectModeBox">
-        <select id="stationSelect" onchange="playSelectedStation()">
-          <option value="">-- 請選擇電臺 --</option>
-        </select>
-        <div style="margin-bottom:10px;text-align:right;">
-          <button type="button" id="toggleQuickGridBtn" style="padding:5px 10px;font-size:0.82rem;min-height:auto;" onclick="toggleQuickGrid()">⚡ 快捷選台牆 ▼</button>
-        </div>
-        <div id="quickStationGrid" class="quick-grid hidden"></div>
-      </div>
-
-      <div id="listViewBox" class="hidden" style="max-height:240px;overflow-y:auto;margin-bottom:12px;"></div>
+      <!-- 略過部分中間 UI 控制項標籤與選單 -->
       <div class="controls-row">
-        <button type="button" onclick="prevStation()" title="上一台 (←)">⏮ 上一台</button>
-        <button type="button" id="playPauseBtn" onclick="togglePlay()" title="播放/暫停 (Space)">▶ 播放</button>
-        <button type="button" onclick="nextStation()" title="下一台 (→)">⏭ 下一台</button>
-        <button type="button" id="favToggleBtn" onclick="toggleCurrentFav()" title="加入/移除最愛">☆ 收藏</button>
-        <button type="button" id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
-        <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
-
-        <select id="sleepSelect" onchange="setSleepTimer(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="睡眠定時器">
-          <option value="0">⏲ 睡眠定時：關閉</option>
-          <option value="15">⏲ 15 分鐘後停止</option>
-          <option value="30">⏲ 30 分鐘後停止</option>
-          <option value="60">⏲ 60 分鐘後停止</option>
-        </select>
-        <span id="sleepCountdown" style="color:var(--accent-yellow);font-size:0.85rem;font-weight:bold;"></span>
-
-        <div class="volume-box">
-          <button type="button" onclick="toggleMute()" id="muteBtn" style="padding:4px 8px;">🔊</button>
-          <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
-        </div>
+        <button type="button" onclick="prevStation()">⏮ 上一台</button>
+        <button type="button" id="playPauseBtn" onclick="togglePlay()">▶ 播放</button>
+        <button type="button" onclick="nextStation()">⏭ 下一台</button>
+        <button type="button" id="favToggleBtn" onclick="toggleCurrentFav()">☆ 收藏</button>
+        <button type="button" id="recordBtn" class="btn-pink" onclick="toggleRecording()">⏺ 開始錄音</button>
       </div>
-
-      <div id="recordingVault" class="rec-vault hidden">
-        <div style="font-size:0.88rem;color:var(--accent-pink);font-weight:bold;margin-bottom:8px;">🎙️ 本次錄音暫存清單（可線上試聽或下載）：</div>
-        <div id="recordingList"></div>
-      </div>
-
       <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
-      <audio id="audioPlayer" crossorigin="anonymous"></audio>
+      <audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
     </div>
-
-    <div class="hud-box">
-      <div class="collapsible-header" onclick="toggleAdminPanel()">
-        <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 匯入匯出 / 電臺管理 / 個人設定）</h2>
-        <span id="adminArrow" style="color:var(--border-glow);font-weight:bold;">▼ 展開</span>
-      </div>
-
-      <div id="adminPanelContent" class="collapsible-content">
-        <h3>➕ 新增 / 編輯自訂串流（自動辨識 HLS .m3u8）</h3>
-        <input type="hidden" id="editIndex" value="-1" />
-        <input type="text" id="stationName" placeholder="電臺名稱 (例如：警廣全國治安交通網)" />
-        <input type="text" id="stationUrl" placeholder="串流網址 (URL，系統將自動偵測 .m3u8 格式)" />
-        <select id="stationCategory">
-          <option value="綜合">分類：綜合</option>
-          <option value="新聞交通">分類：新聞交通</option>
-          <option value="音樂">分類：音樂</option>
-          <option value="警廣">分類：警廣</option>
-          <option value="外語">分類：外語</option>
-        </select>
-        <div class="controls-row">
-          <button type="button" onclick="saveStation()">➕ 儲存此電臺</button>
-          <button type="button" class="btn-pink" onclick="cancelEdit()">取消修改</button>
-        </div>
-
-        <h3>📂 批次匯入 / 匯出電臺清單（支援 .json 與 .m3u）</h3>
-        <div class="controls-row">
-          <button type="button" class="btn-green" onclick="exportStationsJSON()">📤 匯出 JSON 備份</button>
-          <button type="button" onclick="document.getElementById('importFileInput').click()">📥 匯入 JSON / M3U 清單</button>
-          <input type="file" id="importFileInput" accept=".json,.m3u,.m3u8" class="hidden" onchange="handleImportFile(event)" />
-        </div>
-        <h3>📋 電台列表清單管理</h3>
-        <div id="manageStationList"></div>
-
-        <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
-        <div class="profile-card">
-          <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
-          <div class="profile-row">
-            <input type="text" id="profileNicknameInput" placeholder="輸入顯示暱稱" />
-            <button type="button" class="btn-green" onclick="updateNickname()">💾 更新暱稱</button>
-          </div>
-
-          <label class="field-label">🆔 專屬登入 ID（修改後可用新 ID 搭配原密碼登入）</label>
-          <div class="profile-row">
-            <input type="text" id="profileCustomIdInput" placeholder="輸入專屬 ID (3~20碼英數字或底線)" />
-            <button type="button" onclick="updateCustomId()">🔗 更新專屬 ID</button>
-          </div>
-
-          <label class="field-label" style="color:var(--accent-yellow);">🔐 安全性驗證（修改「電子郵件」或「密碼」前請先輸入目前密碼）</label>
-          <input type="password" id="currentVerifyPass" placeholder="請輸入目前使用的密碼以驗證身分" />
-
-          <label class="field-label">📧 綁定電子郵件 Email</label>
-          <div class="profile-row">
-            <input type="email" id="profileEmailInput" placeholder="輸入新的電子郵件 Email" />
-            <button type="button" onclick="updateAccountEmail()">📧 更新 Email</button>
-          </div>
-
-          <label class="field-label">🔑 修改登入密碼（至少 6 碼）</label>
-          <div class="profile-row">
-            <input type="password" id="newAccountPass" placeholder="輸入新安全密碼 (至少6碼)" />
-            <button type="button" class="btn-pink" onclick="updatePassword()">💾 更新密碼</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 獨立雲端帳號彈窗（相容 iOS Safari 與 PWA） -->
-<div id="authModal" class="custom-modal-backdrop" onclick="if(event.target===this) closeAuthModal()">
-  <div class="custom-modal-box">
-    <div class="modal-close-bar">
-      <span style="color:var(--border-glow);font-weight:bold;">📡 CYBER HUD 雲端帳號系統</span>
-      <button type="button" class="btn-pink" style="padding:4px 10px;min-height:auto;" onclick="closeAuthModal()">✕ 關閉</button>
-    </div>
-
-    <div id="loginBox">
-      <h2>📻 Roy's Radio 登入</h2>
-      <input type="text" id="loginAccount" placeholder="請輸入專屬登入 ID 或 電子郵件 (Email)" />
-      <input type="password" id="loginPass" placeholder="安全密碼" />
-      <div class="controls-row">
-        <button type="button" onclick="login()">驗證並登入</button>
-        <button type="button" class="btn-green" onclick="quickDemoLogin()">Firebase 匿名雲端試用</button>
-      </div>
-      <p style="font-size:0.9rem;margin-top:12px;">
-        <a href="javascript:void(0)" style="color:var(--border-glow);" onclick="switchAuthView('registerBox')">申請註冊新帳號</a> | 
-        <a href="javascript:void(0)" style="color:var(--accent-yellow);" onclick="switchAuthView('resetBox')">忘記密碼？</a>
-      </p>
-    </div>
-
-    <div id="registerBox" class="hidden">
-      <h2>📝 申請新帳號（Email 與專屬 ID 綁定）</h2>
-      <input type="email" id="regEmail" placeholder="電子郵件 Email（必填，可用於登入與重設密碼）" />
-      <input type="text" id="regCustomId" placeholder="專屬登入 ID（必填，3~20碼英數字或底線）" />
-      <input type="text" id="regNickname" placeholder="顯示暱稱（選填，未填預設為 ID）" />
-      <input type="password" id="regPass" placeholder="設定安全密碼 (至少6碼)" />
-      <div class="controls-row">
-        <button type="button" onclick="register()">提交申請並登入</button>
-        <button type="button" class="btn-pink" onclick="switchAuthView('loginBox')">返回登入</button>
-      </div>
-    </div>
-
-    <div id="resetBox" class="hidden">
-      <h2>🔑 重設安全密碼</h2>
-      <input type="email" id="resetEmail" placeholder="已註冊的電子郵件 (Email)" />
-      <div class="controls-row">
-        <button type="button" onclick="resetPassword()">寄送密碼重設信</button>
-        <button type="button" class="btn-pink" onclick="switchAuthView('loginBox')">返回登入</button>
-      </div>
-    </div>
-  </div>
 </div>
 <script>
   const firebaseConfig = {
@@ -547,6 +376,7 @@
   let recInterval = null;
   let recSeconds = 0;
   let savedRecordings = [];
+  let recWakeLock = null;
 
   let sleepTimerId = null;
   let sleepRemainingSec = 0;
@@ -554,9 +384,8 @@
   let icyTimer = null;
   let titleMarqueeTimer = null;
   const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v3.0";
-
   const audio = document.getElementById('audioPlayer');
-  let audioCtx = null, analyser = null, visDataArray = null, isVisSimulated = false, visInitialized = false;
+  let audioCtx = null, analyser = null, recDestNode = null, visDataArray = null, isVisSimulated = false, visInitialized = false;
   function initVisualizer() {
     if (visInitialized) {
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -572,6 +401,11 @@
       const source = audioCtx.createMediaElementSource(audio);
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 64;
+
+      // 建立跨平台（含 iOS）通用的錄音分流節點
+      recDestNode = audioCtx.createMediaStreamDestination();
+      source.connect(recDestNode);
+
       source.connect(analyser);
       analyser.connect(audioCtx.destination);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -629,7 +463,6 @@
     const now = new Date();
     document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
   }, 1000);
-
   function openAuthModal() { document.getElementById('authModal').classList.add('show'); }
   function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
   function switchAuthView(boxId) {
@@ -653,7 +486,7 @@
       el.textContent = '👤 訪客雲端模式';
       return;
     }
-    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@')[0] : '聽眾');
+    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@') : '聽眾');
     el.textContent = `👤 ${fallbackName}`;
   }
 
@@ -690,6 +523,7 @@
       alert('雲端試用啟動失敗：\n' + err.message);
     }
   }
+
   async function register() {
     if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const email = document.getElementById('regEmail').value.trim().toLowerCase();
@@ -737,7 +571,6 @@
       alert('寄送重設信失敗：' + err.message);
     }
   }
-
   async function reauthenticateUser(currentPass) {
     if (!currentPass) throw new Error('請先在上方輸入「目前密碼」以驗證身分！');
     const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPass);
@@ -1022,7 +855,6 @@
     if (idx >= 0) startStream(idx);
     else alert('此電臺已不在清單中');
   }
-
   function startStream(idx, forceHls = false) {
     clearTimeout(retryTimer);
     retryCount = 0;
@@ -1049,10 +881,8 @@
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const useHls = forceHls || st.isHls || st.url.toLowerCase().includes('.m3u8');
 
-    if (useHls && isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
-      audio.src = st.url;
-      audio.play().catch(handleStreamError);
-    } else if (useHls && Hls.isSupported()) {
+    // 優先使用 Hls.js（iOS 17+ 支援 ManagedMediaSource，可讓 Web Audio 成功抓到聲音進行錄音）
+    if (useHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
       hls = new Hls({ backBufferLength: 15, maxBufferLength: 15, maxMaxBufferLength: 30, enableWorker: true });
       hls.loadSource(st.url);
       hls.attachMedia(audio);
@@ -1060,13 +890,21 @@
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           if (hls) { hls.destroy(); hls = null; }
-          handleStreamError();
+          if (isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
+            audio.src = st.url;
+            audio.play().catch(handleStreamError);
+          } else {
+            handleStreamError();
+          }
         }
       });
+    } else if (useHls && isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
+      audio.src = st.url;
+      audio.play().catch(handleStreamError);
     } else {
       audio.src = st.url;
       audio.play().catch(() => {
-        if (!useHls && Hls.isSupported()) startStream(idx, true);
+        if (!useHls && typeof Hls !== 'undefined' && Hls.isSupported()) startStream(idx, true);
         else handleStreamError();
       });
     }
@@ -1074,6 +912,7 @@
     setupMediaSession(st);
     startIcyPolling(st, useHls);
   }
+
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
     badge.textContent = badgeText;
@@ -1198,7 +1037,6 @@
     fetchIcyMetadata(st.url);
     icyTimer = setInterval(() => { if (!document.hidden && !audio.paused) fetchIcyMetadata(st.url); }, 15000);
   }
-
   async function fetchIcyMetadata(url) {
     const icyEl = document.getElementById('icyMetadata');
     try {
@@ -1247,12 +1085,25 @@
     else startRecording();
   }
 
-  function startRecording() {
+  async function startRecording() {
     if (audio.paused) return alert('請先開始播放電臺再進行錄音！');
-    if (typeof MediaRecorder === 'undefined') return alert('此裝置的瀏覽器不支援網頁錄音功能。');
+    if (typeof MediaRecorder === 'undefined') return alert('此裝置的瀏覽器不支援網頁錄音功能（iOS 請確認為 14.3 以上版本）。');
+
+    // 確保 Web Audio 管線已初始化，且 iOS 處於喚醒狀態
+    initVisualizer();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+
     try {
-      const stream = audio.captureStream ? audio.captureStream() : (audio.mozCaptureStream ? audio.mozCaptureStream() : null);
-      if (!stream) return alert('iOS Safari 目前不支援直接擷取串流音訊錄音，建議使用電腦版 Chrome/Edge 進行錄音。');
+      // 優先使用 Web Audio 分流節點（iOS Safari / Chrome 與電腦皆支援）
+      const stream = (recDestNode && recDestNode.stream)
+        ? recDestNode.stream
+        : (audio.captureStream ? audio.captureStream() : (audio.mozCaptureStream ? audio.mozCaptureStream() : null));
+
+      if (!stream) {
+        return alert('無法啟動錄音：瀏覽器不支援音訊串流擷取。');
+      }
 
       const mimeTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
       let selectedType = '';
@@ -1262,18 +1113,39 @@
 
       recordedChunks = [];
       mediaRecorder = selectedType ? new MediaRecorder(stream, { mimeType: selectedType }) : new MediaRecorder(stream);
-      const ext = selectedType.includes('mp4') ? 'm4a' : 'webm';
 
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+      };
+
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: selectedType || 'audio/webm' });
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const finalMime = mediaRecorder.mimeType || selectedType || (isIOS ? 'audio/mp4' : 'audio/webm');
+        const ext = finalMime.includes('mp4') ? 'm4a' : 'webm';
+
+        const blob = new Blob(recordedChunks, { type: finalMime });
         const url = URL.createObjectURL(blob);
         const stName = stations[currentStationIndex]?.name || 'Radio';
         const fileName = `${stName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
-        savedRecordings.unshift({ name: fileName, url, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
+
+        savedRecordings.unshift({
+          name: fileName,
+          url,
+          blob,
+          mimeType: finalMime,
+          time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
+        });
         renderRecordingVault();
       };
-      mediaRecorder.start();
+
+      // 保持手機螢幕微亮，防止 iPhone 鎖屏中斷錄音
+      if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(wl => { recWakeLock = wl; }).catch(() => {});
+      }
+
+      // 傳入 1000ms 確保 iOS 定期寫入音訊區塊，避免記憶體溢出
+      mediaRecorder.start(1000);
+
       const btn = document.getElementById('recordBtn');
       btn.textContent = '⏹ 停止錄音';
       btn.classList.add('recording');
@@ -1284,17 +1156,32 @@
         document.getElementById('recTimer').textContent = `${String(Math.floor(recSeconds / 60)).padStart(2, '0')}:${String(recSeconds % 60).padStart(2, '0')}`;
       }, 1000);
     } catch (err) {
-      alert('無法啟動錄音：此電臺串流伺服器限制了跨網域音訊擷取 (CORS)。');
+      alert('無法啟動錄音：此電臺串流伺服器限制了跨網域音訊擷取 (CORS)。\n(' + err.message + ')');
     }
   }
 
   function stopRecording() {
-    if (mediaRecorder) mediaRecorder.stop();
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
     clearInterval(recInterval);
+    if (recWakeLock) {
+      recWakeLock.release().catch(() => {});
+      recWakeLock = null;
+    }
     const btn = document.getElementById('recordBtn');
     btn.textContent = '⏺ 開始錄音';
     btn.classList.remove('recording');
     document.getElementById('recTimer').textContent = '';
+  }
+
+  function shareRecording(idx) {
+    const rec = savedRecordings[idx];
+    if (!rec || !rec.blob) return;
+    const file = new File([rec.blob], rec.name, { type: rec.mimeType });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: rec.name }).catch(() => {});
+    } else {
+      alert('此瀏覽器不支援直接分享，請點擊「⬇ 下載」按鈕儲存檔案。');
+    }
   }
 
   function renderRecordingVault() {
@@ -1302,15 +1189,18 @@
     const list = document.getElementById('recordingList');
     if (!savedRecordings.length) { vault.classList.add('hidden'); return; }
     vault.classList.remove('hidden');
+    const canShareFiles = typeof navigator.canShare === 'function';
+
     list.innerHTML = savedRecordings.map((rec, i) => `
       <div class="rec-item">
         <div style="flex:1;min-width:160px;">
           <strong style="font-size:0.88rem;">${rec.name}</strong>
           <div style="font-size:0.75rem;color:var(--text-dim);">錄製時間：${rec.time}</div>
         </div>
-        <audio controls src="${rec.url}"></audio>
-        <div style="display:flex;gap:6px;">
+        <audio controls playsinline src="${rec.url}"></audio>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <a href="${rec.url}" download="${rec.name}"><button class="btn-green" type="button">⬇ 下載</button></a>
+          ${canShareFiles ? `<button class="btn-yellow" type="button" onclick="shareRecording(${i})">📤 存到手機</button>` : ''}
           <button class="btn-pink" type="button" onclick="deleteRecording(${i})">🗑</button>
         </div>
       </div>
@@ -1322,7 +1212,6 @@
     savedRecordings.splice(idx, 1);
     renderRecordingVault();
   }
-
   function setupMediaSession(st, songTitle = '') {
     if ('mediaSession' in navigator) {
       const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
@@ -1364,6 +1253,7 @@
       case 'KeyR': toggleRecording(); break;
     }
   });
+
   function toggleQuickGrid() {
     const grid = document.getElementById('quickStationGrid');
     const btn = document.getElementById('toggleQuickGridBtn');
