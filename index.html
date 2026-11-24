@@ -1019,7 +1019,7 @@
     if (idx >= 0) startStream(idx);
     else alert('此電臺已不在清單中');
   }
-  function startStream(idx, forceHls = false) {
+    function startStream(idx, forceHls = false) {
     clearTimeout(retryTimer);
     retryCount = 0;
     isUserPaused = false;
@@ -1042,19 +1042,24 @@
     audio.removeAttribute('src');
     audio.load();
 
+    const CORS_PROXY = "https://workers.dev";
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const useHls = forceHls || st.isHls || st.url.toLowerCase().includes('.m3u8');
 
+    const playUrl = st.url.startsWith(CORS_PROXY)
+      ? st.url
+      : CORS_PROXY + encodeURIComponent(st.url);
+
     if (useHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
       hls = new Hls({ backBufferLength: 15, maxBufferLength: 15, maxMaxBufferLength: 30, enableWorker: true });
-      hls.loadSource(st.url);
+      hls.loadSource(playUrl);
       hls.attachMedia(audio);
       hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(handleStreamError));
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           if (hls) { hls.destroy(); hls = null; }
           if (isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
-            audio.src = st.url;
+            audio.src = playUrl;
             audio.play().catch(handleStreamError);
           } else {
             handleStreamError();
@@ -1062,10 +1067,10 @@
         }
       });
     } else if (useHls && isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
-      audio.src = st.url;
+      audio.src = playUrl;
       audio.play().catch(handleStreamError);
     } else {
-      audio.src = st.url;
+      audio.src = playUrl;
       audio.play().catch(() => {
         if (!useHls && typeof Hls !== 'undefined' && Hls.isSupported()) startStream(idx, true);
         else handleStreamError();
@@ -1073,8 +1078,9 @@
     }
 
     setupMediaSession(st);
-    startIcyPolling(st, useHls);
+    startIcyPolling({ ...st, url: playUrl }, useHls);
   }
+
 
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
