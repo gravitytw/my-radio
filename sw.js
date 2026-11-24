@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roys-radio-fast-v10';
+const CACHE_NAME = 'roys-radio-fast-v3.1';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
