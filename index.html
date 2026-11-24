@@ -1350,7 +1350,7 @@
 
 
     // 【方案 A】iOS 專用警廣 (.m3u8) 切片錄音器：背景自動解析清單並下載合併音訊切片
-    if (isIOS && isHls) {
+if (isHls) {
       isDirectStreamRec = true;
       recordedChunks = [];
       recAbortController = new AbortController();
