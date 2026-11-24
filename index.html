@@ -1304,10 +1304,11 @@
     const CORS_PROXY = "https:" + "//radio-proxy.ming-answer" + ".workers.dev/?url=";
 
         // 直接讀取目前正在正常播放的真實串流網址（百分之百正確、不會被改寫）
-    let targetUrl = (activeAudio.currentSrc || activeAudio.src || st.url || '').trim();
-    if (targetUrl.startsWith(CORS_PROXY)) {
-      targetUrl = decodeURIComponent(targetUrl.slice(CORS_PROXY.length));
-    }
+    let rawSrc = (activeAudio.currentSrc || activeAudio.src || '').trim();
+let targetUrl = (rawSrc && !rawSrc.startsWith('blob:')) ? rawSrc : (st.url || '').trim();
+if (targetUrl.startsWith(CORS_PROXY)) {
+  targetUrl = decodeURIComponent(targetUrl.slice(CORS_PROXY.length));
+}
 
     const isHls = st.isHls || targetUrl.toLowerCase().includes('.m3u8');
 
