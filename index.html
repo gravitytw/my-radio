@@ -1291,15 +1291,26 @@
     let recAbortController = null;
   let isDirectStreamRec = false;
 
-    async function startRecording() {
+  async function startRecording() {
     if (activeAudio.paused || currentStationIndex < 0) {
       return alert('請先開始播放電臺再進行錄音！');
     }
 
     const st = stations[currentStationIndex];
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
     const CORS_PROXY = "https://workers.dev";
+
+    // 自動修復雲端舊資料中殘缺的網址（解決全國廣播 M-Radio 報錯 URL is not valid）
+    let targetUrl = (st.url || '').trim();
+    if (targetUrl.startsWith('://revma.com')) {
+      targetUrl = 'https://revma.com' + targetUrl.replace('://revma.com', '').replace(/^\//, '');
+    } else if (targetUrl.startsWith('://')) {
+      targetUrl = 'https' + targetUrl;
+    } else if (!/^https?:\/\//i.test(targetUrl)) {
+      targetUrl = 'https://' + targetUrl;
+    }
+
+    const isHls = st.isHls || targetUrl.toLowerCase().includes('.m3u8');
 
     const setRecUI = (active) => {
       const btn = document.getElementById('recordBtn');
@@ -1320,36 +1331,98 @@
       }
     };
 
-    // 【方案 A】iOS 手機 & 非 HLS 串流：先試直連抓取，失敗再自動走代理
-    if (isIOS || !isHls) {
-      if (isHls && isIOS) {
-        return alert('提醒：警廣 (.m3u8) 串流受限於台灣政府主機 IP 防護與 iOS 系統限制，目前 iPhone 僅支援收聽；中廣、飛碟等一般電台皆可正常錄音！');
+    // 雙軌連線函式：先試直連，被 CORS 擋住再自動切 Cloudflare Worker 代理
+    const fetchWithFallback = async (fetchTarget, signal) => {
+      try {
+        const res1 = await fetch(fetchTarget, { signal });
+        if (res1.ok) return res1;
+      } catch (e) {
+        if (e.name === 'AbortError') throw e;
       }
+      const res2 = await fetch(CORS_PROXY + encodeURIComponent(fetchTarget), { signal });
+      if (!res2.ok) throw new Error(`HTTP ${res2.status} 串流伺服器拒絕連線`);
+      return res2;
+    };
 
+    // 【方案 A】iOS 專用警廣 (.m3u8) 切片錄音器：背景自動解析清單並下載合併音訊切片
+    if (isIOS && isHls) {
+      isDirectStreamRec = true;
+      recordedChunks = [];
+      recAbortController = new AbortController();
+      const signal = recAbortController.signal;
+      const downloadedSegments = new Set();
+
+      setRecUI(true);
+
+      (async () => {
+        try {
+          while (!signal.aborted) {
+            const m3u8Res = await fetchWithFallback(targetUrl, signal);
+            let m3u8Text = await m3u8Res.text();
+            let currentBaseUrl = targetUrl.substring(0, targetUrl.lastIndexOf('/') + 1);
+
+            const subPlaylistLine = m3u8Text.split(/\r?\n/).find(l => l.trim() && !l.startsWith('#') && l.includes('.m3u8'));
+            if (subPlaylistLine) {
+              const subUrl = subPlaylistLine.trim().startsWith('http') ? subPlaylistLine.trim() : currentBaseUrl + subPlaylistLine.trim();
+              const subRes = await fetchWithFallback(subUrl, signal);
+              m3u8Text = await subRes.text();
+              currentBaseUrl = subUrl.substring(0, subUrl.lastIndexOf('/') + 1);
+            }
+
+            const lines = m3u8Text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+            for (const seg of lines) {
+              if (signal.aborted) break;
+              const segUrl = seg.startsWith('http') ? seg : currentBaseUrl + seg;
+              if (!downloadedSegments.has(segUrl)) {
+                downloadedSegments.add(segUrl);
+                if (downloadedSegments.size > 60) {
+                  const firstKey = downloadedSegments.values().next().value;
+                  downloadedSegments.delete(firstKey);
+                }
+                const segRes = await fetchWithFallback(segUrl, signal);
+                const buf = await segRes.arrayBuffer();
+                if (buf && buf.byteLength > 0) recordedChunks.push(buf);
+              }
+            }
+
+            await new Promise(r => setTimeout(r, 2500));
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            alert('警廣切片錄音中斷：' + err.message);
+          }
+        } finally {
+          if (recordedChunks.length > 0) {
+            const blob = new Blob(recordedChunks, { type: 'audio/aac' });
+            const url = URL.createObjectURL(blob);
+            const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.aac`;
+            savedRecordings.unshift({
+              name: fileName,
+              url,
+              blob,
+              mimeType: 'audio/aac',
+              time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
+            });
+            renderRecordingVault();
+          }
+          isDirectStreamRec = false;
+          setRecUI(false);
+        }
+      })();
+      return;
+    }
+    // 【方案 B】iOS 與一般電台 (中廣、飛碟、全國廣播)：直接擷取原始音訊流存為 .aac / .mp3
+    if (isIOS || !isHls) {
       isDirectStreamRec = true;
       recordedChunks = [];
       recAbortController = new AbortController();
 
-      // 雙軌備援抓取：先試直連（避免代理超時），失敗再切 Cloudflare Worker 代理
-      const tryFetchStream = async () => {
-        try {
-          const directRes = await fetch(st.url, { signal: recAbortController.signal });
-          if (directRes.ok && directRes.body) return directRes;
-        } catch (e) {
-          if (e.name === 'AbortError') throw e;
-        }
-        const proxyRes = await fetch(CORS_PROXY + encodeURIComponent(st.url), { signal: recAbortController.signal });
-        if (!proxyRes.ok || !proxyRes.body) {
-          throw new Error(`HTTP ${proxyRes.status} 串流伺服器拒絕連線`);
-        }
-        return proxyRes;
-      };
-
       try {
-        const response = await tryFetchStream();
+        const response = await fetchWithFallback(targetUrl, recAbortController.signal);
+        if (!response.body) throw new Error('串流伺服器無回應');
 
         const contentType = (response.headers.get('Content-Type') || '').toLowerCase();
-        const isAac = contentType.includes('aac') || contentType.includes('mp4') || st.url.includes('revma.com') || st.url.includes('.m4a');
+        const isAac = contentType.includes('aac') || contentType.includes('mp4') || targetUrl.includes('revma.com') || targetUrl.includes('.m4a');
         const ext = isAac ? 'aac' : 'mp3';
         const finalMime = isAac ? 'audio/aac' : 'audio/mpeg';
 
@@ -1389,7 +1462,7 @@
       }
     }
 
-    // 【方案 B】電腦版瀏覽器 (Chrome / Edge)：使用 MediaRecorder 錄製（支援所有電台含警廣）
+    // 【方案 C】電腦版瀏覽器 (Chrome / Edge)：使用 MediaRecorder 錄製
     isDirectStreamRec = false;
     initVisualizer();
     if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
@@ -1428,6 +1501,7 @@
       alert('無法啟動錄音：' + err.message);
     }
   }
+
 
   function stopRecording() {
     if (isDirectStreamRec && recAbortController) {
