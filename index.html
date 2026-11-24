@@ -1433,13 +1433,7 @@
     document.getElementById('recTimer').textContent = '';
   }
 
-    const btn = document.getElementById('recordBtn');
-    btn.textContent = '⏺ 開始錄音';
-    btn.classList.remove('recording');
-    document.getElementById('recTimer').textContent = '';
-  }
-
-  function shareRecording(idx) {
+     function shareRecording(idx) {
     const rec = savedRecordings[idx];
     if (!rec || !rec.blob) return;
     const file = new File([rec.blob], rec.name, { type: rec.mimeType });
