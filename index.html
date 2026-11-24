@@ -357,6 +357,9 @@
 
       <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
       <audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
+<audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
+<audio id="nativeAudioPlayer" playsinline webkit-playsinline></audio>
+
     </div>
     <div class="hud-box">
       <div class="collapsible-header" onclick="toggleAdminPanel()">
@@ -1020,13 +1023,26 @@
     else alert('此電臺已不在清單中');
   }
     
-   function startStream(idx, forceHls = false, bypassProxy = false) {
+     const nativeAudio = document.getElementById('nativeAudioPlayer');
+  let activeAudio = audio;
+
+  function stopAllAudio() {
+    if (hls) { hls.destroy(); hls = null; }
+    [audio, nativeAudio].forEach(el => {
+      if (el) {
+        el.pause();
+        el.removeAttribute('src');
+        el.load();
+      }
+    });
+  }
+
+  function startStream(idx, forceHls = false) {
     clearTimeout(retryTimer);
-    if (!forceHls && !bypassProxy) retryCount = 0;
+    retryCount = 0;
     isUserPaused = false;
     currentStationIndex = idx;
     const st = stations[idx];
-    initVisualizer();
 
     document.getElementById('nowPlayingTitle').textContent = st.name;
     setStatus('連線中...', 'warn', '⏳ 載入串流...');
@@ -1038,60 +1054,55 @@
     const rb = document.getElementById('resumeBanner');
     if (rb) rb.classList.add('hidden');
 
-    if (hls) { hls.destroy(); hls = null; }
-    audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
+    stopAllAudio();
 
-    const CORS_PROXY = "https://workers.dev";
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const useHls = forceHls || st.isHls || st.url.toLowerCase().includes('.m3u8');
+    const isPbs = st.url.includes('pbs.gov.tw');
 
-    // iOS 必須強制走代理取得 CORS 標頭，錄音才會有聲音（若代理被擋才自動退回直連）
-    const shouldUseProxy = !bypassProxy && (isIOS || st.url.includes('pbs.gov.tw') || st.url.startsWith('http://'));
+    // iOS 播放警廣或 HLS 時，使用完全乾淨、未接過 Web Audio 的 nativeAudio，避開 Safari 封鎖
+    if (isIOS && (isPbs || useHls)) {
+      activeAudio = nativeAudio;
+      activeAudio.volume = document.getElementById('volumeSlider').value;
+      activeAudio.src = st.url;
+      activeAudio.play().then(() => {
+        setStatus('LIVE 直播中', 'ok', '');
+        document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
+        startTitleMarquee(st.name);
+      }).catch(handleStreamError);
 
-    const playUrl = (shouldUseProxy && !st.url.startsWith(CORS_PROXY))
-      ? CORS_PROXY + encodeURIComponent(st.url)
-      : st.url;
+      setupMediaSession(st);
+      startIcyPolling(st, useHls);
+      return;
+    }
 
-    const onPlayFail = () => {
-      if (shouldUseProxy) {
-        startStream(idx, forceHls, true);
-      } else if (!useHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
-        startStream(idx, true, bypassProxy);
-      } else {
-        handleStreamError();
-      }
-    };
+    // 一般電台與電腦版：使用主播放器 audio + 視覺頻譜
+    activeAudio = audio;
+    initVisualizer();
 
     if (useHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
       hls = new Hls({ backBufferLength: 15, maxBufferLength: 15, maxMaxBufferLength: 30, enableWorker: true });
-      hls.loadSource(playUrl);
+      hls.loadSource(st.url);
       hls.attachMedia(audio);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(onPlayFail));
+      hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(handleStreamError));
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           if (hls) { hls.destroy(); hls = null; }
-          if (isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
-            audio.src = playUrl;
-            audio.play().catch(onPlayFail);
-          } else {
-            onPlayFail();
-          }
+          handleStreamError();
         }
       });
-    } else if (useHls && isIOS && audio.canPlayType('application/vnd.apple.mpegurl')) {
-      audio.src = playUrl;
-      audio.play().catch(onPlayFail);
     } else {
-      audio.src = playUrl;
-      audio.play().catch(onPlayFail);
+      audio.src = st.url;
+      audio.play().catch(() => {
+        if (!useHls && typeof Hls !== 'undefined' && Hls.isSupported()) startStream(idx, true);
+        else handleStreamError();
+      });
     }
 
     setupMediaSession(st);
-    startIcyPolling({ ...st, url: playUrl }, useHls);
+    startIcyPolling(st, useHls);
   }
- 
+
 
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
@@ -1148,18 +1159,25 @@
     retryTimer = setTimeout(() => { if (!isUserPaused) startStream(currentStationIndex); }, 3000);
   }
 
-  function togglePlay() {
+
+  function prevStation() {
+    if (stations.length) startStream((currentStationIndex - 1 + stations.length) % stations.length);
+  }
+  function nextStation() {
+    if (stations.length) startStream((currentStationIndex + 1) % stations.length);
+  }
+   function togglePlay() {
     if (currentStationIndex < 0 && stations.length > 0) return startStream(0);
-    if (audio.paused) {
+    if (activeAudio.paused) {
       isUserPaused = false;
-      initVisualizer();
-      audio.play();
+      if (activeAudio === audio) initVisualizer();
+      activeAudio.play();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
       document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
     } else {
       isUserPaused = true;
       clearTimeout(retryTimer);
-      audio.pause();
+      activeAudio.pause();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       setStatus('已暫停', '', '');
       stopTitleMarquee("⏸ [已暫停]");
@@ -1175,13 +1193,18 @@
   }
   function changeVolume(val) {
     audio.volume = val;
+    if (nativeAudio) nativeAudio.volume = val;
     localStorage.setItem('roy_saved_volume', val);
     document.getElementById('muteBtn').textContent = val == 0 ? '🔇' : '🔊';
   }
   function toggleMute() {
-    audio.muted = !audio.muted;
-    document.getElementById('muteBtn').textContent = audio.muted ? '🔇' : '🔊';
+    const nextMute = !activeAudio.muted;
+    audio.muted = nextMute;
+    if (nativeAudio) nativeAudio.muted = nextMute;
+    document.getElementById('muteBtn').textContent = nextMute ? '🔇' : '🔊';
   }
+
+ 
 
   function setSleepTimer(minutes) {
     clearInterval(sleepTimerId);
@@ -1265,49 +1288,120 @@
     else startRecording();
   }
 
-  async function startRecording() {
-    if (audio.paused) return alert('請先開始播放電臺再進行錄音！');
-    if (typeof MediaRecorder === 'undefined') return alert('此裝置的瀏覽器不支援網頁錄音功能（iOS 請確認為 14.3 以上版本）。');
+    let recAbortController = null;
+  let isDirectStreamRec = false;
 
-    // 確保 Web Audio 管線已初始化，且 iOS 處於喚醒狀態
-    initVisualizer();
-    if (audioCtx && audioCtx.state === 'suspended') {
-      await audioCtx.resume();
+  async function startRecording() {
+    // 1. 檢查目前正在使用的播放器（audio 或 nativeAudio）是否正在播放
+    if (activeAudio.paused || currentStationIndex < 0) {
+      return alert('請先開始播放電臺再進行錄音！');
     }
 
+    const st = stations[currentStationIndex];
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
+    const CORS_PROXY = "https://workers.dev";
+
+    // 更新錄音按鈕與計時器 UI 狀態
+    const setRecUI = (active) => {
+      const btn = document.getElementById('recordBtn');
+      if (active) {
+        btn.textContent = '⏹ 停止錄音';
+        btn.classList.add('recording');
+        recSeconds = 0;
+        document.getElementById('recTimer').textContent = '00:00';
+        recInterval = setInterval(() => {
+          recSeconds++;
+          document.getElementById('recTimer').textContent = `${String(Math.floor(recSeconds / 60)).padStart(2, '0')}:${String(recSeconds % 60).padStart(2, '0')}`;
+        }, 1000);
+      } else {
+        clearInterval(recInterval);
+        btn.textContent = '⏺ 開始錄音';
+        btn.classList.remove('recording');
+        document.getElementById('recTimer').textContent = '';
+      }
+    };
+
+    // 【方案 A】iOS 手機 & 非 HLS 串流：直接透過 Fetch 擷取原始音訊流，並存為 iPhone 可直接播放的 .aac 格式
+    if (isIOS || !isHls) {
+      if (isHls && isIOS) {
+        return alert('提醒：警廣 (.m3u8) 串流受限於台灣政府主機 IP 防護與 iOS 系統限制，目前 iPhone 僅支援收聽；中廣、飛碟等一般電台皆可正常錄音！');
+      }
+
+      isDirectStreamRec = true;
+      recordedChunks = [];
+      recAbortController = new AbortController();
+      const fetchUrl = CORS_PROXY + encodeURIComponent(st.url);
+
+      try {
+        const response = await fetch(fetchUrl, { signal: recAbortController.signal });
+        if (!response.ok || !response.body) throw new Error('串流伺服器無回應');
+
+        // 關鍵修正：Revma 等電台原始串流為 ADTS AAC，存成 .aac (audio/aac) 才能在 iPhone 播出聲音！
+        const contentType = (response.headers.get('Content-Type') || '').toLowerCase();
+        const isAac = contentType.includes('aac') || contentType.includes('mp4') || st.url.includes('revma.com') || st.url.includes('.m4a');
+        const ext = isAac ? 'aac' : 'mp3';
+        const finalMime = isAac ? 'audio/aac' : 'audio/mpeg';
+
+        setRecUI(true);
+
+        const reader = response.body.getReader();
+        (async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              if (value && value.length > 0) recordedChunks.push(value);
+            }
+          } catch (e) {
+            // 按下停止錄音時觸發 AbortError，屬於正常結束流程
+          } finally {
+            if (recordedChunks.length > 0) {
+              const blob = new Blob(recordedChunks, { type: finalMime });
+              const url = URL.createObjectURL(blob);
+              const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
+              savedRecordings.unshift({
+                name: fileName,
+                url,
+                blob,
+                mimeType: finalMime,
+                time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
+              });
+              renderRecordingVault();
+            }
+            isDirectStreamRec = false;
+          }
+        })();
+        return;
+      } catch (err) {
+        isDirectStreamRec = false;
+        return alert('啟動串流錄音失敗：' + err.message);
+      }
+    }
+
+    // 【方案 B】電腦版瀏覽器 (Chrome / Edge)：使用 MediaRecorder 錄製（支援所有電台含警廣）
+    isDirectStreamRec = false;
+    initVisualizer();
+    if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+
     try {
-      // 優先使用 Web Audio 分流節點（iOS Safari / Chrome 與電腦皆支援）
       const stream = (recDestNode && recDestNode.stream)
         ? recDestNode.stream
-        : (audio.captureStream ? audio.captureStream() : (audio.mozCaptureStream ? audio.mozCaptureStream() : null));
+        : (audio.captureStream ? audio.captureStream() : null);
+      if (!stream) return alert('瀏覽器不支援音訊擷取。');
 
-      if (!stream) {
-        return alert('無法啟動錄音：瀏覽器不支援音訊串流擷取。');
-      }
-
-      const mimeTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
-      let selectedType = '';
-      for (const t of mimeTypes) {
-        if (MediaRecorder.isTypeSupported(t)) { selectedType = t; break; }
-      }
+      const mimeTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+      let selectedType = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
 
       recordedChunks = [];
       mediaRecorder = selectedType ? new MediaRecorder(stream, { mimeType: selectedType }) : new MediaRecorder(stream);
-
-      mediaRecorder.ondataavailable = e => {
-        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-      };
-
+      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
       mediaRecorder.onstop = () => {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const finalMime = mediaRecorder.mimeType || selectedType || (isIOS ? 'audio/mp4' : 'audio/webm');
+        const finalMime = mediaRecorder.mimeType || selectedType || 'audio/webm';
         const ext = finalMime.includes('mp4') ? 'm4a' : 'webm';
-
         const blob = new Blob(recordedChunks, { type: finalMime });
         const url = URL.createObjectURL(blob);
-        const stName = stations[currentStationIndex]?.name || 'Radio';
-        const fileName = `${stName}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
-
+        const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
         savedRecordings.unshift({
           name: fileName,
           url,
@@ -1318,35 +1412,27 @@
         renderRecordingVault();
       };
 
-      // 保持手機螢幕微亮，防止 iPhone 鎖屏中斷錄音
-      if ('wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').then(wl => { recWakeLock = wl; }).catch(() => {});
-      }
-
-      // 傳入 1000ms 確保 iOS 定期寫入音訊區塊，避免記憶體溢出
       mediaRecorder.start(1000);
-
-      const btn = document.getElementById('recordBtn');
-      btn.textContent = '⏹ 停止錄音';
-      btn.classList.add('recording');
-      recSeconds = 0;
-      document.getElementById('recTimer').textContent = '00:00';
-      recInterval = setInterval(() => {
-        recSeconds++;
-        document.getElementById('recTimer').textContent = `${String(Math.floor(recSeconds / 60)).padStart(2, '0')}:${String(recSeconds % 60).padStart(2, '0')}`;
-      }, 1000);
+      setRecUI(true);
     } catch (err) {
-      alert('無法啟動錄音：此電臺串流伺服器限制了跨網域音訊擷取 (CORS)。\n(' + err.message + ')');
+      alert('無法啟動錄音：' + err.message);
     }
   }
 
   function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-    clearInterval(recInterval);
-    if (recWakeLock) {
-      recWakeLock.release().catch(() => {});
-      recWakeLock = null;
+    if (isDirectStreamRec && recAbortController) {
+      recAbortController.abort();
+      recAbortController = null;
+    } else if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
     }
+    clearInterval(recInterval);
+    const btn = document.getElementById('recordBtn');
+    btn.textContent = '⏺ 開始錄音';
+    btn.classList.remove('recording');
+    document.getElementById('recTimer').textContent = '';
+  }
+
     const btn = document.getElementById('recordBtn');
     btn.textContent = '⏺ 開始錄音';
     btn.classList.remove('recording');
