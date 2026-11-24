@@ -357,8 +357,7 @@
 
       <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
       <audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
-<audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
-<audio id="nativeAudioPlayer" playsinline webkit-playsinline></audio>
+      <audio id="nativeAudioPlayer" playsinline webkit-playsinline></audio>
 
     </div>
     <div class="hud-box">
@@ -473,7 +472,7 @@
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
-    authDomain: "://firebaseapp.com",
+    authDomain: "roy-radio.firebaseapp.com",
     projectId: "roy-radio",
     storageBucket: "roy-radio.firebasestorage.app",
     messagingSenderId: "15329601327",
@@ -1204,8 +1203,6 @@
     document.getElementById('muteBtn').textContent = nextMute ? '🔇' : '🔊';
   }
 
- 
-
   function setSleepTimer(minutes) {
     clearInterval(sleepTimerId);
     sleepTimerId = null;
@@ -1291,7 +1288,7 @@
     }
   }
 
-    let recAbortController = null;
+      let recAbortController = null;
   let isDirectStreamRec = false;
   let activeStreamReader = null;
 
@@ -1302,14 +1299,16 @@
 
     const st = stations[currentStationIndex];
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const CORS_PROXY = "https://workers.dev";
+    
+    // 採用字串拼接，確保代理網址完整不缺字
+    const CORS_PROXY = "https:" + "//radio-proxy.ming-answer" + ".workers.dev/?url=";
 
-
-
-    // 自動修復雲端舊資料中殘缺的網址（解決全國廣播 M-Radio 報錯 URL is not valid）
+    // 自動修復雲端舊資料中殘缺或縮寫的中廣/Revma網址
     let targetUrl = (st.url || '').trim();
-    if (targetUrl.startsWith('://revma.com')) {
-      targetUrl = 'https://revma.com' + targetUrl.replace('://revma.com', '').replace(/^\//, '');
+    const revmaPrefix = "https:" + "//n01.rcs." + "://revma.com";
+    if (targetUrl.includes("revma.com")) {
+      const streamId = targetUrl.split("/").pop();
+      targetUrl = revmaPrefix + streamId;
     } else if (targetUrl.startsWith('://')) {
       targetUrl = 'https' + targetUrl;
     } else if (!/^https?:\/\//i.test(targetUrl)) {
@@ -1337,7 +1336,7 @@
       }
     };
 
-        // 雙軌連線函式：支援 302 節點跳轉，先試直連、失敗再自動切 Cloudflare Worker 代理
+    // 雙軌連線函式：支援 302 節點跳轉，先試直連、失敗再自動切 Cloudflare Worker 代理
     const fetchWithFallback = async (fetchTarget, signal) => {
       let err1 = '';
       try {
@@ -1534,8 +1533,6 @@ activeStreamReader = reader;
     btn.classList.remove('recording');
     document.getElementById('recTimer').textContent = '';
   }
-
-  
 
      function shareRecording(idx) {
     const rec = savedRecordings[idx];
