@@ -511,7 +511,7 @@
   }, 500);
 
   const _H = "https:" + "//";
-  const _R = _H + "://revma.com";
+  const _R = _H + "stream.revma." + "://ihrhls.com";
   const _P = _H + "stream.pbs.gov.tw/live/";
   const PRESET_STATIONS = [
     { name: "🔵中廣流行網(I like radio)", url: _R + "aw9uqyxy2tzuv", category: "音樂" },
@@ -1305,8 +1305,8 @@
 
     // 自動修復雲端舊資料中殘缺或縮寫的中廣/Revma網址
     let targetUrl = (st.url || '').trim();
-    const revmaPrefix = "https:" + "//n01.rcs." + "://revma.com";
-    if (targetUrl.includes("revma.com")) {
+    const revmaPrefix = "https:" + "//stream.revma." + "://ihrhls.com";
+   if (targetUrl.includes("revma.com") || targetUrl.includes("ihrhls.com")) {
       const streamId = targetUrl.split("/").pop();
       targetUrl = revmaPrefix + streamId;
     } else if (targetUrl.startsWith('://')) {
