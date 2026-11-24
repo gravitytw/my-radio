@@ -510,8 +510,8 @@
     if (initFirebaseSafe()) clearInterval(fbBootTimer);
   }, 500);
 
-  const _H = "https:" + "//";
-  const _R = _H + "stream.revma." + "://ihrhls.com";
+    const _H = "https://";
+  const _R = _H + "://revma.com";
   const _P = _H + "stream.pbs.gov.tw/live/";
   const PRESET_STATIONS = [
     { name: "🔵中廣流行網(I like radio)", url: _R + "aw9uqyxy2tzuv", category: "音樂" },
@@ -1288,7 +1288,7 @@
     }
   }
 
-      let recAbortController = null;
+ let recAbortController = null;
   let isDirectStreamRec = false;
   let activeStreamReader = null;
 
@@ -1303,16 +1303,10 @@
     // 採用字串拼接，確保代理網址完整不缺字
     const CORS_PROXY = "https:" + "//radio-proxy.ming-answer" + ".workers.dev/?url=";
 
-    // 自動修復雲端舊資料中殘缺或縮寫的中廣/Revma網址
-    let targetUrl = (st.url || '').trim();
-    const revmaPrefix = "https:" + "//stream.revma." + "://ihrhls.com";
-   if (targetUrl.includes("revma.com") || targetUrl.includes("ihrhls.com")) {
-      const streamId = targetUrl.split("/").pop();
-      targetUrl = revmaPrefix + streamId;
-    } else if (targetUrl.startsWith('://')) {
-      targetUrl = 'https' + targetUrl;
-    } else if (!/^https?:\/\//i.test(targetUrl)) {
-      targetUrl = 'https://' + targetUrl;
+        // 直接讀取目前正在正常播放的真實串流網址（百分之百正確、不會被改寫）
+    let targetUrl = (activeAudio.currentSrc || activeAudio.src || st.url || '').trim();
+    if (targetUrl.startsWith(CORS_PROXY)) {
+      targetUrl = decodeURIComponent(targetUrl.slice(CORS_PROXY.length));
     }
 
     const isHls = st.isHls || targetUrl.toLowerCase().includes('.m3u8');
