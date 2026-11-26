@@ -382,7 +382,10 @@
           <button type="button" onclick="document.getElementById('importFileInput').click()">📥 匯入 JSON / M3U 清單</button>
           <input type="file" id="importFileInput" accept=".json,.m3u,.m3u8" class="hidden" onchange="handleImportFile(event)" />
         </div>
-        <h3>📋 電台列表清單管理</h3>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;">📋 電台列表清單管理</h3>
+          <button type="button" class="btn-yellow" style="padding:5px 10px;font-size:0.82rem;min-height:auto;" onclick="mergeDuplicateStations()">🧹 合併重複電臺</button>
+        </div>
         <div id="manageStationList"></div>
 
         <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
@@ -1667,7 +1670,62 @@
     await saveData();
     renderAllLists();
   }
+async function mergeDuplicateStations() {
+    if (stations.length <= 1) return alert('目前清單電臺數量不足，無需合併。');
 
+    const seenUrls = new Set();
+    const seenNames = new Set();
+    const uniqueStations = [];
+    let removedCount = 0;
+
+    const playingUrl = (currentStationIndex >= 0 && stations[currentStationIndex])
+      ? stations[currentStationIndex].url
+      : null;
+
+    stations.forEach(st => {
+      const normUrl = st.url.trim().replace(/\/+$/, '').toLowerCase();
+      const normName = st.name.trim().toLowerCase();
+
+      if (seenUrls.has(normUrl) || seenNames.has(normName)) {
+        removedCount++;
+        if (favorites.includes(st.url)) {
+          const kept = uniqueStations.find(u =>
+            u.url.trim().replace(/\/+$/, '').toLowerCase() === normUrl ||
+            u.name.trim().toLowerCase() === normName
+          );
+          if (kept && !favorites.includes(kept.url)) {
+            favorites.push(kept.url);
+          }
+        }
+      } else {
+        seenUrls.add(normUrl);
+        seenNames.add(normName);
+        uniqueStations.push(st);
+      }
+    });
+
+    if (removedCount === 0) {
+      return alert('✨ 太棒了！檢查完畢，目前清單中沒有發現任何重複的電臺。');
+    }
+
+    if (!confirm(`🔍 共偵測到 ${removedCount} 個重複電臺（相同網址或相同名稱），確定要自動合併清理嗎？`)) {
+      return;
+    }
+
+    stations = uniqueStations;
+    const validUrls = new Set(stations.map(s => s.url));
+    favorites = favorites.filter(f => validUrls.has(f));
+
+    if (playingUrl) {
+      const newIdx = stations.findIndex(s => s.url === playingUrl);
+      currentStationIndex = newIdx;
+    }
+
+    await saveData();
+    renderAllLists();
+    updateFavButton();
+    alert(`✅ 合併完成！已成功清理 ${removedCount} 個重複電臺，目前共有 ${stations.length} 個電臺。`);
+  }
   function exportStationsJSON() {
     const blob = new Blob([JSON.stringify(stations, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
