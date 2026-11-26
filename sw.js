@@ -1,5 +1,5 @@
 // 每次修改 index.html 並推上 GitHub 時，只要改一下這個版本號（例如 v4.0 -> v4.1），手機就會自動跳出更新橫幅！
-const CACHE_NAME = 'roys-radio-hud-v4.0';
+const CACHE_NAME = 'roys-radio-hud-v4.1';
 
 const CORE_ASSETS = [
   './',
