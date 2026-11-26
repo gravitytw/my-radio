@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#070b14" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./icon-512.png" />
-  <title>Roy的網路廣播播放器 // CYBER HUD v3.0</title>
+  <title>Roy的網路廣播播放器 // CYBER HUD v3.5</title>
 
   <script>
     (function() {
@@ -34,6 +34,7 @@
       loadNext(0);
     })();
   </script>
+
   <style>
     :root {
       --bg-dark: #070b14;
@@ -73,12 +74,13 @@
       margin-bottom: 18px;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
-
     h1, h2, h3 { margin-top: 0; letter-spacing: 1px; }
     h1 { color: var(--border-glow); text-shadow: 0 0 10px rgba(0, 243, 255, 0.6); font-size: 1.55rem; margin-bottom: 4px; }
     h2 { font-size: 1.15rem; color: #8be9fd; border-bottom: 1px solid rgba(0, 243, 255, 0.2); padding-bottom: 8px; }
     h3 { font-size: 1.02rem; color: #8be9fd; margin-top: 20px; margin-bottom: 8px; }
+
     .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .clock { color: var(--accent-green); font-weight: bold; font-size: 0.92rem; }
     .status-panel {
@@ -87,6 +89,8 @@
       padding: 12px 15px;
       border-radius: 4px;
       margin-bottom: 12px;
+      user-select: none;
+      touch-action: pan-y;
     }
     .status-badge {
       display: inline-block; padding: 2px 8px; border-radius: 4px;
@@ -186,6 +190,7 @@
     .profile-row input { margin: 0; flex: 1; }
     .profile-row button { white-space: nowrap; }
     .field-label { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 4px; display: block; }
+
     .rec-vault { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255, 0, 127, 0.4); }
     .rec-item {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
@@ -252,11 +257,13 @@
       font-size: 0.88rem;
       gap: 8px;
     }
+    .btn-mini { padding: 4px 8px; font-size: 0.78rem; min-height: auto; }
 
     @media (max-width: 600px) {
       body { padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)) 12px; }
       #nowPlayingTitle { font-size: 1.5rem; }
       button { min-height: 42px; }
+      .btn-mini { min-height: 32px; }
       input, select { font-size: 16px; }
     }
   </style>
@@ -265,11 +272,12 @@
 <div class="container">
   <div class="hud-box top-bar">
     <div>
-      <h1>⚡ Roy's Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v3.0</small></h1>
+      <h1>⚡ Roy's Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v3.5</small></h1>
       <div class="clock" id="clockDisplay">📅 載入時間中...</div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.98rem;">👤 本地體驗模式</span>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="btn-mini btn-yellow" onclick="cycleHudTheme()" title="切換介面霓虹主題色">🎨 切換主題</button>
+      <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
       <button id="openAuthBtn" class="btn-green" onclick="openAuthModal()">🔐 登入 / 雲端同步</button>
       <button id="logoutBtn" class="btn-pink hidden" onclick="logout()">登出電臺</button>
     </div>
@@ -277,13 +285,13 @@
   <div id="playerSection">
     <div class="hud-box">
       <h2>🌌 Roy 的廣播電臺</h2>
-      <div class="status-panel">
+      <div class="status-panel" id="swipeTouchArea" title="手機端可左右滑動切換頻道">
         <div>
           <span id="connBadge" class="status-badge">待機中</span>
           <strong id="nowPlayingTitle">未選擇電臺</strong>
           <span id="bufferSpinner" style="color:var(--accent-yellow);margin-left:8px;"></span>
         </div>
-        <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...</div>
+        <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...（手機可左右滑動面板切台）</div>
       </div>
 
       <div class="visualizer-wrap">
@@ -309,7 +317,7 @@
       </div>
       <div id="resumeBanner" class="resume-banner hidden">
         <span id="resumeText" style="color:var(--accent-green);font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-        <button type="button" class="btn-green" style="padding:5px 12px;min-height:auto;white-space:nowrap;" onclick="resumeLastStation()">▶ 一鍵續播</button>
+        <button type="button" class="btn-green btn-mini" onclick="resumeLastStation()">▶ 一鍵續播</button>
       </div>
 
       <div id="selectModeBox">
@@ -317,7 +325,7 @@
           <option value="">-- 請選擇電臺 --</option>
         </select>
         <div style="margin-bottom:10px;text-align:right;">
-          <button type="button" id="toggleQuickGridBtn" style="padding:5px 10px;font-size:0.82rem;min-height:auto;" onclick="toggleQuickGrid()">⚡ 快捷選台牆 ▼</button>
+          <button type="button" id="toggleQuickGridBtn" class="btn-mini" onclick="toggleQuickGrid()">⚡ 快捷選台牆 ▼</button>
         </div>
         <div id="quickStationGrid" class="quick-grid hidden"></div>
       </div>
@@ -350,7 +358,7 @@
         <div id="recordingList"></div>
       </div>
 
-      <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
+      <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音 ｜ 📱 手機可左右滑動狀態欄切台</div>
       <audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
       <audio id="nativeAudioPlayer" playsinline webkit-playsinline></audio>
     </div>
@@ -376,18 +384,22 @@
           <button type="button" onclick="saveStation()">➕ 儲存此電臺</button>
           <button type="button" class="btn-pink" onclick="cancelEdit()">取消修改</button>
         </div>
+
         <h3>📂 批次匯入 / 匯出電臺清單（支援 .json 與 .m3u）</h3>
         <div class="controls-row">
           <button type="button" class="btn-green" onclick="exportStationsJSON()">📤 匯出 JSON 備份</button>
           <button type="button" onclick="document.getElementById('importFileInput').click()">📥 匯入 JSON / M3U 清單</button>
           <input type="file" id="importFileInput" accept=".json,.m3u,.m3u8" class="hidden" onchange="handleImportFile(event)" />
         </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;">📋 電台列表清單管理</h3>
-          <button type="button" class="btn-yellow" style="padding:5px 10px;font-size:0.82rem;min-height:auto;" onclick="mergeDuplicateStations()">🧹 合併重複電臺</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" id="healthCheckBtn" class="btn-green btn-mini" onclick="checkAllStationsHealth()">🩺 檢測失效電臺</button>
+            <button type="button" class="btn-yellow btn-mini" onclick="mergeDuplicateStations()">🧹 合併重複電臺</button>
+          </div>
         </div>
         <div id="manageStationList"></div>
-
         <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
         <div class="profile-card">
           <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
@@ -401,6 +413,7 @@
             <input type="text" id="profileCustomIdInput" placeholder="輸入專屬 ID (3~20碼英數字或底線)" />
             <button type="button" onclick="updateCustomId()">🔗 更新專屬 ID</button>
           </div>
+
           <label class="field-label" style="color:var(--accent-yellow);">🔐 安全性驗證（修改「電子郵件」或「密碼」前請先輸入目前密碼）</label>
           <input type="password" id="currentVerifyPass" placeholder="請輸入目前使用的密碼以驗證身分" />
 
@@ -420,12 +433,12 @@
     </div>
   </div>
 </div>
-<!-- 獨立雲端帳號彈窗（相容 iOS Safari 與 PWA） -->
+
 <div id="authModal" class="custom-modal-backdrop" onclick="if(event.target===this) closeAuthModal()">
   <div class="custom-modal-box">
     <div class="modal-close-bar">
       <span style="color:var(--border-glow);font-weight:bold;">📡 CYBER HUD 雲端帳號系統</span>
-      <button type="button" class="btn-pink" style="padding:4px 10px;min-height:auto;" onclick="closeAuthModal()">✕ 關閉</button>
+      <button type="button" class="btn-pink btn-mini" onclick="closeAuthModal()">✕ 關閉</button>
     </div>
 
     <div id="loginBox">
@@ -441,6 +454,7 @@
         <a href="javascript:void(0)" style="color:var(--accent-yellow);" onclick="switchAuthView('resetBox')">忘記密碼？</a>
       </p>
     </div>
+
     <div id="registerBox" class="hidden">
       <h2>📝 申請新帳號（Email 與專屬 ID 綁定）</h2>
       <input type="email" id="regEmail" placeholder="電子郵件 Email（必填，可用於登入與重設密碼）" />
@@ -483,6 +497,53 @@
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
+
+  // 多主題 HUD 切換器
+  const HUD_THEMES = [
+    { name: '賽博青藍', glow: '#00f3ff', green: '#00ff9d', pink: '#ff007f', bg: '#101d36' },
+    { name: '駭客任務綠', glow: '#00ff66', green: '#aaff00', pink: '#ff3366', bg: '#082214' },
+    { name: '霓虹紫羅蘭', glow: '#d966ff', green: '#00f3ff', pink: '#ff007f', bg: '#1e1035' },
+    { name: '琥珀黃金', glow: '#ffb700', green: '#00ff9d', pink: '#ff4444', bg: '#261a08' }
+  ];
+  let currentThemeIdx = parseInt(localStorage.getItem('roy_hud_theme') || '0', 10) % HUD_THEMES.length;
+
+  function applyHudTheme(idx) {
+    const t = HUD_THEMES[idx] || HUD_THEMES[0];
+    document.documentElement.style.setProperty('--border-glow', t.glow);
+    document.documentElement.style.setProperty('--accent-green', t.green);
+    document.documentElement.style.setProperty('--accent-pink', t.pink);
+    document.body.style.background = `radial-gradient(circle at top, ${t.bg} 0%, var(--bg-dark) 80%)`;
+  }
+  applyHudTheme(currentThemeIdx);
+
+  function cycleHudTheme() {
+    currentThemeIdx = (currentThemeIdx + 1) % HUD_THEMES.length;
+    localStorage.setItem('roy_hud_theme', currentThemeIdx);
+    applyHudTheme(currentThemeIdx);
+  }
+
+  // 手機端左右滑動狀態面板切台手勢
+  (function initSwipeGesture() {
+    const area = document.getElementById('swipeTouchArea');
+    if (!area) return;
+    let startX = 0, startY = 0;
+    area.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    area.addEventListener('touchend', (e) => {
+      if (e.changedTouches.length === 1) {
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          if (dx < 0) nextStation();
+          else prevStation();
+        }
+      }
+    }, { passive: true });
+  })();
 
   let auth = null;
   let db = null;
@@ -534,6 +595,7 @@
   let currentFilter = 'all';
   let currentStationIndex = -1;
   let hls = null;
+  let stationHealthMap = {};
 
   let retryCount = 0;
   const MAX_RETRIES = 5;
@@ -547,13 +609,29 @@
   let recSeconds = 0;
   let recBytes = 0;
   let savedRecordings = [];
+  let wakeLockSentinel = null;
+
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator && !wakeLockSentinel) {
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
+      } catch (e) {}
+    }
+  }
+  function releaseWakeLock() {
+    if (wakeLockSentinel) {
+      wakeLockSentinel.release().catch(() => {});
+      wakeLockSentinel = null;
+    }
+  }
 
   let sleepTimerId = null;
   let sleepRemainingSec = 0;
 
   let icyTimer = null;
   let titleMarqueeTimer = null;
-  const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v3.0";
+  const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v3.5";
 
   const audio = document.getElementById('audioPlayer');
   const nativeAudio = document.getElementById('nativeAudioPlayer');
@@ -600,6 +678,7 @@
         for (let j = 0; j < barCount; j++) { if (visDataArray[j] > 0) { hasSignal = true; break; } }
       }
 
+      const activeTheme = HUD_THEMES[currentThemeIdx] || HUD_THEMES[0];
       for (let i = 0; i < barCount; i++) {
         let val = 4;
         if (!activeAudio.paused) {
@@ -608,8 +687,8 @@
         }
         const barH = Math.max(3, (val / 255) * canvas.height);
         const grad = ctx.createLinearGradient(0, canvas.height - barH, 0, canvas.height);
-        grad.addColorStop(0, '#00ff9d');
-        grad.addColorStop(1, '#00f3ff');
+        grad.addColorStop(0, activeTheme.green);
+        grad.addColorStop(1, activeTheme.glow);
         ctx.fillStyle = grad;
         ctx.fillRect(i * (barWidth + 4), canvas.height - barH, barWidth, barH);
       }
@@ -659,7 +738,7 @@
       el.textContent = '👤 訪客雲端模式';
       return;
     }
-    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@')[0] : '聽眾');
+    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@') : '聽眾');
     el.textContent = `👤 ${fallbackName}`;
   }
 
@@ -731,6 +810,7 @@
       alert('註冊失敗：' + err.message);
     }
   }
+
   async function resetPassword() {
     if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('resetEmail').value.trim();
@@ -749,7 +829,6 @@
     const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPass);
     await currentUser.reauthenticateWithCredential(credential);
   }
-
   async function updateNickname() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客帳號無法修改個人資料，請先註冊正式帳號！');
     const newNick = document.getElementById('profileNicknameInput').value.trim();
@@ -779,6 +858,7 @@
       alert(`🎉 專屬 ID 已更新為「${newId}」！`);
     } catch (err) { alert('更新專屬 ID 失敗：' + err.message); }
   }
+
   async function updateAccountEmail() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客帳號無法修改 Email！');
     const currentPass = document.getElementById('currentVerifyPass').value;
@@ -863,6 +943,7 @@
       }, 1500);
     }
   }
+
   function setFilter(filter, btnEl) {
     currentFilter = filter;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -918,15 +999,14 @@
     });
 
     if (quickGrid) {
-      const sorted = [...visibleList].sort((a, b) => (b.isFav ? 1 : 0) - (a.isFav ? 1 : 0)).slice(0, 8);
+      const sorted = [...visibleList].sort((a, b) => (b.isFav ? 1 : 0) - (a.isFav ? 1 : 0)).slice(0, 12);
       quickGrid.innerHTML = sorted.map(item => `
-        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx}); toggleQuickGrid();" title="${escapeHTML(item.st.name)}">
+        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx})" title="${escapeHTML(item.st.name)}">
           ${item.isFav ? '⭐' : '📻'} ${escapeHTML(item.st.name)}
         </div>
       `).join('');
     }
   }
-
   function renderHistory() {
     const box = document.getElementById('listViewBox');
     const filtered = playHistory.filter(matchesSearch);
@@ -1013,6 +1093,7 @@
     btn.textContent = isFav ? '⭐ 已收藏' : '☆ 收藏';
     btn.style.color = isFav ? 'var(--accent-yellow)' : '';
   }
+
   async function addToHistory(st) {
     playHistory = playHistory.filter(h => h.url !== st.url);
     playHistory.unshift({ name: st.name, url: st.url, category: st.category || '綜合', time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
@@ -1312,6 +1393,7 @@
     const setRecUI = (active) => {
       const btn = document.getElementById('recordBtn');
       if (active) {
+        requestWakeLock();
         btn.textContent = '⏹ 停止錄音';
         btn.classList.add('recording');
         recSeconds = 0;
@@ -1324,6 +1406,7 @@
           document.getElementById('recTimer').textContent = `${timeStr} (${mb} MB)`;
         }, 1000);
       } else {
+        releaseWakeLock();
         clearInterval(recInterval);
         btn.textContent = '⏺ 開始錄音';
         btn.classList.remove('recording');
@@ -1398,7 +1481,7 @@
             const blob = new Blob(recordedChunks, { type: 'audio/aac' });
             const url = URL.createObjectURL(blob);
             const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.aac`;
-            savedRecordings.unshift({ name: fileName, url, blob, mimeType: 'audio/aac', time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
+            savedRecordings.unshift({ name: fileName, url, blob, mimeType: 'audio/aac', time: new Date().toLocaleTimeString('zh-TW', { hour12: false }), sizeMB: (blob.size / (1024 * 1024)).toFixed(2) });
             renderRecordingVault();
           }
           isDirectStreamRec = false;
@@ -1441,7 +1524,7 @@
               const blob = new Blob(recordedChunks, { type: finalMime });
               const url = URL.createObjectURL(blob);
               const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
-              savedRecordings.unshift({ name: fileName, url, blob, mimeType: finalMime, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
+              savedRecordings.unshift({ name: fileName, url, blob, mimeType: finalMime, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }), sizeMB: (blob.size / (1024 * 1024)).toFixed(2) });
               renderRecordingVault();
             }
             isDirectStreamRec = false;
@@ -1481,7 +1564,7 @@
         const blob = new Blob(recordedChunks, { type: finalMime });
         const url = URL.createObjectURL(blob);
         const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
-        savedRecordings.unshift({ name: fileName, url, blob, mimeType: finalMime, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
+        savedRecordings.unshift({ name: fileName, url, blob, mimeType: finalMime, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }), sizeMB: (blob.size / (1024 * 1024)).toFixed(2) });
         renderRecordingVault();
       };
 
@@ -1494,6 +1577,7 @@
 
   function stopRecording() {
     isDirectStreamRec = false;
+    releaseWakeLock();
     if (activeStreamReader) {
       activeStreamReader.cancel().catch(() => {});
       activeStreamReader = null;
@@ -1533,13 +1617,13 @@
       <div class="rec-item">
         <div style="flex:1;min-width:160px;">
           <strong style="font-size:0.88rem;">${escapeHTML(rec.name)}</strong>
-          <div style="font-size:0.75rem;color:var(--text-dim);">錄製時間：${escapeHTML(rec.time)}</div>
+          <div style="font-size:0.75rem;color:var(--text-dim);">錄製時間：${escapeHTML(rec.time)} ${rec.sizeMB ? `｜ 大小：${rec.sizeMB} MB` : ''}</div>
         </div>
         <audio controls playsinline src="${rec.url}"></audio>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <a href="${rec.url}" download="${escapeHTML(rec.name)}"><button class="btn-green" type="button">⬇ 下載</button></a>
-          ${canShareFiles ? `<button class="btn-yellow" type="button" onclick="shareRecording(${i})">📤 存到手機</button>` : ''}
-          <button class="btn-pink" type="button" onclick="deleteRecording(${i})">🗑</button>
+          <a href="${rec.url}" download="${escapeHTML(rec.name)}"><button class="btn-green btn-mini" type="button">⬇ 下載</button></a>
+          ${canShareFiles ? `<button class="btn-yellow btn-mini" type="button" onclick="shareRecording(${i})">📤 存到手機</button>` : ''}
+          <button class="btn-pink btn-mini" type="button" onclick="deleteRecording(${i})">🗑</button>
         </div>
       </div>
     `).join('');
@@ -1550,6 +1634,7 @@
     savedRecordings.splice(idx, 1);
     renderRecordingVault();
   }
+
   function setupMediaSession(st, songTitle = '') {
     if ('mediaSession' in navigator) {
       const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
@@ -1557,7 +1642,7 @@
       navigator.mediaSession.metadata = new MediaMetadata({
         title: st.name,
         artist: songTitle ? `🎵 ${songTitle}` : "Roy's Net Radio // LIVE",
-        album: 'CYBER HUD v3.0',
+        album: 'CYBER HUD v3.5',
         artwork: [
           { src: baseUrl + 'icon-512.png', sizes: '512x512', type: 'image/png' }
         ]
@@ -1591,13 +1676,17 @@
       case 'KeyR': toggleRecording(); break;
     }
   });
-
-  function toggleQuickGrid() {
+  function toggleQuickGrid(forceState) {
     const grid = document.getElementById('quickStationGrid');
     const btn = document.getElementById('toggleQuickGridBtn');
     if (!grid || !btn) return;
-    grid.classList.toggle('hidden');
+    if (typeof forceState === 'boolean') {
+      grid.classList.toggle('hidden', !forceState);
+    } else {
+      grid.classList.toggle('hidden');
+    }
     const isHidden = grid.classList.contains('hidden');
+    localStorage.setItem('roy_quick_grid_open', isHidden ? '0' : '1');
     btn.textContent = isHidden ? '⚡ 快捷選台牆 ▼' : '⚡ 快捷選台牆 ▲';
   }
 
@@ -1613,18 +1702,92 @@
     const manageBox = document.getElementById('manageStationList');
     manageBox.innerHTML = stations.map((st, idx) => {
       const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
+      const health = stationHealthMap[st.url];
+      let healthBadge = '';
+      if (health === 'checking') healthBadge = '<span style="color:var(--accent-yellow);font-size:0.78rem;margin-left:6px;">⏳ 檢測中...</span>';
+      else if (health === 'ok') healthBadge = '<span style="color:var(--accent-green);font-size:0.78rem;margin-left:6px;">🟢 正常</span>';
+      else if (health === 'fail') healthBadge = '<span style="color:var(--accent-pink);font-size:0.78rem;margin-left:6px;">🔴 疑似失效</span>';
+
       return `
-      <div class="station-item">
-        <div>
-          <strong>${escapeHTML(st.name)}</strong><span class="cat-tag">${escapeHTML(st.category || '綜合')}</span> ${isHls ? '<span style="color:var(--accent-green);">[HLS]</span>' : ''}
-          <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${escapeHTML(st.url)}</div>
+      <div class="station-item" style="flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <strong>${escapeHTML(st.name)}</strong><span class="cat-tag">${escapeHTML(st.category || '綜合')}</span> ${isHls ? '<span style="color:var(--accent-green);font-size:0.8rem;">[HLS]</span>' : ''}${healthBadge}
+          <div style="font-size:0.76rem;color:var(--text-dim);word-break:break-all;">${escapeHTML(st.url)}</div>
         </div>
-        <div style="display:flex;gap:6px;">
-          <button type="button" onclick="editStation(${idx})">✏️ 編輯</button>
-          <button type="button" class="btn-pink" onclick="deleteStation(${idx})">🗑 刪除</button>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button type="button" class="btn-mini" onclick="pinStationTop(${idx})" title="置頂此電臺">📌</button>
+          <button type="button" class="btn-mini" onclick="moveStation(${idx}, -1)" title="上移">⬆️</button>
+          <button type="button" class="btn-mini" onclick="moveStation(${idx}, 1)" title="下移">⬇️</button>
+          <button type="button" class="btn-mini" onclick="editStation(${idx})">✏️ 編輯</button>
+          <button type="button" class="btn-pink btn-mini" onclick="deleteStation(${idx})">🗑 刪除</button>
         </div>
       </div>`;
     }).join('');
+  }
+
+  async function moveStation(idx, dir) {
+    const targetIdx = idx + dir;
+    if (targetIdx < 0 || targetIdx >= stations.length) return;
+    const playingUrl = (currentStationIndex >= 0 && stations[currentStationIndex]) ? stations[currentStationIndex].url : null;
+    const temp = stations[idx];
+    stations[idx] = stations[targetIdx];
+    stations[targetIdx] = temp;
+    if (playingUrl) currentStationIndex = stations.findIndex(s => s.url === playingUrl);
+    await saveData();
+    renderAllLists();
+  }
+
+  async function pinStationTop(idx) {
+    if (idx <= 0 || idx >= stations.length) return;
+    const playingUrl = (currentStationIndex >= 0 && stations[currentStationIndex]) ? stations[currentStationIndex].url : null;
+    const [picked] = stations.splice(idx, 1);
+    stations.unshift(picked);
+    if (playingUrl) currentStationIndex = stations.findIndex(s => s.url === playingUrl);
+    await saveData();
+    renderAllLists();
+  }
+
+  async function checkAllStationsHealth() {
+    if (!stations.length) return alert('目前清單沒有任何電臺！');
+    const btn = document.getElementById('healthCheckBtn');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = '⏳ 檢測中...';
+
+    const CORS_PROXY = "https:" + "//radio-proxy.ming-answer" + ".workers.dev/?url=";
+    stations.forEach(st => { stationHealthMap[st.url] = 'checking'; });
+    renderAllLists();
+
+    const testOne = async (url) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const res = await fetch(url, { signal: controller.signal, redirect: 'follow' });
+        clearTimeout(timer);
+        if (res.ok) return 'ok';
+      } catch (e) {}
+
+      const controller2 = new AbortController();
+      const timer2 = setTimeout(() => controller2.abort(), 7000);
+      try {
+        const res2 = await fetch(CORS_PROXY + encodeURIComponent(url), { signal: controller2.signal, redirect: 'follow' });
+        clearTimeout(timer2);
+        return res2.ok ? 'ok' : 'fail';
+      } catch (e) {
+        clearTimeout(timer2);
+        return 'fail';
+      }
+    };
+
+    for (const st of stations) {
+      stationHealthMap[st.url] = await testOne(st.url);
+      renderAllLists();
+    }
+
+    btn.disabled = false;
+    btn.textContent = '🩺 檢測失效電臺';
+    const failCount = Object.values(stationHealthMap).filter(v => v === 'fail').length;
+    alert(`🩺 全清單檢測完成！共 ${stations.length} 個電臺，其中 ${failCount} 個疑似連線異常（已標記 🔴）。`);
   }
   async function saveStation() {
     const name = document.getElementById('stationName').value.trim();
@@ -1666,11 +1829,14 @@
       stopAllAudio();
       currentStationIndex = -1;
       document.getElementById('nowPlayingTitle').textContent = '未選擇電臺';
+    } else if (currentStationIndex > idx) {
+      currentStationIndex--;
     }
     await saveData();
     renderAllLists();
   }
-async function mergeDuplicateStations() {
+
+  async function mergeDuplicateStations() {
     if (stations.length <= 1) return alert('目前清單電臺數量不足，無需合併。');
 
     const seenUrls = new Set();
@@ -1717,8 +1883,7 @@ async function mergeDuplicateStations() {
     favorites = favorites.filter(f => validUrls.has(f));
 
     if (playingUrl) {
-      const newIdx = stations.findIndex(s => s.url === playingUrl);
-      currentStationIndex = newIdx;
+      currentStationIndex = stations.findIndex(s => s.url === playingUrl);
     }
 
     await saveData();
@@ -1726,6 +1891,7 @@ async function mergeDuplicateStations() {
     updateFavButton();
     alert(`✅ 合併完成！已成功清理 ${removedCount} 個重複電臺，目前共有 ${stations.length} 個電臺。`);
   }
+
   function exportStationsJSON() {
     const blob = new Blob([JSON.stringify(stations, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1790,6 +1956,9 @@ async function mergeDuplicateStations() {
   loadLocalData();
 
   (function restoreLastSession() {
+    if (localStorage.getItem('roy_quick_grid_open') === '1') {
+      toggleQuickGrid(true);
+    }
     const savedVol = localStorage.getItem('roy_saved_volume');
     if (savedVol !== null) {
       const v = parseFloat(savedVol);
