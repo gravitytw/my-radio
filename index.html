@@ -586,7 +586,7 @@
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
-    authDomain: "://firebaseapp.com",
+    authDomain: "roy-radio.firebaseapp.com",
     projectId: "roy-radio",
     storageBucket: "roy-radio.firebasestorage.app",
     messagingSenderId: "15329601327",
@@ -594,14 +594,14 @@
     measurementId: "G-2N69W5VK65"
   };
 
-  function escapeHTML(str) {
+    function escapeHTML(str) {
     if (str === null || str === undefined) return '';
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/'/g, '\u0027');
   }
 
   // 全介面光暈同步多主題切換器
@@ -773,35 +773,7 @@
   let activeAudio = audio;
 
   // 數位三段式 EQ 等化器節點
-  let audioCtx = null, analyser = null, recDestNode = null, visDataArray = null, isVisSimulated = false, visInitialized = false;
-  let eqBassFilter = null, eqMidFilter = null, eqTrebleFilter = null;
-  let currentEqPreset = localStorage.getItem('roy_eq_preset') || 'flat';
-
-    let customEqValues = JSON.parse(localStorage.getItem('roy_custom_eq')) || { bass: 0, mid: 0, treble: 0 };
-
-  const EQ_PRESETS = {
-    flat:   { bass: 0,  mid: 0,  treble: 0 },
-    vocal:  { bass: -3, mid: 5,  treble: 2 },
-    bass:   { bass: 7,  mid: -1, treble: 1 },
-    night:  { bass: -4, mid: 1,  treble: -5 },
-    custom: customEqValues
-  };
-
-  function toggleCustomEqPanel() {
-    const panel = document.getElementById('customEqPanel');
-    if (panel) panel.classList.toggle('hidden');
-  }
-
-  function syncEqSlidersUI(cfg) {
-    const bS = document.getElementById('eqBassSlider');
-    const mS = document.getElementById('eqMidSlider');
-    const tS = document.getElementById('eqTrebleSlider');
-    if (bS) { bS.value = cfg.bass; document.getElementById('eqBassVal').textContent = `${cfg.bass > 0 ? '+' : ''}${cfg.bass} dB`; }
-    if (mS) { mS.value = cfg.mid; document.getElementById('eqMidVal').textContent = `${cfg.mid > 0 ? '+' : ''}${cfg.mid} dB`; }
-    if (tS) { tS.value = cfg.treble; document.getElementById('eqTrebleVal').textContent = `${cfg.treble > 0 ? '+' : ''}${cfg.treble} dB`; }
-  }
-
-  function applyEqPreset(presetKey) {
+    function applyEqPreset(presetKey) {
     currentEqPreset = EQ_PRESETS[presetKey] ? presetKey : 'flat';
     localStorage.setItem('roy_eq_preset', currentEqPreset);
     const sel = document.getElementById('eqPresetSelect');
@@ -816,73 +788,9 @@
       eqMidFilter.gain.setTargetAtTime(cfg.mid, now, 0.05);
       eqTrebleFilter.gain.setTargetAtTime(cfg.treble, now, 0.05);
     }
-    if (eqBassFilter && eqMidFilter && eqTrebleFilter && audioCtx) {
-      const now = audioCtx.currentTime;
-      eqBassFilter.gain.setTargetAtTime(cfg.bass, now, 0.05);
-      eqMidFilter.gain.setTargetAtTime(cfg.mid, now, 0.05);
-      eqTrebleFilter.gain.setTargetAtTime(cfg.treble, now, 0.05);
-    }
     saveCurrentStationEq(currentEqPreset, customEqValues);
   }
 
-  }
-
-  function onManualEqSlide() {
-    customEqValues = {
-      bass: parseInt(document.getElementById('eqBassSlider').value, 10),
-      mid: parseInt(document.getElementById('eqMidSlider').value, 10),
-      treble: parseInt(document.getElementById('eqTrebleSlider').value, 10)
-    };
-    EQ_PRESETS.custom = customEqValues;
-    localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
-    applyEqPreset('custom');
-  }
-
-  function resetCustomEq() {
-    customEqValues = { bass: 0, mid: 0, treble: 0 };
-    EQ_PRESETS.custom = customEqValues;
-    localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
-    applyEqPreset('custom');
-  }
-
-  function initVisualizer() {
-    if (visInitialized) {
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      return;
-    }
-    visInitialized = true;
-    const canvas = document.getElementById('visualizerCanvas');
-    const ctx = canvas.getContext('2d');
-    const tag = document.getElementById('visModeTag');
-
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioCtx.createMediaElementSource(audio);
-
-      eqBassFilter = audioCtx.createBiquadFilter();
-      eqBassFilter.type = 'lowshelf';
-      eqBassFilter.frequency.value = 120;
-
-      eqMidFilter = audioCtx.createBiquadFilter();
-      eqMidFilter.type = 'peaking';
-      eqMidFilter.frequency.value = 1200;
-      eqMidFilter.Q.value = 1.0;
-
-      eqTrebleFilter = audioCtx.createBiquadFilter();
-      eqTrebleFilter.type = 'highshelf';
-      eqTrebleFilter.frequency.value = 7500;
-
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 64;
-
-      recDestNode = audioCtx.createMediaStreamDestination();
-
-      source.connect(eqBassFilter);
-      eqBassFilter.connect(eqMidFilter);
-      eqMidFilter.connect(eqTrebleFilter);
-      eqTrebleFilter.connect(recDestNode);
-      eqTrebleFilter.connect(analyser);
-      analyser.connect(audioCtx.destination);
 
       applyEqPreset(currentEqPreset);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -952,7 +860,7 @@
     const timeLabel = hrs > 0 ? `${hrs} 小時 ${mins} 分鐘` : `${mins} 分鐘`;
 
     const entries = Object.entries(listeningStats.stationSeconds || {})
-      .sort((a, b) => b - a)
+      .sort((a, b) => b[1] - a[1])
       .slice(0, 3);
 
     const topHtml = entries.length
@@ -1019,7 +927,7 @@
       el.textContent = '👤 訪客雲端模式';
       return;
     }
-    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@') : '聽眾');
+    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@')[0] : '聽眾');
     el.textContent = `👤 ${fallbackName}`;
   }
 
