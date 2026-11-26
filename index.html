@@ -34,7 +34,6 @@
       loadNext(0);
     })();
   </script>
-
   <style>
     :root {
       --bg-dark: #070b14;
@@ -80,7 +79,6 @@
     h1 { color: var(--border-glow); text-shadow: 0 0 10px rgba(0, 243, 255, 0.6); font-size: 1.55rem; margin-bottom: 4px; }
     h2 { font-size: 1.15rem; color: #8be9fd; border-bottom: 1px solid rgba(0, 243, 255, 0.2); padding-bottom: 8px; }
     h3 { font-size: 1.02rem; color: #8be9fd; margin-top: 20px; margin-bottom: 8px; }
-
     .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .clock { color: var(--accent-green); font-weight: bold; font-size: 0.92rem; }
     .status-panel {
@@ -152,7 +150,6 @@
     button.btn-yellow { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 208, 0, 0.12); }
     button.btn-yellow:hover { background: var(--accent-yellow); color: #050a14; }
     button.recording { animation: pulse 1.2s infinite; background: var(--accent-pink); color: #fff; }
-
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; } }
 
     .controls-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
@@ -189,7 +186,6 @@
     .profile-row input { margin: 0; flex: 1; }
     .profile-row button { white-space: nowrap; }
     .field-label { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 4px; display: block; }
-
     .rec-vault { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255, 0, 127, 0.4); }
     .rec-item {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
@@ -300,7 +296,6 @@
         <button class="tab-btn" onclick="setFilter('history', this)">🕒 播放紀錄</button>
         <button class="tab-btn btn-green" onclick="setFilter('presets', this)">📦 預設電臺庫</button>
       </div>
-
       <div class="filter-toolbar">
         <input type="search" id="searchInput" placeholder="🔍 搜尋電臺名稱或關鍵字..." oninput="applySearchFilter()" />
         <select id="categoryFilter" onchange="applySearchFilter()">
@@ -358,7 +353,6 @@
       <div class="shortcut-hint">⌨️ 快捷鍵：<code>Space</code> 播放/暫停 ｜ <code>←/→</code> 上/下一台 ｜ <code>↑/↓</code> 音量 ｜ <code>M</code> 靜音 ｜ <code>R</code> 錄音</div>
       <audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
       <audio id="nativeAudioPlayer" playsinline webkit-playsinline></audio>
-
     </div>
     <div class="hud-box">
       <div class="collapsible-header" onclick="toggleAdminPanel()">
@@ -382,7 +376,6 @@
           <button type="button" onclick="saveStation()">➕ 儲存此電臺</button>
           <button type="button" class="btn-pink" onclick="cancelEdit()">取消修改</button>
         </div>
-
         <h3>📂 批次匯入 / 匯出電臺清單（支援 .json 與 .m3u）</h3>
         <div class="controls-row">
           <button type="button" class="btn-green" onclick="exportStationsJSON()">📤 匯出 JSON 備份</button>
@@ -405,7 +398,6 @@
             <input type="text" id="profileCustomIdInput" placeholder="輸入專屬 ID (3~20碼英數字或底線)" />
             <button type="button" onclick="updateCustomId()">🔗 更新專屬 ID</button>
           </div>
-
           <label class="field-label" style="color:var(--accent-yellow);">🔐 安全性驗證（修改「電子郵件」或「密碼」前請先輸入目前密碼）</label>
           <input type="password" id="currentVerifyPass" placeholder="請輸入目前使用的密碼以驗證身分" />
 
@@ -446,7 +438,6 @@
         <a href="javascript:void(0)" style="color:var(--accent-yellow);" onclick="switchAuthView('resetBox')">忘記密碼？</a>
       </p>
     </div>
-
     <div id="registerBox" class="hidden">
       <h2>📝 申請新帳號（Email 與專屬 ID 綁定）</h2>
       <input type="email" id="regEmail" placeholder="電子郵件 Email（必填，可用於登入與重設密碼）" />
@@ -472,13 +463,23 @@
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
-    authDomain: "roy-radio.firebaseapp.com",
+    authDomain: "://firebaseapp.com",
     projectId: "roy-radio",
     storageBucket: "roy-radio.firebasestorage.app",
     messagingSenderId: "15329601327",
     appId: "1:15329601327:web:d3036a3c5d8b6091e823da",
     measurementId: "G-2N69W5VK65"
   };
+
+  function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   let auth = null;
   let db = null;
@@ -510,8 +511,8 @@
     if (initFirebaseSafe()) clearInterval(fbBootTimer);
   }, 500);
 
-    const _H = "https://";
-  const _R = _H + "://revma.com";
+  const _H = "https://";
+  const _R = _H + "://ihrhls.com";
   const _P = _H + "stream.pbs.gov.tw/live/";
   const PRESET_STATIONS = [
     { name: "🔵中廣流行網(I like radio)", url: _R + "aw9uqyxy2tzuv", category: "音樂" },
@@ -541,8 +542,8 @@
   let recordedChunks = [];
   let recInterval = null;
   let recSeconds = 0;
+  let recBytes = 0;
   let savedRecordings = [];
-  let recWakeLock = null;
 
   let sleepTimerId = null;
   let sleepRemainingSec = 0;
@@ -552,6 +553,9 @@
   const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v3.0";
 
   const audio = document.getElementById('audioPlayer');
+  const nativeAudio = document.getElementById('nativeAudioPlayer');
+  let activeAudio = audio;
+
   let audioCtx = null, analyser = null, recDestNode = null, visDataArray = null, isVisSimulated = false, visInitialized = false;
   function initVisualizer() {
     if (visInitialized) {
@@ -571,7 +575,6 @@
 
       recDestNode = audioCtx.createMediaStreamDestination();
       source.connect(recDestNode);
-
       source.connect(analyser);
       analyser.connect(audioCtx.destination);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -583,19 +586,20 @@
 
     function drawSpectrum() {
       requestAnimationFrame(drawSpectrum);
+      if (document.hidden) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const barCount = 32;
       const barWidth = (canvas.width / barCount) - 4;
       let hasSignal = false;
 
-      if (!isVisSimulated && analyser && !audio.paused) {
+      if (!isVisSimulated && analyser && !activeAudio.paused) {
         analyser.getByteFrequencyData(visDataArray);
         for (let j = 0; j < barCount; j++) { if (visDataArray[j] > 0) { hasSignal = true; break; } }
       }
 
       for (let i = 0; i < barCount; i++) {
         let val = 4;
-        if (!audio.paused) {
+        if (!activeAudio.paused) {
           if (!isVisSimulated && hasSignal) val = visDataArray[i] || 6;
           else val = Math.abs(Math.sin(Date.now() * 0.005 + i * 0.45)) * 130 + Math.random() * 65 + 15;
         }
@@ -624,11 +628,11 @@
     titleMarqueeTimer = null;
     document.title = statusPrefix ? `${statusPrefix} ${DEFAULT_PAGE_TITLE}` : DEFAULT_PAGE_TITLE;
   }
-
   setInterval(() => {
     const now = new Date();
     document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
   }, 1000);
+
   function openAuthModal() { document.getElementById('authModal').classList.add('show'); }
   function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
   function switchAuthView(boxId) {
@@ -652,7 +656,7 @@
       el.textContent = '👤 訪客雲端模式';
       return;
     }
-    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@') : '聽眾');
+    const fallbackName = userProfile.nickname || userProfile.customId || (currentUser.email ? currentUser.email.split('@')[0] : '聽眾');
     el.textContent = `👤 ${fallbackName}`;
   }
 
@@ -724,7 +728,6 @@
       alert('註冊失敗：' + err.message);
     }
   }
-
   async function resetPassword() {
     if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('resetEmail').value.trim();
@@ -737,6 +740,7 @@
       alert('寄送重設信失敗：' + err.message);
     }
   }
+
   async function reauthenticateUser(currentPass) {
     if (!currentPass) throw new Error('請先在上方輸入「目前密碼」以驗證身分！');
     const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPass);
@@ -772,7 +776,6 @@
       alert(`🎉 專屬 ID 已更新為「${newId}」！`);
     } catch (err) { alert('更新專屬 ID 失敗：' + err.message); }
   }
-
   async function updateAccountEmail() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客帳號無法修改 Email！');
     const currentPass = document.getElementById('currentVerifyPass').value;
@@ -840,17 +843,21 @@
     }
   }
 
+  let saveDebounceTimer = null;
   async function saveData() {
     localStorage.setItem('roy_stations', JSON.stringify(stations));
     localStorage.setItem('roy_favs', JSON.stringify(favorites));
     localStorage.setItem('roy_history', JSON.stringify(playHistory));
     if (currentUser && db) {
-      try {
-        await db.collection('users').doc(currentUser.uid).set({
-          stations, favorites, playHistory,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-      } catch (err) { console.error('雲端同步失敗:', err); }
+      clearTimeout(saveDebounceTimer);
+      saveDebounceTimer = setTimeout(async () => {
+        try {
+          await db.collection('users').doc(currentUser.uid).set({
+            stations, favorites, playHistory,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        } catch (err) { console.error('雲端同步失敗:', err); }
+      }, 1500);
     }
   }
   function setFilter(filter, btnEl) {
@@ -910,8 +917,8 @@
     if (quickGrid) {
       const sorted = [...visibleList].sort((a, b) => (b.isFav ? 1 : 0) - (a.isFav ? 1 : 0)).slice(0, 8);
       quickGrid.innerHTML = sorted.map(item => `
-        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx}); toggleQuickGrid();" title="${item.st.name}">
-          ${item.isFav ? '⭐' : '📻'} ${item.st.name}
+        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx}); toggleQuickGrid();" title="${escapeHTML(item.st.name)}">
+          ${item.isFav ? '⭐' : '📻'} ${escapeHTML(item.st.name)}
         </div>
       `).join('');
     }
@@ -927,10 +934,10 @@
     box.innerHTML = filtered.map(h => `
       <div class="station-item">
         <div>
-          <strong>${h.name}</strong>
-          <div style="font-size:0.78rem;color:var(--text-dim);">🕒 ${h.time}</div>
+          <strong>${escapeHTML(h.name)}</strong>
+          <div style="font-size:0.78rem;color:var(--text-dim);">🕒 ${escapeHTML(h.time)}</div>
         </div>
-        <button type="button" onclick="playByUrl('${h.url}')">▶ 收聽</button>
+        <button type="button" onclick="playByUrl('${encodeURIComponent(h.url)}', true)">▶ 收聽</button>
       </div>
     `).join('');
   }
@@ -958,8 +965,8 @@
     ` + filtered.map(p => `
       <div class="station-item">
         <div>
-          <strong>${p.name}</strong><span class="cat-tag">${p.category || '綜合'}</span>
-          <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${p.url}</div>
+          <strong>${escapeHTML(p.name)}</strong><span class="cat-tag">${escapeHTML(p.category || '綜合')}</span>
+          <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${escapeHTML(p.url)}</div>
         </div>
         <button type="button" onclick="importPreset(${p.origIdx})">➕ 匯入</button>
       </div>
@@ -1003,7 +1010,6 @@
     btn.textContent = isFav ? '⭐ 已收藏' : '☆ 收藏';
     btn.style.color = isFav ? 'var(--accent-yellow)' : '';
   }
-
   async function addToHistory(st) {
     playHistory = playHistory.filter(h => h.url !== st.url);
     playHistory.unshift({ name: st.name, url: st.url, category: st.category || '綜合', time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
@@ -1016,14 +1022,12 @@
     if (idx !== '') startStream(parseInt(idx, 10));
   }
 
-  function playByUrl(url) {
-    const idx = stations.findIndex(s => s.url === url);
+  function playByUrl(url, isEncoded = false) {
+    const target = isEncoded ? decodeURIComponent(url) : url;
+    const idx = stations.findIndex(s => s.url === target);
     if (idx >= 0) startStream(idx);
     else alert('此電臺已不在清單中');
   }
-    
-     const nativeAudio = document.getElementById('nativeAudioPlayer');
-  let activeAudio = audio;
 
   function stopAllAudio() {
     if (hls) { hls.destroy(); hls = null; }
@@ -1059,7 +1063,6 @@
     const useHls = forceHls || st.isHls || st.url.toLowerCase().includes('.m3u8');
     const isPbs = st.url.includes('pbs.gov.tw');
 
-    // iOS 播放警廣或 HLS 時，使用完全乾淨、未接過 Web Audio 的 nativeAudio，避開 Safari 封鎖
     if (isIOS && (isPbs || useHls)) {
       activeAudio = nativeAudio;
       activeAudio.volume = document.getElementById('volumeSlider').value;
@@ -1075,7 +1078,6 @@
       return;
     }
 
-    // 一般電台與電腦版：使用主播放器 audio + 視覺頻譜
     activeAudio = audio;
     initVisualizer();
 
@@ -1102,7 +1104,6 @@
     startIcyPolling(st, useHls);
   }
 
-
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
     badge.textContent = badgeText;
@@ -1110,35 +1111,41 @@
     document.getElementById('bufferSpinner').textContent = spinnerText;
   }
 
-  audio.addEventListener('playing', () => {
-    clearTimeout(stallDebounceTimer);
-    retryCount = 0;
-    setStatus('LIVE 直播中', 'ok', '');
-    document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-    if (currentStationIndex >= 0 && stations[currentStationIndex]) {
-      startTitleMarquee(stations[currentStationIndex].name);
-      setupMediaSession(stations[currentStationIndex]);
-    }
+  [audio, nativeAudio].forEach(el => {
+    if (!el) return;
+    el.addEventListener('playing', () => {
+      if (el !== activeAudio) return;
+      clearTimeout(stallDebounceTimer);
+      retryCount = 0;
+      setStatus('LIVE 直播中', 'ok', '');
+      document.getElementById('playPauseBtn').textContent = '⏸ 暫停';
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+      if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+        startTitleMarquee(stations[currentStationIndex].name);
+        setupMediaSession(stations[currentStationIndex]);
+      }
+    });
+    el.addEventListener('waiting', () => {
+      if (el !== activeAudio || isUserPaused) return;
+      clearTimeout(stallDebounceTimer);
+      stallDebounceTimer = setTimeout(() => {
+        if (!isUserPaused && activeAudio.readyState < 3) setStatus('緩衝中', 'warn', '⏳ 網路緩衝中...');
+      }, 1800);
+    });
+    el.addEventListener('stalled', () => {
+      if (el !== activeAudio || isUserPaused) return;
+      clearTimeout(stallDebounceTimer);
+      stallDebounceTimer = setTimeout(() => {
+        if (!isUserPaused && activeAudio.paused) setStatus('訊號不穩', 'warn', '⚠️ 串流停滯...');
+      }, 2000);
+    });
+    el.addEventListener('error', () => {
+      if (el === activeAudio && !isUserPaused) handleStreamError();
+    });
   });
-  audio.addEventListener('waiting', () => {
-    if (isUserPaused) return;
-    clearTimeout(stallDebounceTimer);
-    stallDebounceTimer = setTimeout(() => {
-      if (!isUserPaused && audio.readyState < 3) setStatus('緩衝中', 'warn', '⏳ 網路緩衝中...');
-    }, 1800);
-  });
-  audio.addEventListener('stalled', () => {
-    if (isUserPaused) return;
-    clearTimeout(stallDebounceTimer);
-    stallDebounceTimer = setTimeout(() => {
-      if (!isUserPaused && audio.paused) setStatus('訊號不穩', 'warn', '⚠️ 串流停滯...');
-    }, 2000);
-  });
-  audio.addEventListener('error', () => { if (!isUserPaused) handleStreamError(); });
 
   window.addEventListener('online', () => {
-    if (!isUserPaused && currentStationIndex >= 0 && audio.paused) {
+    if (!isUserPaused && currentStationIndex >= 0 && activeAudio.paused) {
       setStatus('網路已恢復', 'warn', '🔄 正在自動重連電臺...');
       startStream(currentStationIndex);
     }
@@ -1157,15 +1164,13 @@
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => { if (!isUserPaused) startStream(currentStationIndex); }, 3000);
   }
-
-
   function prevStation() {
     if (stations.length) startStream((currentStationIndex - 1 + stations.length) % stations.length);
   }
   function nextStation() {
     if (stations.length) startStream((currentStationIndex + 1) % stations.length);
   }
-   function togglePlay() {
+  function togglePlay() {
     if (currentStationIndex < 0 && stations.length > 0) return startStream(0);
     if (activeAudio.paused) {
       isUserPaused = false;
@@ -1182,13 +1187,6 @@
       stopTitleMarquee("⏸ [已暫停]");
       document.getElementById('playPauseBtn').textContent = '▶ 播放';
     }
-  }
-
-  function prevStation() {
-    if (stations.length) startStream((currentStationIndex - 1 + stations.length) % stations.length);
-  }
-  function nextStation() {
-    if (stations.length) startStream((currentStationIndex + 1) % stations.length);
   }
   function changeVolume(val) {
     audio.volume = val;
@@ -1217,7 +1215,7 @@
         clearInterval(sleepTimerId);
         sleepTimerId = null;
         badge.textContent = '💤 已自動停止';
-        if (!audio.paused) togglePlay();
+        if (!activeAudio.paused) togglePlay();
         document.getElementById('sleepSelect').value = '0';
       } else {
         updateSleepBadge();
@@ -1235,7 +1233,7 @@
     if (isHls) { icyEl.textContent = `🎵 HLS 串流直播中：${st.name}`; return; }
     icyEl.textContent = '🎵 正在偵測 ICY 節目曲目資訊...';
     fetchIcyMetadata(st.url);
-    icyTimer = setInterval(() => { if (!document.hidden && !audio.paused) fetchIcyMetadata(st.url); }, 15000);
+    icyTimer = setInterval(() => { if (!document.hidden && !activeAudio.paused) fetchIcyMetadata(st.url); }, 15000);
   }
   async function fetchIcyMetadata(url) {
     const icyEl = document.getElementById('icyMetadata');
@@ -1280,18 +1278,17 @@
     }
   }
 
-    function toggleRecording() {
+  let recAbortController = null;
+  let isDirectStreamRec = false;
+  let activeStreamReader = null;
+
+  function toggleRecording() {
     if ((mediaRecorder && mediaRecorder.state === 'recording') || isDirectStreamRec) {
       stopRecording();
     } else {
       startRecording();
     }
   }
-
- let recAbortController = null;
-  let isDirectStreamRec = false;
-  let activeStreamReader = null;
-
   async function startRecording() {
     if (activeAudio.paused || currentStationIndex < 0) {
       return alert('請先開始播放電臺再進行錄音！');
@@ -1299,16 +1296,13 @@
 
     const st = stations[currentStationIndex];
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    
-    // 採用字串拼接，確保代理網址完整不缺字
     const CORS_PROXY = "https:" + "//radio-proxy.ming-answer" + ".workers.dev/?url=";
 
-        // 直接讀取目前正在正常播放的真實串流網址（百分之百正確、不會被改寫）
     let rawSrc = (activeAudio.currentSrc || activeAudio.src || '').trim();
-let targetUrl = (rawSrc && !rawSrc.startsWith('blob:')) ? rawSrc : (st.url || '').trim();
-if (targetUrl.startsWith(CORS_PROXY)) {
-  targetUrl = decodeURIComponent(targetUrl.slice(CORS_PROXY.length));
-}
+    let targetUrl = (rawSrc && !rawSrc.startsWith('blob:')) ? rawSrc : (st.url || '').trim();
+    if (targetUrl.startsWith(CORS_PROXY)) {
+      targetUrl = decodeURIComponent(targetUrl.slice(CORS_PROXY.length));
+    }
 
     const isHls = st.isHls || targetUrl.toLowerCase().includes('.m3u8');
 
@@ -1318,10 +1312,13 @@ if (targetUrl.startsWith(CORS_PROXY)) {
         btn.textContent = '⏹ 停止錄音';
         btn.classList.add('recording');
         recSeconds = 0;
-        document.getElementById('recTimer').textContent = '00:00';
+        recBytes = 0;
+        document.getElementById('recTimer').textContent = '00:00 (0.0 MB)';
         recInterval = setInterval(() => {
           recSeconds++;
-          document.getElementById('recTimer').textContent = `${String(Math.floor(recSeconds / 60)).padStart(2, '0')}:${String(recSeconds % 60).padStart(2, '0')}`;
+          const mb = (recBytes / (1024 * 1024)).toFixed(1);
+          const timeStr = `${String(Math.floor(recSeconds / 60)).padStart(2, '0')}:${String(recSeconds % 60).padStart(2, '0')}`;
+          document.getElementById('recTimer').textContent = `${timeStr} (${mb} MB)`;
         }, 1000);
       } else {
         clearInterval(recInterval);
@@ -1331,7 +1328,6 @@ if (targetUrl.startsWith(CORS_PROXY)) {
       }
     };
 
-    // 雙軌連線函式：支援 302 節點跳轉，先試直連、失敗再自動切 Cloudflare Worker 代理
     const fetchWithFallback = async (fetchTarget, signal) => {
       let err1 = '';
       try {
@@ -1349,15 +1345,12 @@ if (targetUrl.startsWith(CORS_PROXY)) {
       return res2;
     };
 
-
-    // 【方案 A】iOS 專用警廣 (.m3u8) 切片錄音器：背景自動解析清單並下載合併音訊切片
-if (isHls) {
+    if (isHls) {
       isDirectStreamRec = true;
       recordedChunks = [];
       recAbortController = new AbortController();
       const signal = recAbortController.signal;
       const downloadedSegments = new Set();
-
       setRecUI(true);
 
       (async () => {
@@ -1387,28 +1380,22 @@ if (isHls) {
                 }
                 const segRes = await fetchWithFallback(segUrl, signal);
                 const buf = await segRes.arrayBuffer();
-                if (buf && buf.byteLength > 0) recordedChunks.push(buf);
+                if (buf && buf.byteLength > 0) {
+                  recordedChunks.push(buf);
+                  recBytes += buf.byteLength;
+                }
               }
             }
-
             await new Promise(r => setTimeout(r, 2500));
           }
         } catch (err) {
-          if (err.name !== 'AbortError') {
-            alert('警廣切片錄音中斷：' + err.message);
-          }
+          if (err.name !== 'AbortError') alert('警廣切片錄音中斷：' + err.message);
         } finally {
           if (recordedChunks.length > 0) {
             const blob = new Blob(recordedChunks, { type: 'audio/aac' });
             const url = URL.createObjectURL(blob);
             const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.aac`;
-            savedRecordings.unshift({
-              name: fileName,
-              url,
-              blob,
-              mimeType: 'audio/aac',
-              time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
-            });
+            savedRecordings.unshift({ name: fileName, url, blob, mimeType: 'audio/aac', time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
             renderRecordingVault();
           }
           isDirectStreamRec = false;
@@ -1417,7 +1404,6 @@ if (isHls) {
       })();
       return;
     }
-    // 【方案 B】iOS 與一般電台 (中廣、飛碟、全國廣播)：直接擷取原始音訊流存為 .aac / .mp3
     if (isIOS || !isHls) {
       isDirectStreamRec = true;
       recordedChunks = [];
@@ -1435,28 +1421,24 @@ if (isHls) {
         setRecUI(true);
 
         const reader = response.body.getReader();
-activeStreamReader = reader;
+        activeStreamReader = reader;
         (async () => {
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
-              if (value && value.length > 0) recordedChunks.push(value);
+              if (value && value.length > 0) {
+                recordedChunks.push(value);
+                recBytes += value.byteLength;
+              }
             }
           } catch (e) {
-            // 按下停止錄音時觸發 AbortError，屬於正常結束
           } finally {
             if (recordedChunks.length > 0) {
               const blob = new Blob(recordedChunks, { type: finalMime });
               const url = URL.createObjectURL(blob);
               const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
-              savedRecordings.unshift({
-                name: fileName,
-                url,
-                blob,
-                mimeType: finalMime,
-                time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
-              });
+              savedRecordings.unshift({ name: fileName, url, blob, mimeType: finalMime, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
               renderRecordingVault();
             }
             isDirectStreamRec = false;
@@ -1469,7 +1451,6 @@ activeStreamReader = reader;
       }
     }
 
-    // 【方案 C】電腦版瀏覽器 (Chrome / Edge)：使用 MediaRecorder 錄製
     isDirectStreamRec = false;
     initVisualizer();
     if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
@@ -1485,20 +1466,19 @@ activeStreamReader = reader;
 
       recordedChunks = [];
       mediaRecorder = selectedType ? new MediaRecorder(stream, { mimeType: selectedType }) : new MediaRecorder(stream);
-      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) {
+          recordedChunks.push(e.data);
+          recBytes += e.data.size;
+        }
+      };
       mediaRecorder.onstop = () => {
         const finalMime = mediaRecorder.mimeType || selectedType || 'audio/webm';
         const ext = finalMime.includes('mp4') ? 'm4a' : 'webm';
         const blob = new Blob(recordedChunks, { type: finalMime });
         const url = URL.createObjectURL(blob);
         const fileName = `${st.name}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
-        savedRecordings.unshift({
-          name: fileName,
-          url,
-          blob,
-          mimeType: finalMime,
-          time: new Date().toLocaleTimeString('zh-TW', { hour12: false })
-        });
+        savedRecordings.unshift({ name: fileName, url, blob, mimeType: finalMime, time: new Date().toLocaleTimeString('zh-TW', { hour12: false }) });
         renderRecordingVault();
       };
 
@@ -1528,8 +1508,7 @@ activeStreamReader = reader;
     btn.classList.remove('recording');
     document.getElementById('recTimer').textContent = '';
   }
-
-     function shareRecording(idx) {
+  function shareRecording(idx) {
     const rec = savedRecordings[idx];
     if (!rec || !rec.blob) return;
     const file = new File([rec.blob], rec.name, { type: rec.mimeType });
@@ -1550,12 +1529,12 @@ activeStreamReader = reader;
     list.innerHTML = savedRecordings.map((rec, i) => `
       <div class="rec-item">
         <div style="flex:1;min-width:160px;">
-          <strong style="font-size:0.88rem;">${rec.name}</strong>
-          <div style="font-size:0.75rem;color:var(--text-dim);">錄製時間：${rec.time}</div>
+          <strong style="font-size:0.88rem;">${escapeHTML(rec.name)}</strong>
+          <div style="font-size:0.75rem;color:var(--text-dim);">錄製時間：${escapeHTML(rec.time)}</div>
         </div>
         <audio controls playsinline src="${rec.url}"></audio>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <a href="${rec.url}" download="${rec.name}"><button class="btn-green" type="button">⬇ 下載</button></a>
+          <a href="${rec.url}" download="${escapeHTML(rec.name)}"><button class="btn-green" type="button">⬇ 下載</button></a>
           ${canShareFiles ? `<button class="btn-yellow" type="button" onclick="shareRecording(${i})">📤 存到手機</button>` : ''}
           <button class="btn-pink" type="button" onclick="deleteRecording(${i})">🗑</button>
         </div>
@@ -1580,9 +1559,9 @@ activeStreamReader = reader;
           { src: baseUrl + 'icon-512.png', sizes: '512x512', type: 'image/png' }
         ]
       });
-      navigator.mediaSession.playbackState = audio.paused ? 'paused' : 'playing';
-      navigator.mediaSession.setActionHandler('play', () => { if (audio.paused) togglePlay(); });
-      navigator.mediaSession.setActionHandler('pause', () => { if (!audio.paused) togglePlay(); });
+      navigator.mediaSession.playbackState = activeAudio.paused ? 'paused' : 'playing';
+      navigator.mediaSession.setActionHandler('play', () => { if (activeAudio.paused) togglePlay(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (!activeAudio.paused) togglePlay(); });
       navigator.mediaSession.setActionHandler('previoustrack', prevStation);
       navigator.mediaSession.setActionHandler('nexttrack', nextStation);
     }
@@ -1597,13 +1576,13 @@ activeStreamReader = reader;
       case 'ArrowRight': nextStation(); break;
       case 'ArrowUp':
         e.preventDefault();
-        audio.volume = Math.min(1, +(audio.volume + 0.05).toFixed(2));
-        document.getElementById('volumeSlider').value = audio.volume;
+        changeVolume(Math.min(1, +(activeAudio.volume + 0.05).toFixed(2)));
+        document.getElementById('volumeSlider').value = activeAudio.volume;
         break;
       case 'ArrowDown':
         e.preventDefault();
-        audio.volume = Math.max(0, +(audio.volume - 0.05).toFixed(2));
-        document.getElementById('volumeSlider').value = audio.volume;
+        changeVolume(Math.max(0, +(activeAudio.volume - 0.05).toFixed(2)));
+        document.getElementById('volumeSlider').value = activeAudio.volume;
         break;
       case 'KeyM': toggleMute(); break;
       case 'KeyR': toggleRecording(); break;
@@ -1634,8 +1613,8 @@ activeStreamReader = reader;
       return `
       <div class="station-item">
         <div>
-          <strong>${st.name}</strong><span class="cat-tag">${st.category || '綜合'}</span> ${isHls ? '<span style="color:var(--accent-green);">[HLS]</span>' : ''}
-          <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${st.url}</div>
+          <strong>${escapeHTML(st.name)}</strong><span class="cat-tag">${escapeHTML(st.category || '綜合')}</span> ${isHls ? '<span style="color:var(--accent-green);">[HLS]</span>' : ''}
+          <div style="font-size:0.78rem;color:var(--text-dim);word-break:break-all;">${escapeHTML(st.url)}</div>
         </div>
         <div style="display:flex;gap:6px;">
           <button type="button" onclick="editStation(${idx})">✏️ 編輯</button>
@@ -1644,7 +1623,6 @@ activeStreamReader = reader;
       </div>`;
     }).join('');
   }
-
   async function saveStation() {
     const name = document.getElementById('stationName').value.trim();
     const url = document.getElementById('stationUrl').value.trim();
@@ -1682,7 +1660,7 @@ activeStreamReader = reader;
     stations.splice(idx, 1);
     favorites = favorites.filter(f => f !== removedUrl);
     if (currentStationIndex === idx) {
-      audio.pause();
+      stopAllAudio();
       currentStationIndex = -1;
       document.getElementById('nowPlayingTitle').textContent = '未選擇電臺';
     }
@@ -1743,12 +1721,22 @@ activeStreamReader = reader;
     reader.readAsText(file);
   }
 
+  window.addEventListener('beforeunload', (e) => {
+    const isRec = (mediaRecorder && mediaRecorder.state === 'recording') || isDirectStreamRec;
+    if (isRec) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
   loadLocalData();
 
   (function restoreLastSession() {
     const savedVol = localStorage.getItem('roy_saved_volume');
     if (savedVol !== null) {
-      audio.volume = parseFloat(savedVol);
+      const v = parseFloat(savedVol);
+      audio.volume = v;
+      if (nativeAudio) nativeAudio.volume = v;
       const slider = document.getElementById('volumeSlider');
       if (slider) slider.value = savedVol;
     }
