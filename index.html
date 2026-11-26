@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#070b14" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./icon-512.png" />
-  <title>Roy的網路廣播播放器 // CYBER HUD v4.0</title>
+  <title>Roy的網路廣播播放器 // CYBER HUD v4.2</title>
 
   <script>
     (function() {
@@ -168,7 +168,6 @@
 
     .tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
     .tab-btn.active { background: var(--border-glow); color: #050a14; }
-
     .station-item {
       display: flex; justify-content: space-between; align-items: center;
       padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); gap: 8px;
@@ -292,6 +291,7 @@
       .btn-mini { min-height: 32px; }
       input, select { font-size: 16px; }
     }
+
     /* 🚘 車用 / 桌面極簡大字模式 */
     body.car-mode .tabs,
     body.car-mode .filter-toolbar,
@@ -303,6 +303,7 @@
     body.car-mode #favToggleBtn,
     body.car-mode #recordBtn,
     body.car-mode #eqPresetSelect,
+    body.car-mode #eqToggleBtn,
     body.car-mode #sleepSelect,
     body.car-mode .volume-box,
     body.car-mode #playerSection > .hud-box:nth-child(2) {
@@ -331,7 +332,6 @@
       font-size: 1.25rem;
       border-width: 2px;
     }
-
   </style>
 </head>
 <body>
@@ -343,13 +343,13 @@
 
   <div class="hud-box top-bar">
     <div>
-      <h1>⚡ Roy's Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v4.0</small></h1>
+      <h1>⚡ Roy's Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v4.2</small></h1>
       <div class="clock" id="clockDisplay">📅 載入時間中...</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <button type="button" id="themeCycleBtn" class="btn-mini btn-yellow" onclick="cycleHudTheme()" title="切換介面霓虹主題色">🎨 主題：賽博青藍</button>
-       <button type="button" id="carModeBtn" class="btn-mini btn-green" onclick="toggleCarMode()" title="切換車用極簡大字模式">🚘 車用模式</button>
-       <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
+      <button type="button" id="carModeBtn" class="btn-mini btn-green" onclick="toggleCarMode()" title="切換車用極簡大字模式">🚘 車用模式</button>
+      <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
       <button id="openAuthBtn" class="btn-green" onclick="openAuthModal()">🔐 登入 / 雲端同步</button>
       <button id="logoutBtn" class="btn-pink hidden" onclick="logout()">登出電臺</button>
     </div>
@@ -411,14 +411,15 @@
         <button type="button" id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
         <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
 
-                <select id="eqPresetSelect" onchange="applyEqPreset(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="數位三段式等化器音場">
+        <select id="eqPresetSelect" onchange="applyEqPreset(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="數位三段式等化器音場">
           <option value="flat">🎛️ 音場：原音標準</option>
           <option value="vocal">🎙️ 音場：清晰人聲</option>
           <option value="bass">🔊 音場：重低音增強</option>
           <option value="night">🌙 音場：夜間柔音</option>
           <option value="custom">🎚️ 音場：自訂調音</option>
         </select>
-        <button type="button" class="btn-mini" onclick="toggleCustomEqPanel()" title="展開/收合自訂 EQ 推桿">🎚️ 微調</button>
+        <button type="button" id="eqToggleBtn" class="btn-mini" onclick="toggleCustomEqPanel()" title="展開/收合自訂 EQ 推桿">🎚️ 微調</button>
+
         <select id="sleepSelect" onchange="setSleepTimer(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="睡眠定時器">
           <option value="0">⏲ 睡眠定時：關閉</option>
           <option value="15">⏲ 15 分鐘後停止</option>
@@ -433,7 +434,7 @@
           <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
         </div>
       </div>
-<div id="customEqPanel" class="profile-card hidden" style="margin-top:12px;">
+      <div id="customEqPanel" class="profile-card hidden" style="margin-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
           <strong style="color:var(--border-glow);font-size:0.9rem;">🎚️ 自訂三段式數位 EQ 等化器（-12dB ～ +12dB）</strong>
           <button type="button" class="btn-mini btn-pink" onclick="resetCustomEq()">歸零重置</button>
@@ -453,6 +454,7 @@
           </div>
         </div>
       </div>
+
       <div id="recordingVault" class="rec-vault hidden">
         <div style="font-size:0.88rem;color:var(--accent-pink);font-weight:bold;margin-bottom:8px;">🎙️ 本次錄音暫存清單（可線上試聽或下載）：</div>
         <div id="recordingList"></div>
@@ -462,6 +464,7 @@
       <audio id="audioPlayer" playsinline webkit-playsinline crossorigin="anonymous"></audio>
       <audio id="nativeAudioPlayer" playsinline webkit-playsinline></audio>
     </div>
+
     <div class="hud-box">
       <div class="collapsible-header" onclick="toggleAdminPanel()">
         <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 匯入匯出 / 電臺管理 / 收聽統計 / 個人設定）</h2>
@@ -506,6 +509,7 @@
           <button type="button" class="btn-pink btn-mini" onclick="resetListeningStats()">🔄 重置統計</button>
         </div>
         <div id="listeningStatsBox" class="stats-grid"></div>
+
         <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
         <div class="profile-card">
           <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
@@ -586,7 +590,7 @@
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
-    authDomain: "roy-radio.firebaseapp.com",
+    authDomain: "://firebaseapp.com",
     projectId: "roy-radio",
     storageBucket: "roy-radio.firebasestorage.app",
     messagingSenderId: "15329601327",
@@ -594,7 +598,7 @@
     measurementId: "G-2N69W5VK65"
   };
 
-    function escapeHTML(str) {
+  function escapeHTML(str) {
     if (str === null || str === undefined) return '';
     return String(str)
       .replace(/&/g, '&amp;')
@@ -604,7 +608,6 @@
       .replace(/'/g, '\u0027');
   }
 
-  // 全介面光暈同步多主題切換器
   const HUD_THEMES = [
     { name: '賽博青藍', glow: '#00f3ff', rgb: '0, 243, 255', sub: '#8be9fd', green: '#00ff9d', pink: '#ff007f', bg: '#101d36' },
     { name: '駭客任務綠', glow: '#00ff66', rgb: '0, 255, 102', sub: '#99ffbb', green: '#aaff00', pink: '#ff3366', bg: '#082214' },
@@ -614,7 +617,7 @@
   let currentThemeIdx = parseInt(localStorage.getItem('roy_hud_theme') || '0', 10) % HUD_THEMES.length;
 
   function applyHudTheme(idx) {
-    const t = HUD_THEMES[idx] || HUD_THEMES;
+    const t = HUD_THEMES[idx] || HUD_THEMES[0];
     document.documentElement.style.setProperty('--border-glow', t.glow);
     document.documentElement.style.setProperty('--border-glow-rgb', t.rgb);
     document.documentElement.style.setProperty('--sub-title', t.sub);
@@ -631,7 +634,7 @@
     localStorage.setItem('roy_hud_theme', currentThemeIdx);
     applyHudTheme(currentThemeIdx);
   }
-  // 🚘 車用大字模式控制
+
   function toggleCarMode(forceState) {
     const isCar = typeof forceState === 'boolean'
       ? document.body.classList.toggle('car-mode', forceState)
@@ -645,7 +648,6 @@
   }
   if (localStorage.getItem('roy_car_mode') === '1') toggleCarMode(true);
 
-  // 🎛️ 電臺專屬音場記憶表
   let stationEqMap = JSON.parse(localStorage.getItem('roy_station_eq_map')) || {};
   function saveCurrentStationEq(presetKey, customVals) {
     if (currentStationIndex >= 0 && stations[currentStationIndex]) {
@@ -657,21 +659,20 @@
     }
   }
 
-  // 手機端左右滑動狀態面板切台手勢
   (function initSwipeGesture() {
     const area = document.getElementById('swipeTouchArea');
     if (!area) return;
     let startX = 0, startY = 0;
     area.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
-        startX = e.touches.clientX;
-        startY = e.touches.clientY;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
       }
     }, { passive: true });
     area.addEventListener('touchend', (e) => {
       if (e.changedTouches.length === 1) {
-        const dx = e.changedTouches.clientX - startX;
-        const dy = e.changedTouches.clientY - startY;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
         if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
           if (dx < 0) nextStation();
           else prevStation();
@@ -679,7 +680,6 @@
       }
     }, { passive: true });
   })();
-
   let auth = null;
   let db = null;
   function initFirebaseSafe() {
@@ -722,6 +722,7 @@
     { name: "警廣臺中分臺(TCS)💛", url: _P + "TCS/playlist.m3u8", category: "警廣" },
     { name: "❤️警廣全國治安交通網(PBS)", url: _P + "PBS/playlist.m3u8", category: "警廣" }
   ];
+
   let currentUser = null;
   let userProfile = { customId: '', nickname: '', email: '' };
   let stations = [];
@@ -766,14 +767,40 @@
 
   let icyTimer = null;
   let titleMarqueeTimer = null;
-  const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v4.0";
+  const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v4.2";
 
   const audio = document.getElementById('audioPlayer');
   const nativeAudio = document.getElementById('nativeAudioPlayer');
   let activeAudio = audio;
 
-  // 數位三段式 EQ 等化器節點
-    function applyEqPreset(presetKey) {
+  let audioCtx = null, analyser = null, recDestNode = null, visDataArray = null, isVisSimulated = false, visInitialized = false;
+  let eqBassFilter = null, eqMidFilter = null, eqTrebleFilter = null;
+  let currentEqPreset = localStorage.getItem('roy_eq_preset') || 'flat';
+  let customEqValues = JSON.parse(localStorage.getItem('roy_custom_eq')) || { bass: 0, mid: 0, treble: 0 };
+
+  const EQ_PRESETS = {
+    flat:   { bass: 0,  mid: 0,  treble: 0 },
+    vocal:  { bass: -3, mid: 5,  treble: 2 },
+    bass:   { bass: 7,  mid: -1, treble: 1 },
+    night:  { bass: -4, mid: 1,  treble: -5 },
+    custom: customEqValues
+  };
+
+  function toggleCustomEqPanel() {
+    const panel = document.getElementById('customEqPanel');
+    if (panel) panel.classList.toggle('hidden');
+  }
+
+  function syncEqSlidersUI(cfg) {
+    const bS = document.getElementById('eqBassSlider');
+    const mS = document.getElementById('eqMidSlider');
+    const tS = document.getElementById('eqTrebleSlider');
+    if (bS) { bS.value = cfg.bass; document.getElementById('eqBassVal').textContent = `${cfg.bass > 0 ? '+' : ''}${cfg.bass} dB`; }
+    if (mS) { mS.value = cfg.mid; document.getElementById('eqMidVal').textContent = `${cfg.mid > 0 ? '+' : ''}${cfg.mid} dB`; }
+    if (tS) { tS.value = cfg.treble; document.getElementById('eqTrebleVal').textContent = `${cfg.treble > 0 ? '+' : ''}${cfg.treble} dB`; }
+  }
+
+  function applyEqPreset(presetKey) {
     currentEqPreset = EQ_PRESETS[presetKey] ? presetKey : 'flat';
     localStorage.setItem('roy_eq_preset', currentEqPreset);
     const sel = document.getElementById('eqPresetSelect');
@@ -789,8 +816,63 @@
       eqTrebleFilter.gain.setTargetAtTime(cfg.treble, now, 0.05);
     }
     saveCurrentStationEq(currentEqPreset, customEqValues);
-  
-}
+  }
+
+  function onManualEqSlide() {
+    customEqValues = {
+      bass: parseInt(document.getElementById('eqBassSlider').value, 10),
+      mid: parseInt(document.getElementById('eqMidSlider').value, 10),
+      treble: parseInt(document.getElementById('eqTrebleSlider').value, 10)
+    };
+    EQ_PRESETS.custom = customEqValues;
+    localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
+    applyEqPreset('custom');
+  }
+
+  function resetCustomEq() {
+    customEqValues = { bass: 0, mid: 0, treble: 0 };
+    EQ_PRESETS.custom = customEqValues;
+    localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
+    applyEqPreset('custom');
+  }
+  function initVisualizer() {
+    if (visInitialized) {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      return;
+    }
+    visInitialized = true;
+    const canvas = document.getElementById('visualizerCanvas');
+    const ctx = canvas.getContext('2d');
+    const tag = document.getElementById('visModeTag');
+
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaElementSource(audio);
+
+      eqBassFilter = audioCtx.createBiquadFilter();
+      eqBassFilter.type = 'lowshelf';
+      eqBassFilter.frequency.value = 120;
+
+      eqMidFilter = audioCtx.createBiquadFilter();
+      eqMidFilter.type = 'peaking';
+      eqMidFilter.frequency.value = 1200;
+      eqMidFilter.Q.value = 1.0;
+
+      eqTrebleFilter = audioCtx.createBiquadFilter();
+      eqTrebleFilter.type = 'highshelf';
+      eqTrebleFilter.frequency.value = 7500;
+
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+
+      recDestNode = audioCtx.createMediaStreamDestination();
+
+      source.connect(eqBassFilter);
+      eqBassFilter.connect(eqMidFilter);
+      eqMidFilter.connect(eqTrebleFilter);
+      eqTrebleFilter.connect(recDestNode);
+      eqTrebleFilter.connect(analyser);
+      analyser.connect(audioCtx.destination);
 
       applyEqPreset(currentEqPreset);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -845,7 +927,7 @@
     titleMarqueeTimer = null;
     document.title = statusPrefix ? `${statusPrefix} ${DEFAULT_PAGE_TITLE}` : DEFAULT_PAGE_TITLE;
   }
-  // 收聽數據統計引擎
+
   let listeningStats = JSON.parse(localStorage.getItem('roy_listening_stats')) || {
     totalSeconds: 0,
     stationSeconds: {}
@@ -938,7 +1020,6 @@
     playHistory = JSON.parse(localStorage.getItem('roy_history')) || [];
     renderAllLists();
   }
-
   async function login() {
     if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('loginAccount').value.trim();
@@ -1012,12 +1093,12 @@
       alert('寄送重設信失敗：' + err.message);
     }
   }
-
   async function reauthenticateUser(currentPass) {
     if (!currentPass) throw new Error('請先在上方輸入「目前密碼」以驗證身分！');
     const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPass);
     await currentUser.reauthenticateWithCredential(credential);
   }
+
   async function updateNickname() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客帳號無法修改個人資料，請先註冊正式帳號！');
     const newNick = document.getElementById('profileNicknameInput').value.trim();
@@ -1047,7 +1128,6 @@
       alert(`🎉 專屬 ID 已更新為「${newId}」！`);
     } catch (err) { alert('更新專屬 ID 失敗：' + err.message); }
   }
-
   async function updateAccountEmail() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客帳號無法修改 Email！');
     const currentPass = document.getElementById('currentVerifyPass').value;
@@ -1132,7 +1212,6 @@
       }, 1500);
     }
   }
-
   function setFilter(filter, btnEl) {
     currentFilter = filter;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1196,6 +1275,7 @@
       `).join('');
     }
   }
+
   function renderHistory() {
     const box = document.getElementById('listViewBox');
     const filtered = playHistory.filter(matchesSearch);
@@ -1213,7 +1293,6 @@
       </div>
     `).join('');
   }
-
   function renderPresets() {
     const selectBox = document.getElementById('selectModeBox');
     const box = document.getElementById('listViewBox');
@@ -1319,7 +1398,7 @@
     isUserPaused = false;
     currentStationIndex = idx;
     const st = stations[idx];
-// 自動套用此電臺專屬記憶音場
+
     const savedStEq = stationEqMap[st.url];
     if (savedStEq) {
       if (savedStEq.preset === 'custom' && typeof savedStEq.bass === 'number') {
@@ -1328,6 +1407,7 @@
       }
       applyEqPreset(savedStEq.preset);
     }
+
     document.getElementById('nowPlayingTitle').textContent = st.name;
     setStatus('連線中...', 'warn', '⏳ 載入串流...');
     stopTitleMarquee("⏳ [連線中]");
@@ -1384,7 +1464,6 @@
     setupMediaSession(st);
     startIcyPolling(st, useHls);
   }
-
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
     badge.textContent = badgeText;
@@ -1445,6 +1524,7 @@
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => { if (!isUserPaused) startStream(currentStationIndex); }, 3000);
   }
+
   function prevStation() {
     if (stations.length) startStream((currentStationIndex - 1 + stations.length) % stations.length);
   }
@@ -1482,7 +1562,7 @@
     document.getElementById('muteBtn').textContent = nextMute ? '🔇' : '🔊';
   }
 
-    function setSleepTimer(minutes) {
+  function setSleepTimer(minutes) {
     clearInterval(sleepTimerId);
     sleepTimerId = null;
     const badge = document.getElementById('sleepCountdown');
@@ -1523,12 +1603,12 @@
       }
     }, 1000);
   }
-
   function updateSleepBadge() {
     const m = String(Math.floor(sleepRemainingSec / 60)).padStart(2, '0');
     const s = String(sleepRemainingSec % 60).padStart(2, '0');
     document.getElementById('sleepCountdown').textContent = `⏳ ${m}:${s}`;
   }
+
   function startIcyPolling(st, isHls) {
     if (icyTimer) { clearInterval(icyTimer); icyTimer = null; }
     const icyEl = document.getElementById('icyMetadata');
@@ -1579,7 +1659,6 @@
       icyEl.textContent = `🎵 串流播放中（此電臺未開放跨網域曲目讀取）`;
     }
   }
-
   let recAbortController = null;
   let isDirectStreamRec = false;
   let activeStreamReader = null;
@@ -1591,6 +1670,7 @@
       startRecording();
     }
   }
+
   async function startRecording() {
     if (activeAudio.paused || currentStationIndex < 0) {
       return alert('請先開始播放電臺再進行錄音！');
@@ -1792,7 +1872,6 @@
       alert('無法啟動錄音：' + err.message);
     }
   }
-
   function stopRecording() {
     isDirectStreamRec = false;
     releaseWakeLock();
@@ -1813,6 +1892,7 @@
     btn.classList.remove('recording');
     document.getElementById('recTimer').textContent = '';
   }
+
   function shareRecording(idx) {
     const rec = savedRecordings[idx];
     if (!rec || !rec.blob) return;
@@ -1860,7 +1940,7 @@
       navigator.mediaSession.metadata = new MediaMetadata({
         title: st.name,
         artist: songTitle ? `🎵 ${songTitle}` : "Roy's Net Radio // LIVE",
-        album: 'CYBER HUD v4.0',
+        album: 'CYBER HUD v4.2',
         artwork: [
           { src: baseUrl + 'icon-512.png', sizes: '512x512', type: 'image/png' }
         ]
@@ -1872,7 +1952,6 @@
       navigator.mediaSession.setActionHandler('nexttrack', nextStation);
     }
   }
-
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
     if (document.getElementById('authModal').classList.contains('show')) return;
@@ -1894,6 +1973,7 @@
       case 'KeyR': toggleRecording(); break;
     }
   });
+
   function toggleQuickGrid(forceState) {
     const grid = document.getElementById('quickStationGrid');
     const btn = document.getElementById('toggleQuickGridBtn');
@@ -1942,7 +2022,6 @@
       </div>`;
     }).join('');
   }
-
   async function moveStation(idx, dir) {
     const targetIdx = idx + dir;
     if (targetIdx < 0 || targetIdx >= stations.length) return;
@@ -2119,7 +2198,6 @@
     a.click();
     URL.revokeObjectURL(url);
   }
-
   function handleImportFile(event) {
     const file = event.target.files[0];
     if (!file) return;
