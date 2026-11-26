@@ -1,18 +1,40 @@
 {
-  "name": "Roy's Radio // CYBER HUD",
+  "name": "Roy's Radio player // CYBER HUD",
   "short_name": "Roy's Radio",
-  "description": "Roy 的網路廣播播放器",
+  "description": "賽博龐克風格雲端網路廣播播放器，支援 HLS 串流、即時錄音與多裝置收藏同步。",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#070b14",
   "theme_color": "#070b14",
-  "orientation": "portrait",
+  "categories": ["music", "entertainment", "utilities"],
   "icons": [
+    {
+      "src": "./icon-512.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "開啟 Roy's Radio",
+      "short_name": "收聽廣播",
+      "description": "立即啟動網路廣播電臺播放器",
+      "url": "./index.html",
+      "icons": [
+        {
+          "src": "./icon-512.png",
+          "sizes": "512x512"
+        }
+      ]
     }
   ]
 }
