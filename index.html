@@ -11,29 +11,10 @@
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>Roy的網路廣播播放器 // CYBER HUD v4.3</title>
 
-  <script>
-    (function() {
-      var base = "https://jsdelivr.net";
-      var libs = [
-        base + "hls.js@1.5.15/dist/hls.min.js",
-        base + "firebase@10.12.2/firebase-app-compat.js",
-        base + "firebase@10.12.2/firebase-auth-compat.js",
-        base + "firebase@10.12.2/firebase-firestore-compat.js"
-      ];
-      function loadNext(i) {
-        if (i >= libs.length) {
-          if (typeof initFirebaseSafe === 'function') initFirebaseSafe();
-          return;
-        }
-        var s = document.createElement('script');
-        s.src = libs[i];
-        s.onload = function() { loadNext(i + 1); };
-        s.onerror = function() { loadNext(i + 1); };
-        document.head.appendChild(s);
-      }
-      loadNext(0);
-    })();
-  </script>
+    <script src="https://jsdelivr.net"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
 
   <style>
     :root {
@@ -607,7 +588,7 @@
 </div>
 
 <script>
-  const firebaseConfig = {
+    const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
     authDomain: "://firebaseapp.com",
     projectId: "roy-radio",
@@ -616,6 +597,7 @@
     appId: "1:15329601327:web:d3036a3c5d8b6091e823da",
     measurementId: "G-2N69W5VK65"
   };
+
 
   function escapeHTML(str) {
     if (str === null || str === undefined) return '';
@@ -699,35 +681,41 @@
     }, { passive: true });
   })();
 
-  let auth = null;
+   let auth = null;
   let db = null;
   function initFirebaseSafe() {
     if (!window.firebase || typeof firebase.auth !== 'function' || typeof firebase.firestore !== 'function') {
       return false;
     }
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    if (!auth) {
-      auth = firebase.auth();
-      db = firebase.firestore();
-      auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          currentUser = user;
-          closeAuthModal();
-          updateHeaderNicknameUI();
-          await loadUserDataFromCloud(user.uid);
-        } else {
-          currentUser = null;
-          userProfile = { customId: '', nickname: '', email: '' };
-          updateHeaderNicknameUI();
-          loadLocalData();
-        }
-      });
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      if (!auth) {
+        auth = firebase.auth();
+        db = firebase.firestore();
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            currentUser = user;
+            closeAuthModal();
+            updateHeaderNicknameUI();
+            await loadUserDataFromCloud(user.uid);
+          } else {
+            currentUser = null;
+            userProfile = { customId: '', nickname: '', email: '' };
+            updateHeaderNicknameUI();
+            loadLocalData();
+          }
+        });
+      }
+      return true;
+    } catch (err) {
+      console.error('Firebase 初始化失敗:', err);
+      return false;
     }
-    return true;
   }
-  const fbBootTimer = setInterval(() => {
-    if (initFirebaseSafe()) clearInterval(fbBootTimer);
-  }, 500);
+  initFirebaseSafe();
+
   const _H = "https://";
   const _R = _H + "://ihrhls.com";
   const _P = _H + "stream.pbs.gov.tw/live/";
