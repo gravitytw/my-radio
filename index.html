@@ -11,10 +11,28 @@
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>Roy的網路廣播播放器 // CYBER HUD v4.3</title>
 
-    <script src="https://jsdelivr.net"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
+  <script>
+    (function() {
+      var urls = [
+        "https:" + "//cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js",
+        "https:" + "//://gstatic.com",
+        "https:" + "//://gstatic.com",
+        "https:" + "//://gstatic.com"
+      ];
+      function loadSeq(idx) {
+        if (idx >= urls.length) {
+          if (typeof initFirebaseSafe === 'function') initFirebaseSafe();
+          return;
+        }
+        var sc = document.createElement('script');
+        sc.src = urls[idx];
+        sc.onload = function() { loadSeq(idx + 1); };
+        sc.onerror = function() { loadSeq(idx + 1); };
+        document.head.appendChild(sc);
+      }
+      loadSeq(0);
+    })();
+  </script>
 
   <style>
     :root {
@@ -275,7 +293,6 @@
       input, select { font-size: 16px; }
     }
 
-    /* 🚘 車用 / 桌面極簡大字模式（優化版：保留並放大快捷選台牆為雙欄大按鈕） */
     body.car-mode .tabs,
     body.car-mode .filter-toolbar,
     body.car-mode #resumeBanner,
@@ -440,6 +457,7 @@
           <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
         </div>
       </div>
+
       <div id="customEqPanel" class="profile-card hidden" style="margin-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
           <strong style="color:var(--border-glow);font-size:0.9rem;">🎚️ 自訂三段式數位 EQ 等化器（-12dB ～ +12dB）</strong>
@@ -460,6 +478,7 @@
           </div>
         </div>
       </div>
+
       <div id="recordingVault" class="rec-vault hidden">
         <div style="font-size:0.88rem;color:var(--accent-pink);font-weight:bold;margin-bottom:8px;">🎙️ 本次錄音暫存清單（可線上試聽或下載）：</div>
         <div id="recordingList"></div>
@@ -491,6 +510,7 @@
           <button type="button" onclick="saveStation()">➕ 儲存此電臺</button>
           <button type="button" class="btn-pink" onclick="cancelEdit()">取消修改</button>
         </div>
+
         <h3>📂 批次匯入 / 匯出電臺清單（支援 .json 與 .m3u）</h3>
         <div class="controls-row">
           <button type="button" class="btn-green" onclick="exportStationsJSON()">📤 匯出 JSON 備份</button>
@@ -506,12 +526,12 @@
           </div>
         </div>
         <div id="manageStationList"></div>
+
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;">
           <h3 style="margin:0;">📊 收聽數據統計儀表板</h3>
           <button type="button" class="btn-pink btn-mini" onclick="resetListeningStats()">🔄 重置統計</button>
         </div>
         <div id="listeningStatsBox" class="stats-grid"></div>
-
         <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
         <div class="profile-card">
           <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
@@ -525,6 +545,7 @@
             <input type="text" id="profileCustomIdInput" placeholder="輸入專屬 ID (3~20碼英數字或底線)" />
             <button type="button" onclick="updateCustomId()">🔗 更新專屬 ID</button>
           </div>
+
           <label class="field-label" style="color:var(--accent-yellow);">🔐 安全性驗證（修改「電子郵件」或「密碼」前請先輸入目前密碼）</label>
           <input type="password" id="currentVerifyPass" placeholder="請輸入目前使用的密碼以驗證身分" />
 
@@ -544,6 +565,7 @@
     </div>
   </div>
 </div>
+
 <div id="authModal" class="custom-modal-backdrop" onclick="if(event.target===this) closeAuthModal()">
   <div class="custom-modal-box">
     <div class="modal-close-bar">
@@ -576,6 +598,7 @@
         <button type="button" class="btn-pink" onclick="switchAuthView('loginBox')">返回登入</button>
       </div>
     </div>
+
     <div id="resetBox" class="hidden">
       <h2>🔑 重設安全密碼</h2>
       <input type="email" id="resetEmail" placeholder="已註冊的電子郵件 (Email)" />
@@ -586,18 +609,16 @@
     </div>
   </div>
 </div>
-
 <script>
-    const firebaseConfig = {
+  const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
-    authDomain: "://firebaseapp.com",
+    authDomain: "roy-radio" + ".firebaseapp.com",
     projectId: "roy-radio",
-    storageBucket: "roy-radio.firebasestorage.app",
+    storageBucket: "roy-radio" + ".firebasestorage.app",
     messagingSenderId: "15329601327",
     appId: "1:15329601327:web:d3036a3c5d8b6091e823da",
     measurementId: "G-2N69W5VK65"
   };
-
 
   function escapeHTML(str) {
     if (str === null || str === undefined) return '';
@@ -635,6 +656,7 @@
     localStorage.setItem('roy_hud_theme', currentThemeIdx);
     applyHudTheme(currentThemeIdx);
   }
+
   function toggleCarMode(forceState) {
     const isCar = typeof forceState === 'boolean'
       ? document.body.classList.toggle('car-mode', forceState)
@@ -681,7 +703,7 @@
     }, { passive: true });
   })();
 
-   let auth = null;
+  let auth = null;
   let db = null;
   function initFirebaseSafe() {
     if (!window.firebase || typeof firebase.auth !== 'function' || typeof firebase.firestore !== 'function') {
@@ -715,9 +737,8 @@
     }
   }
   initFirebaseSafe();
-
   const _H = "https://";
-  const _R = _H + "://ihrhls.com";
+  const _R = _H + "://revma.com";
   const _P = _H + "stream.pbs.gov.tw/live/";
   const PRESET_STATIONS = [
     { name: "🔵中廣流行網(I like radio)", url: _R + "aw9uqyxy2tzuv", category: "音樂" },
@@ -906,7 +927,7 @@
         for (let j = 0; j < barCount; j++) { if (visDataArray[j] > 0) { hasSignal = true; break; } }
       }
 
-      const activeTheme = HUD_THEMES[currentThemeIdx] || HUD_THEMES;
+      const activeTheme = HUD_THEMES[currentThemeIdx] || HUD_THEMES[0];
       for (let i = 0; i < barCount; i++) {
         let val = 4;
         if (!activeAudio.paused) {
@@ -928,7 +949,7 @@
     stopTitleMarquee();
     let marqueeText = `▶ 正在收聽：${displayText} ｜ Roy's Net Radio 📻 　　`;
     titleMarqueeTimer = setInterval(() => {
-      marqueeText = marqueeText.slice(1) + marqueeText;
+      marqueeText = marqueeText.slice(1) + marqueeText[0];
       if (!document.hidden) document.title = marqueeText;
     }, 300);
   }
@@ -938,6 +959,7 @@
     titleMarqueeTimer = null;
     document.title = statusPrefix ? `${statusPrefix} ${DEFAULT_PAGE_TITLE}` : DEFAULT_PAGE_TITLE;
   }
+
   let listeningStats = JSON.parse(localStorage.getItem('roy_listening_stats')) || {
     totalSeconds: 0,
     stationSeconds: {}
@@ -995,7 +1017,6 @@
       }
     }
   }, 1000);
-
   function openAuthModal() { document.getElementById('authModal').classList.add('show'); }
   function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
   function switchAuthView(boxId) {
@@ -1030,6 +1051,7 @@
     playHistory = JSON.parse(localStorage.getItem('roy_history')) || [];
     renderAllLists();
   }
+
   async function login() {
     if (!initFirebaseSafe()) return alert('雲端系統載入中，請稍候 2 秒再試！');
     const rawAccount = document.getElementById('loginAccount').value.trim();
@@ -1139,6 +1161,7 @@
       alert(`🎉 專屬 ID 已更新為「${newId}」！`);
     } catch (err) { alert('更新專屬 ID 失敗：' + err.message); }
   }
+
   async function updateAccountEmail() {
     if (!currentUser || currentUser.isAnonymous) return alert('訪客帳號無法修改 Email！');
     const currentPass = document.getElementById('currentVerifyPass').value;
@@ -1170,7 +1193,6 @@
   }
 
   function logout() { if (auth) auth.signOut(); }
-
   async function loadUserDataFromCloud(uid) {
     try {
       const docSnap = await db.collection('users').doc(uid).get();
@@ -1258,6 +1280,7 @@
     if (kw && !st.name.toLowerCase().includes(kw) && !stCat.toLowerCase().includes(kw)) return false;
     return true;
   }
+
   function renderDropdown() {
     const sel = document.getElementById('stationSelect');
     const quickGrid = document.getElementById('quickStationGrid');
@@ -1475,7 +1498,6 @@
     setupMediaSession(st);
     startIcyPolling(st, useHls);
   }
-
   function setStatus(badgeText, type, spinnerText = '') {
     const badge = document.getElementById('connBadge');
     badge.textContent = badgeText;
@@ -1536,6 +1558,7 @@
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => { if (!isUserPaused) startStream(currentStationIndex); }, 3000);
   }
+
   function prevStation() {
     if (stations.length) startStream((currentStationIndex - 1 + stations.length) % stations.length);
   }
@@ -1689,7 +1712,7 @@
 
     const st = stations[currentStationIndex];
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const CORS_PROXY = "https://workers.dev";
+    const CORS_PROXY = "https:" + "//radio-proxy.ming-answer.workers.dev/?url=";
 
     let rawSrc = (activeAudio.currentSrc || activeAudio.src || '').trim();
     let targetUrl = (rawSrc && !rawSrc.startsWith('blob:')) ? rawSrc : (st.url || '').trim();
@@ -1943,7 +1966,6 @@
     renderRecordingVault();
   }
 
-  /* 🎧 強化版藍牙與手機鎖定畫面控制（Media Session API） */
   function setupMediaSession(st, songTitle = '') {
     if (!('mediaSession' in navigator) || !st) return;
     const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
@@ -1997,6 +2019,7 @@
       case 'KeyR': toggleRecording(); break;
     }
   });
+
   function toggleQuickGrid(forceState) {
     const grid = document.getElementById('quickStationGrid');
     const btn = document.getElementById('toggleQuickGridBtn');
@@ -2074,7 +2097,7 @@
     btn.disabled = true;
     btn.textContent = '⏳ 檢測中...';
 
-    const CORS_PROXY = "https://workers.dev";
+    const CORS_PROXY = "https:" + "//radio-proxy.ming-answer.workers.dev/?url=";
     stations.forEach(st => { stationHealthMap[st.url] = 'checking'; });
     renderAllLists();
 
@@ -2109,6 +2132,7 @@
     const failCount = Object.values(stationHealthMap).filter(v => v === 'fail').length;
     alert(`🩺 全清單檢測完成！共 ${stations.length} 個電臺，其中 ${failCount} 個疑似連線異常（已標記 🔴）。`);
   }
+
   async function saveStation() {
     const name = document.getElementById('stationName').value.trim();
     const url = document.getElementById('stationUrl').value.trim();
@@ -2155,7 +2179,6 @@
     await saveData();
     renderAllLists();
   }
-
   async function mergeDuplicateStations() {
     if (stations.length <= 1) return alert('目前清單電臺數量不足，無需合併。');
 
@@ -2211,6 +2234,7 @@
     updateFavButton();
     alert(`✅ 合併完成！已成功清理 ${removedCount} 個重複電臺，目前共有 ${stations.length} 個電臺。`);
   }
+
   function exportStationsJSON() {
     const blob = new Blob([JSON.stringify(stations, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
