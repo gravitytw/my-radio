@@ -370,13 +370,14 @@
         <button type="button" id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
         <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
 
-        <select id="eqPresetSelect" onchange="applyEqPreset(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="數位三段式等化器音場">
+                <select id="eqPresetSelect" onchange="applyEqPreset(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="數位三段式等化器音場">
           <option value="flat">🎛️ 音場：原音標準</option>
           <option value="vocal">🎙️ 音場：清晰人聲</option>
           <option value="bass">🔊 音場：重低音增強</option>
           <option value="night">🌙 音場：夜間柔音</option>
+          <option value="custom">🎚️ 音場：自訂調音</option>
         </select>
-
+        <button type="button" class="btn-mini" onclick="toggleCustomEqPanel()" title="展開/收合自訂 EQ 推桿">🎚️ 微調</button>
         <select id="sleepSelect" onchange="setSleepTimer(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="睡眠定時器">
           <option value="0">⏲ 睡眠定時：關閉</option>
           <option value="15">⏲ 15 分鐘後停止</option>
@@ -390,7 +391,26 @@
           <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume(this.value)" />
         </div>
       </div>
-
+<div id="customEqPanel" class="profile-card hidden" style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+          <strong style="color:var(--border-glow);font-size:0.9rem;">🎚️ 自訂三段式數位 EQ 等化器（-12dB ～ +12dB）</strong>
+          <button type="button" class="btn-mini btn-pink" onclick="resetCustomEq()">歸零重置</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+          <div>
+            <label class="field-label">低音 Bass (120Hz)：<span id="eqBassVal" style="color:var(--accent-green);font-weight:bold;">0 dB</span></label>
+            <input type="range" id="eqBassSlider" min="-12" max="12" step="1" value="0" oninput="onManualEqSlide()" />
+          </div>
+          <div>
+            <label class="field-label">人聲 Mid (1.2kHz)：<span id="eqMidVal" style="color:var(--accent-green);font-weight:bold;">0 dB</span></label>
+            <input type="range" id="eqMidSlider" min="-12" max="12" step="1" value="0" oninput="onManualEqSlide()" />
+          </div>
+          <div>
+            <label class="field-label">高音 Treble (7.5kHz)：<span id="eqTrebleVal" style="color:var(--accent-green);font-weight:bold;">0 dB</span></label>
+            <input type="range" id="eqTrebleSlider" min="-12" max="12" step="1" value="0" oninput="onManualEqSlide()" />
+          </div>
+        </div>
+      </div>
       <div id="recordingVault" class="rec-vault hidden">
         <div style="font-size:0.88rem;color:var(--accent-pink);font-weight:bold;margin-bottom:8px;">🎙️ 本次錄音暫存清單（可線上試聽或下載）：</div>
         <div id="recordingList"></div>
@@ -690,12 +710,29 @@
   let eqBassFilter = null, eqMidFilter = null, eqTrebleFilter = null;
   let currentEqPreset = localStorage.getItem('roy_eq_preset') || 'flat';
 
+    let customEqValues = JSON.parse(localStorage.getItem('roy_custom_eq')) || { bass: 0, mid: 0, treble: 0 };
+
   const EQ_PRESETS = {
-    flat:  { bass: 0,  mid: 0,  treble: 0 },
-    vocal: { bass: -3, mid: 5,  treble: 2 },
-    bass:  { bass: 7,  mid: -1, treble: 1 },
-    night: { bass: -4, mid: 1,  treble: -5 }
+    flat:   { bass: 0,  mid: 0,  treble: 0 },
+    vocal:  { bass: -3, mid: 5,  treble: 2 },
+    bass:   { bass: 7,  mid: -1, treble: 1 },
+    night:  { bass: -4, mid: 1,  treble: -5 },
+    custom: customEqValues
   };
+
+  function toggleCustomEqPanel() {
+    const panel = document.getElementById('customEqPanel');
+    if (panel) panel.classList.toggle('hidden');
+  }
+
+  function syncEqSlidersUI(cfg) {
+    const bS = document.getElementById('eqBassSlider');
+    const mS = document.getElementById('eqMidSlider');
+    const tS = document.getElementById('eqTrebleSlider');
+    if (bS) { bS.value = cfg.bass; document.getElementById('eqBassVal').textContent = `${cfg.bass > 0 ? '+' : ''}${cfg.bass} dB`; }
+    if (mS) { mS.value = cfg.mid; document.getElementById('eqMidVal').textContent = `${cfg.mid > 0 ? '+' : ''}${cfg.mid} dB`; }
+    if (tS) { tS.value = cfg.treble; document.getElementById('eqTrebleVal').textContent = `${cfg.treble > 0 ? '+' : ''}${cfg.treble} dB`; }
+  }
 
   function applyEqPreset(presetKey) {
     currentEqPreset = EQ_PRESETS[presetKey] ? presetKey : 'flat';
@@ -703,13 +740,33 @@
     const sel = document.getElementById('eqPresetSelect');
     if (sel && sel.value !== currentEqPreset) sel.value = currentEqPreset;
 
-    const cfg = EQ_PRESETS[currentEqPreset];
+    const cfg = currentEqPreset === 'custom' ? customEqValues : EQ_PRESETS[currentEqPreset];
+    syncEqSlidersUI(cfg);
+
     if (eqBassFilter && eqMidFilter && eqTrebleFilter && audioCtx) {
       const now = audioCtx.currentTime;
       eqBassFilter.gain.setTargetAtTime(cfg.bass, now, 0.05);
       eqMidFilter.gain.setTargetAtTime(cfg.mid, now, 0.05);
       eqTrebleFilter.gain.setTargetAtTime(cfg.treble, now, 0.05);
     }
+  }
+
+  function onManualEqSlide() {
+    customEqValues = {
+      bass: parseInt(document.getElementById('eqBassSlider').value, 10),
+      mid: parseInt(document.getElementById('eqMidSlider').value, 10),
+      treble: parseInt(document.getElementById('eqTrebleSlider').value, 10)
+    };
+    EQ_PRESETS.custom = customEqValues;
+    localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
+    applyEqPreset('custom');
+  }
+
+  function resetCustomEq() {
+    customEqValues = { bass: 0, mid: 0, treble: 0 };
+    EQ_PRESETS.custom = customEqValues;
+    localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
+    applyEqPreset('custom');
   }
 
   function initVisualizer() {
