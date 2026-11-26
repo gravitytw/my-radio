@@ -11,26 +11,28 @@
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>Roy的網路廣播播放器 // CYBER HUD v4.3</title>
 
-  <script>
+      <script>
     (function() {
-      var urls = [
-        "https:" + "//cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js",
-        "https:" + "//://gstatic.com",
-        "https:" + "//://gstatic.com",
-        "https:" + "//://gstatic.com"
+      var hlsUrl = "https://" + "cdn.jsdelivr" + ".net/npm/hls.js@1.5.15/dist/hls.min.js";
+      var fbHost = "https://" + "www.gstatic" + ".com/firebasejs/10.12.2/";
+      var queue = [
+        hlsUrl,
+        fbHost + "firebase-app-compat.js",
+        fbHost + "firebase-auth-compat.js",
+        fbHost + "firebase-firestore-compat.js"
       ];
-      function loadSeq(idx) {
-        if (idx >= urls.length) {
+      function loadNext() {
+        if (!queue.length) {
           if (typeof initFirebaseSafe === 'function') initFirebaseSafe();
           return;
         }
         var sc = document.createElement('script');
-        sc.src = urls[idx];
-        sc.onload = function() { loadSeq(idx + 1); };
-        sc.onerror = function() { loadSeq(idx + 1); };
+        sc.src = queue.shift();
+        sc.onload = loadNext;
+        sc.onerror = loadNext;
         document.head.appendChild(sc);
       }
-      loadSeq(0);
+      loadNext();
     })();
   </script>
 
@@ -612,7 +614,7 @@
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBfrd-K31m36eQIHx3s_f5mN5LtWpSf-bA",
-    authDomain: "roy-radio" + ".firebaseapp.com",
+    authDomain: "roy-radio." + "firebaseapp" + ".com",
     projectId: "roy-radio",
     storageBucket: "roy-radio" + ".firebasestorage.app",
     messagingSenderId: "15329601327",
