@@ -292,6 +292,46 @@
       .btn-mini { min-height: 32px; }
       input, select { font-size: 16px; }
     }
+    /* 🚘 車用 / 桌面極簡大字模式 */
+    body.car-mode .tabs,
+    body.car-mode .filter-toolbar,
+    body.car-mode #resumeBanner,
+    body.car-mode #selectModeBox,
+    body.car-mode #recordingVault,
+    body.car-mode #customEqPanel,
+    body.car-mode .shortcut-hint,
+    body.car-mode #favToggleBtn,
+    body.car-mode #recordBtn,
+    body.car-mode #eqPresetSelect,
+    body.car-mode #sleepSelect,
+    body.car-mode .volume-box,
+    body.car-mode #playerSection > .hud-box:nth-child(2) {
+      display: none !important;
+    }
+    body.car-mode #nowPlayingTitle {
+      font-size: 2.5rem;
+      display: block;
+      margin-top: 8px;
+    }
+    body.car-mode .icy-marquee {
+      font-size: 1.15rem;
+      margin-top: 12px;
+    }
+    body.car-mode #visualizerCanvas {
+      height: 85px;
+    }
+    body.car-mode .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    body.car-mode .controls-row button {
+      min-height: 76px;
+      font-size: 1.25rem;
+      border-width: 2px;
+    }
+
   </style>
 </head>
 <body>
@@ -308,7 +348,8 @@
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <button type="button" id="themeCycleBtn" class="btn-mini btn-yellow" onclick="cycleHudTheme()" title="切換介面霓虹主題色">🎨 主題：賽博青藍</button>
-      <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
+       <button type="button" id="carModeBtn" class="btn-mini btn-green" onclick="toggleCarMode()" title="切換車用極簡大字模式">🚘 車用模式</button>
+       <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
       <button id="openAuthBtn" class="btn-green" onclick="openAuthModal()">🔐 登入 / 雲端同步</button>
       <button id="logoutBtn" class="btn-pink hidden" onclick="logout()">登出電臺</button>
     </div>
@@ -383,6 +424,7 @@
           <option value="15">⏲ 15 分鐘後停止</option>
           <option value="30">⏲ 30 分鐘後停止</option>
           <option value="60">⏲ 60 分鐘後停止</option>
+          <option value="custom">⏲ 自訂分鐘數...</option>
         </select>
         <span id="sleepCountdown" style="color:var(--accent-yellow);font-size:0.85rem;font-weight:bold;"></span>
 
@@ -589,6 +631,31 @@
     localStorage.setItem('roy_hud_theme', currentThemeIdx);
     applyHudTheme(currentThemeIdx);
   }
+  // 🚘 車用大字模式控制
+  function toggleCarMode(forceState) {
+    const isCar = typeof forceState === 'boolean'
+      ? document.body.classList.toggle('car-mode', forceState)
+      : document.body.classList.toggle('car-mode');
+    localStorage.setItem('roy_car_mode', isCar ? '1' : '0');
+    const btn = document.getElementById('carModeBtn');
+    if (btn) {
+      btn.textContent = isCar ? '🚘 退出車用' : '🚘 車用模式';
+      btn.className = isCar ? 'btn-mini btn-pink' : 'btn-mini btn-green';
+    }
+  }
+  if (localStorage.getItem('roy_car_mode') === '1') toggleCarMode(true);
+
+  // 🎛️ 電臺專屬音場記憶表
+  let stationEqMap = JSON.parse(localStorage.getItem('roy_station_eq_map')) || {};
+  function saveCurrentStationEq(presetKey, customVals) {
+    if (currentStationIndex >= 0 && stations[currentStationIndex]) {
+      const url = stations[currentStationIndex].url;
+      stationEqMap[url] = presetKey === 'custom'
+        ? { preset: 'custom', ...customVals }
+        : { preset: presetKey };
+      localStorage.setItem('roy_station_eq_map', JSON.stringify(stationEqMap));
+    }
+  }
 
   // 手機端左右滑動狀態面板切台手勢
   (function initSwipeGesture() {
@@ -749,6 +816,15 @@
       eqMidFilter.gain.setTargetAtTime(cfg.mid, now, 0.05);
       eqTrebleFilter.gain.setTargetAtTime(cfg.treble, now, 0.05);
     }
+    if (eqBassFilter && eqMidFilter && eqTrebleFilter && audioCtx) {
+      const now = audioCtx.currentTime;
+      eqBassFilter.gain.setTargetAtTime(cfg.bass, now, 0.05);
+      eqMidFilter.gain.setTargetAtTime(cfg.mid, now, 0.05);
+      eqTrebleFilter.gain.setTargetAtTime(cfg.treble, now, 0.05);
+    }
+    saveCurrentStationEq(currentEqPreset, customEqValues);
+  }
+
   }
 
   function onManualEqSlide() {
@@ -1335,7 +1411,15 @@
     isUserPaused = false;
     currentStationIndex = idx;
     const st = stations[idx];
-
+// 自動套用此電臺專屬記憶音場
+    const savedStEq = stationEqMap[st.url];
+    if (savedStEq) {
+      if (savedStEq.preset === 'custom' && typeof savedStEq.bass === 'number') {
+        customEqValues = { bass: savedStEq.bass, mid: savedStEq.mid, treble: savedStEq.treble };
+        EQ_PRESETS.custom = customEqValues;
+      }
+      applyEqPreset(savedStEq.preset);
+    }
     document.getElementById('nowPlayingTitle').textContent = st.name;
     setStatus('連線中...', 'warn', '⏳ 載入串流...');
     stopTitleMarquee("⏳ [連線中]");
@@ -1490,11 +1574,31 @@
     document.getElementById('muteBtn').textContent = nextMute ? '🔇' : '🔊';
   }
 
-  function setSleepTimer(minutes) {
+    function setSleepTimer(minutes) {
     clearInterval(sleepTimerId);
     sleepTimerId = null;
     const badge = document.getElementById('sleepCountdown');
-    const mins = parseInt(minutes, 10);
+    const sel = document.getElementById('sleepSelect');
+    let mins = 0;
+
+    if (minutes === 'custom') {
+      const input = prompt('⏲ 請輸入睡眠定時分鐘數（1 ～ 480 分鐘）：', '45');
+      if (input === null) {
+        sel.value = '0';
+        badge.textContent = '';
+        return;
+      }
+      mins = parseInt(input.trim(), 10);
+      if (isNaN(mins) || mins < 1 || mins > 480) {
+        alert('請輸入 1 到 480 之間的有效整數分鐘數！');
+        sel.value = '0';
+        badge.textContent = '';
+        return;
+      }
+    } else {
+      mins = parseInt(minutes, 10);
+    }
+
     if (!mins) { badge.textContent = ''; return; }
     sleepRemainingSec = mins * 60;
     updateSleepBadge();
@@ -1505,12 +1609,13 @@
         sleepTimerId = null;
         badge.textContent = '💤 已自動停止';
         if (!activeAudio.paused) togglePlay();
-        document.getElementById('sleepSelect').value = '0';
+        sel.value = '0';
       } else {
         updateSleepBadge();
       }
     }, 1000);
   }
+
   function updateSleepBadge() {
     const m = String(Math.floor(sleepRemainingSec / 60)).padStart(2, '0');
     const s = String(sleepRemainingSec % 60).padStart(2, '0');
