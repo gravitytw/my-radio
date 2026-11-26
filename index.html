@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#070b14" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./icon-512.png" />
-  <title>Roy的網路廣播播放器 // CYBER HUD v3.5</title>
+  <title>Roy的網路廣播播放器 // CYBER HUD v4.0</title>
 
   <script>
     (function() {
@@ -40,6 +40,8 @@
       --bg-dark: #070b14;
       --panel-bg: rgba(13, 21, 38, 0.88);
       --border-glow: #00f3ff;
+      --border-glow-rgb: 0, 243, 255;
+      --sub-title: #8be9fd;
       --accent-pink: #ff007f;
       --accent-green: #00ff9d;
       --accent-yellow: #ffd000;
@@ -67,8 +69,8 @@
 
     .hud-box {
       background: var(--panel-bg);
-      border: 1px solid rgba(0, 243, 255, 0.35);
-      box-shadow: 0 0 18px rgba(0, 243, 255, 0.12), inset 0 0 12px rgba(0, 243, 255, 0.05);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.35);
+      box-shadow: 0 0 18px rgba(var(--border-glow-rgb), 0.14), inset 0 0 12px rgba(var(--border-glow-rgb), 0.06);
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 18px;
@@ -77,9 +79,9 @@
       transition: border-color 0.3s, box-shadow 0.3s;
     }
     h1, h2, h3 { margin-top: 0; letter-spacing: 1px; }
-    h1 { color: var(--border-glow); text-shadow: 0 0 10px rgba(0, 243, 255, 0.6); font-size: 1.55rem; margin-bottom: 4px; }
-    h2 { font-size: 1.15rem; color: #8be9fd; border-bottom: 1px solid rgba(0, 243, 255, 0.2); padding-bottom: 8px; }
-    h3 { font-size: 1.02rem; color: #8be9fd; margin-top: 20px; margin-bottom: 8px; }
+    h1 { color: var(--border-glow); text-shadow: 0 0 10px rgba(var(--border-glow-rgb), 0.6); font-size: 1.55rem; margin-bottom: 4px; }
+    h2 { font-size: 1.15rem; color: var(--sub-title); border-bottom: 1px solid rgba(var(--border-glow-rgb), 0.25); padding-bottom: 8px; }
+    h3 { font-size: 1.02rem; color: var(--sub-title); margin-top: 20px; margin-bottom: 8px; }
 
     .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .clock { color: var(--accent-green); font-weight: bold; font-size: 0.92rem; }
@@ -95,7 +97,7 @@
     .status-badge {
       display: inline-block; padding: 2px 8px; border-radius: 4px;
       font-size: 0.85rem; font-weight: bold; margin-right: 8px;
-      background: rgba(0, 243, 255, 0.15); color: var(--border-glow);
+      background: rgba(var(--border-glow-rgb), 0.15); color: var(--border-glow);
     }
     .status-badge.warn { background: rgba(255, 208, 0, 0.2); color: var(--accent-yellow); }
     .status-badge.err { background: rgba(255, 0, 127, 0.2); color: var(--accent-pink); }
@@ -105,7 +107,7 @@
       font-size: 1.9rem;
       font-weight: 800;
       letter-spacing: 1px;
-      background: linear-gradient(180deg, #ffffff 15%, #38b6ff 65%, #0066ff 100%);
+      background: linear-gradient(180deg, #ffffff 15%, var(--sub-title) 65%, var(--border-glow) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95));
@@ -119,7 +121,7 @@
     }
     .visualizer-wrap {
       background: rgba(4, 9, 18, 0.75);
-      border: 1px solid rgba(0, 243, 255, 0.25);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.28);
       border-radius: 6px;
       padding: 6px;
       margin-bottom: 14px;
@@ -129,18 +131,18 @@
     #visualizerCanvas { width: 100%; height: 54px; display: block; }
     .vis-tag {
       position: absolute; top: 4px; right: 8px;
-      font-size: 0.7rem; color: rgba(0, 243, 255, 0.55); pointer-events: none;
+      font-size: 0.7rem; color: rgba(var(--border-glow-rgb), 0.65); pointer-events: none;
     }
 
     input, select {
       width: 100%; padding: 9px 12px; margin: 5px 0 10px;
-      background: rgba(5, 10, 20, 0.85); border: 1px solid rgba(0, 243, 255, 0.4);
+      background: rgba(5, 10, 20, 0.85); border: 1px solid rgba(var(--border-glow-rgb), 0.4);
       color: var(--text-main); border-radius: 4px; outline: none;
     }
-    input:focus, select:focus { border-color: var(--border-glow); box-shadow: 0 0 8px rgba(0, 243, 255, 0.4); }
+    input:focus, select:focus { border-color: var(--border-glow); box-shadow: 0 0 8px rgba(var(--border-glow-rgb), 0.45); }
 
     button {
-      background: rgba(0, 243, 255, 0.15);
+      background: rgba(var(--border-glow-rgb), 0.15);
       border: 1px solid var(--border-glow);
       color: var(--border-glow);
       padding: 8px 13px; border-radius: 4px; cursor: pointer;
@@ -171,10 +173,10 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); gap: 8px;
     }
-    .station-item:hover { background: rgba(0, 243, 255, 0.06); }
+    .station-item:hover { background: rgba(var(--border-glow-rgb), 0.06); }
     .cat-tag {
       display: inline-block; font-size: 0.72rem; padding: 1px 6px;
-      border-radius: 3px; background: rgba(0, 243, 255, 0.15); color: #8be9fd; margin-left: 6px;
+      border-radius: 3px; background: rgba(var(--border-glow-rgb), 0.15); color: var(--sub-title); margin-left: 6px;
     }
 
     .collapsible-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
@@ -183,7 +185,7 @@
 
     .profile-card {
       background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(0, 243, 255, 0.25);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.25);
       border-radius: 6px; padding: 14px; margin-top: 10px;
     }
     .profile-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
@@ -201,7 +203,7 @@
     .shortcut-hint { font-size: 0.78rem; color: var(--text-dim); margin-top: 12px; line-height: 1.5; }
     .modal-close-bar {
       display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid rgba(0, 243, 255, 0.25); padding-bottom: 10px; margin-bottom: 14px;
+      border-bottom: 1px solid rgba(var(--border-glow-rgb), 0.25); padding-bottom: 10px; margin-bottom: 14px;
     }
 
     .custom-modal-backdrop {
@@ -214,7 +216,7 @@
     .custom-modal-box {
       background: #0b1324; color: var(--text-main);
       border: 1px solid var(--border-glow); border-radius: 10px;
-      box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+      box-shadow: 0 0 30px rgba(var(--border-glow-rgb), 0.4);
       max-width: 460px; width: 100%; padding: 22px; max-height: 90vh; overflow-y: auto;
     }
 
@@ -225,8 +227,8 @@
       margin-bottom: 14px;
     }
     .quick-chip {
-      background: rgba(0, 243, 255, 0.08);
-      border: 1px solid rgba(0, 243, 255, 0.35);
+      background: rgba(var(--border-glow-rgb), 0.08);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.35);
       color: var(--text-main);
       padding: 8px 10px;
       border-radius: 6px;
@@ -240,7 +242,7 @@
       transition: all 0.2s;
     }
     .quick-chip.active {
-      background: linear-gradient(90deg, rgba(0, 243, 255, 0.28), rgba(0, 255, 157, 0.22));
+      background: linear-gradient(90deg, rgba(var(--border-glow-rgb), 0.28), rgba(0, 255, 157, 0.22));
       border-color: var(--accent-green);
       color: var(--accent-green);
       box-shadow: 0 0 10px rgba(0, 255, 157, 0.35);
@@ -257,6 +259,30 @@
       font-size: 0.88rem;
       gap: 8px;
     }
+    .pwa-update-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(90deg, rgba(255, 208, 0, 0.22), rgba(0, 255, 157, 0.18));
+      border: 1px solid var(--accent-yellow);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+      gap: 10px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .stat-card {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.25);
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
     .btn-mini { padding: 4px 8px; font-size: 0.78rem; min-height: auto; }
 
     @media (max-width: 600px) {
@@ -270,13 +296,18 @@
 </head>
 <body>
 <div class="container">
+  <div id="pwaUpdateBanner" class="pwa-update-bar hidden">
+    <span style="color:var(--accent-yellow);font-weight:bold;">🚀 偵測到播放器新版本已上線！</span>
+    <button type="button" class="btn-yellow btn-mini" onclick="applyPwaUpdate()">立即更新重整</button>
+  </div>
+
   <div class="hud-box top-bar">
     <div>
-      <h1>⚡ Roy's Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v3.5</small></h1>
+      <h1>⚡ Roy's Radio player <small style="font-size:0.55em;color:#00ff9d;">// CYBER HUD v4.0</small></h1>
       <div class="clock" id="clockDisplay">📅 載入時間中...</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <button type="button" class="btn-mini btn-yellow" onclick="cycleHudTheme()" title="切換介面霓虹主題色">🎨 切換主題</button>
+      <button type="button" id="themeCycleBtn" class="btn-mini btn-yellow" onclick="cycleHudTheme()" title="切換介面霓虹主題色">🎨 主題：賽博青藍</button>
       <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
       <button id="openAuthBtn" class="btn-green" onclick="openAuthModal()">🔐 登入 / 雲端同步</button>
       <button id="logoutBtn" class="btn-pink hidden" onclick="logout()">登出電臺</button>
@@ -339,6 +370,13 @@
         <button type="button" id="recordBtn" class="btn-pink" onclick="toggleRecording()" title="即時錄音 (R)">⏺ 開始錄音</button>
         <span id="recTimer" style="color:var(--accent-pink);font-weight:bold;"></span>
 
+        <select id="eqPresetSelect" onchange="applyEqPreset(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="數位三段式等化器音場">
+          <option value="flat">🎛️ 音場：原音標準</option>
+          <option value="vocal">🎙️ 音場：清晰人聲</option>
+          <option value="bass">🔊 音場：重低音增強</option>
+          <option value="night">🌙 音場：夜間柔音</option>
+        </select>
+
         <select id="sleepSelect" onchange="setSleepTimer(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="睡眠定時器">
           <option value="0">⏲ 睡眠定時：關閉</option>
           <option value="15">⏲ 15 分鐘後停止</option>
@@ -364,7 +402,7 @@
     </div>
     <div class="hud-box">
       <div class="collapsible-header" onclick="toggleAdminPanel()">
-        <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 匯入匯出 / 電臺管理 / 個人設定）</h2>
+        <h2 style="margin:0;border:none;">🛠 管理面板（新增串流 / 匯入匯出 / 電臺管理 / 收聽統計 / 個人設定）</h2>
         <span id="adminArrow" style="color:var(--border-glow);font-weight:bold;">▼ 展開</span>
       </div>
 
@@ -400,6 +438,12 @@
           </div>
         </div>
         <div id="manageStationList"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;">
+          <h3 style="margin:0;">📊 收聽數據統計儀表板</h3>
+          <button type="button" class="btn-pink btn-mini" onclick="resetListeningStats()">🔄 重置統計</button>
+        </div>
+        <div id="listeningStatsBox" class="stats-grid"></div>
         <h3>👤 個人資料與帳號設定（需登入正式帳號）</h3>
         <div class="profile-card">
           <label class="field-label">✨ 顯示暱稱（登入後顯示於播放頁右上角）</label>
@@ -498,21 +542,25 @@
       .replace(/'/g, '&#39;');
   }
 
-  // 多主題 HUD 切換器
+  // 全介面光暈同步多主題切換器
   const HUD_THEMES = [
-    { name: '賽博青藍', glow: '#00f3ff', green: '#00ff9d', pink: '#ff007f', bg: '#101d36' },
-    { name: '駭客任務綠', glow: '#00ff66', green: '#aaff00', pink: '#ff3366', bg: '#082214' },
-    { name: '霓虹紫羅蘭', glow: '#d966ff', green: '#00f3ff', pink: '#ff007f', bg: '#1e1035' },
-    { name: '琥珀黃金', glow: '#ffb700', green: '#00ff9d', pink: '#ff4444', bg: '#261a08' }
+    { name: '賽博青藍', glow: '#00f3ff', rgb: '0, 243, 255', sub: '#8be9fd', green: '#00ff9d', pink: '#ff007f', bg: '#101d36' },
+    { name: '駭客任務綠', glow: '#00ff66', rgb: '0, 255, 102', sub: '#99ffbb', green: '#aaff00', pink: '#ff3366', bg: '#082214' },
+    { name: '霓虹紫羅蘭', glow: '#d966ff', rgb: '217, 102, 255', sub: '#eeb3ff', green: '#00f3ff', pink: '#ff007f', bg: '#1e1035' },
+    { name: '琥珀黃金', glow: '#ffb700', rgb: '255, 183, 0', sub: '#ffe082', green: '#00ff9d', pink: '#ff4444', bg: '#261a08' }
   ];
   let currentThemeIdx = parseInt(localStorage.getItem('roy_hud_theme') || '0', 10) % HUD_THEMES.length;
 
   function applyHudTheme(idx) {
-    const t = HUD_THEMES[idx] || HUD_THEMES[0];
+    const t = HUD_THEMES[idx] || HUD_THEMES;
     document.documentElement.style.setProperty('--border-glow', t.glow);
+    document.documentElement.style.setProperty('--border-glow-rgb', t.rgb);
+    document.documentElement.style.setProperty('--sub-title', t.sub);
     document.documentElement.style.setProperty('--accent-green', t.green);
     document.documentElement.style.setProperty('--accent-pink', t.pink);
     document.body.style.background = `radial-gradient(circle at top, ${t.bg} 0%, var(--bg-dark) 80%)`;
+    const btn = document.getElementById('themeCycleBtn');
+    if (btn) btn.textContent = `🎨 主題：${t.name}`;
   }
   applyHudTheme(currentThemeIdx);
 
@@ -529,14 +577,14 @@
     let startX = 0, startY = 0;
     area.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
+        startX = e.touches.clientX;
+        startY = e.touches.clientY;
       }
     }, { passive: true });
     area.addEventListener('touchend', (e) => {
       if (e.changedTouches.length === 1) {
-        const dx = e.changedTouches[0].clientX - startX;
-        const dy = e.changedTouches[0].clientY - startY;
+        const dx = e.changedTouches.clientX - startX;
+        const dy = e.changedTouches.clientY - startY;
         if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
           if (dx < 0) nextStation();
           else prevStation();
@@ -631,13 +679,39 @@
 
   let icyTimer = null;
   let titleMarqueeTimer = null;
-  const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v3.5";
+  const DEFAULT_PAGE_TITLE = "Roy's 雲端網路廣播播放器 // CYBER HUD v4.0";
 
   const audio = document.getElementById('audioPlayer');
   const nativeAudio = document.getElementById('nativeAudioPlayer');
   let activeAudio = audio;
 
+  // 數位三段式 EQ 等化器節點
   let audioCtx = null, analyser = null, recDestNode = null, visDataArray = null, isVisSimulated = false, visInitialized = false;
+  let eqBassFilter = null, eqMidFilter = null, eqTrebleFilter = null;
+  let currentEqPreset = localStorage.getItem('roy_eq_preset') || 'flat';
+
+  const EQ_PRESETS = {
+    flat:  { bass: 0,  mid: 0,  treble: 0 },
+    vocal: { bass: -3, mid: 5,  treble: 2 },
+    bass:  { bass: 7,  mid: -1, treble: 1 },
+    night: { bass: -4, mid: 1,  treble: -5 }
+  };
+
+  function applyEqPreset(presetKey) {
+    currentEqPreset = EQ_PRESETS[presetKey] ? presetKey : 'flat';
+    localStorage.setItem('roy_eq_preset', currentEqPreset);
+    const sel = document.getElementById('eqPresetSelect');
+    if (sel && sel.value !== currentEqPreset) sel.value = currentEqPreset;
+
+    const cfg = EQ_PRESETS[currentEqPreset];
+    if (eqBassFilter && eqMidFilter && eqTrebleFilter && audioCtx) {
+      const now = audioCtx.currentTime;
+      eqBassFilter.gain.setTargetAtTime(cfg.bass, now, 0.05);
+      eqMidFilter.gain.setTargetAtTime(cfg.mid, now, 0.05);
+      eqTrebleFilter.gain.setTargetAtTime(cfg.treble, now, 0.05);
+    }
+  }
+
   function initVisualizer() {
     if (visInitialized) {
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -651,15 +725,35 @@
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtx.createMediaElementSource(audio);
+
+      eqBassFilter = audioCtx.createBiquadFilter();
+      eqBassFilter.type = 'lowshelf';
+      eqBassFilter.frequency.value = 120;
+
+      eqMidFilter = audioCtx.createBiquadFilter();
+      eqMidFilter.type = 'peaking';
+      eqMidFilter.frequency.value = 1200;
+      eqMidFilter.Q.value = 1.0;
+
+      eqTrebleFilter = audioCtx.createBiquadFilter();
+      eqTrebleFilter.type = 'highshelf';
+      eqTrebleFilter.frequency.value = 7500;
+
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 64;
 
       recDestNode = audioCtx.createMediaStreamDestination();
-      source.connect(recDestNode);
-      source.connect(analyser);
+
+      source.connect(eqBassFilter);
+      eqBassFilter.connect(eqMidFilter);
+      eqMidFilter.connect(eqTrebleFilter);
+      eqTrebleFilter.connect(recDestNode);
+      eqTrebleFilter.connect(analyser);
       analyser.connect(audioCtx.destination);
+
+      applyEqPreset(currentEqPreset);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
-      tag.textContent = "HUD SPECTRUM // REAL-TIME";
+      tag.textContent = "HUD SPECTRUM + EQ // REAL-TIME";
     } catch (e) {
       isVisSimulated = true;
       tag.textContent = "HUD SPECTRUM // SIMULATED";
@@ -710,9 +804,63 @@
     titleMarqueeTimer = null;
     document.title = statusPrefix ? `${statusPrefix} ${DEFAULT_PAGE_TITLE}` : DEFAULT_PAGE_TITLE;
   }
+  // 收聽數據統計引擎
+  let listeningStats = JSON.parse(localStorage.getItem('roy_listening_stats')) || {
+    totalSeconds: 0,
+    stationSeconds: {}
+  };
+
+  function renderListeningStats() {
+    const box = document.getElementById('listeningStatsBox');
+    if (!box) return;
+    const totalMins = Math.floor(listeningStats.totalSeconds / 60);
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    const timeLabel = hrs > 0 ? `${hrs} 小時 ${mins} 分鐘` : `${mins} 分鐘`;
+
+    const entries = Object.entries(listeningStats.stationSeconds || {})
+      .sort((a, b) => b - a)
+      .slice(0, 3);
+
+    const topHtml = entries.length
+      ? entries.map(([name, sec], idx) => `<div style="font-size:0.84rem;margin-top:4px;">${idx + 1}. ${escapeHTML(name)} <span style="color:var(--accent-green);">(${Math.max(1, Math.round(sec / 60))} 分)</span></div>`).join('')
+      : '<div style="font-size:0.84rem;color:var(--text-dim);margin-top:4px;">尚無累積收聽紀錄</div>';
+
+    box.innerHTML = `
+      <div class="stat-card">
+        <div style="font-size:0.8rem;color:var(--text-dim);">⏱️ 累計收聽總時長</div>
+        <div style="font-size:1.25rem;font-weight:bold;color:var(--border-glow);margin-top:4px;">${timeLabel}</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:0.8rem;color:var(--text-dim);">🏆 最常收聽 TOP 3 電臺</div>
+        ${topHtml}
+      </div>
+    `;
+  }
+
+  function resetListeningStats() {
+    if (!confirm('確定要清空所有累計收聽時間與電臺排行統計嗎？')) return;
+    listeningStats = { totalSeconds: 0, stationSeconds: {} };
+    localStorage.setItem('roy_listening_stats', JSON.stringify(listeningStats));
+    renderListeningStats();
+  }
+
+  let statSaveTick = 0;
   setInterval(() => {
     const now = new Date();
     document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
+
+    if (activeAudio && !activeAudio.paused && currentStationIndex >= 0 && stations[currentStationIndex]) {
+      const stName = stations[currentStationIndex].name;
+      listeningStats.totalSeconds = (listeningStats.totalSeconds || 0) + 1;
+      listeningStats.stationSeconds[stName] = (listeningStats.stationSeconds[stName] || 0) + 1;
+      statSaveTick++;
+      if (statSaveTick >= 15) {
+        statSaveTick = 0;
+        localStorage.setItem('roy_listening_stats', JSON.stringify(listeningStats));
+        renderListeningStats();
+      }
+    }
   }, 1000);
 
   function openAuthModal() { document.getElementById('authModal').classList.add('show'); }
@@ -1515,7 +1663,7 @@
               if (done) break;
               if (value && value.length > 0) {
                 recordedChunks.push(value);
-                recBytes += value.byteLength;
+                recBytes += value.length;
               }
             }
           } catch (e) {
@@ -1642,7 +1790,7 @@
       navigator.mediaSession.metadata = new MediaMetadata({
         title: st.name,
         artist: songTitle ? `🎵 ${songTitle}` : "Roy's Net Radio // LIVE",
-        album: 'CYBER HUD v3.5',
+        album: 'CYBER HUD v4.0',
         artwork: [
           { src: baseUrl + 'icon-512.png', sizes: '512x512', type: 'image/png' }
         ]
@@ -1954,8 +2102,10 @@
   });
 
   loadLocalData();
+  renderListeningStats();
 
   (function restoreLastSession() {
+    applyEqPreset(currentEqPreset);
     if (localStorage.getItem('roy_quick_grid_open') === '1') {
       toggleQuickGrid(true);
     }
@@ -1987,9 +2137,34 @@
     if (foundIdx >= 0) startStream(foundIdx);
   }
 
+  let newSwWorker = null;
+  function applyPwaUpdate() {
+    if (newSwWorker) {
+      newSwWorker.postMessage({ type: 'SKIP_WAITING' });
+    }
+    window.location.reload();
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        if (reg.waiting) {
+          newSwWorker = reg.waiting;
+          const bar = document.getElementById('pwaUpdateBanner');
+          if (bar) bar.classList.remove('hidden');
+        }
+        reg.addEventListener('updatefound', () => {
+          const installing = reg.installing;
+          if (!installing) return;
+          installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+              newSwWorker = installing;
+              const bar = document.getElementById('pwaUpdateBanner');
+              if (bar) bar.classList.remove('hidden');
+            }
+          });
+        });
+      }).catch(() => {});
     });
   }
 </script>
