@@ -295,6 +295,7 @@
       input, select { font-size: 16px; }
     }
 
+        /* 🚘 車用 / 桌面極簡大字模式（含錄音、大音量條與一鍵換色） */
     body.car-mode .tabs,
     body.car-mode .filter-toolbar,
     body.car-mode #resumeBanner,
@@ -305,14 +306,18 @@
     body.car-mode #customEqPanel,
     body.car-mode .shortcut-hint,
     body.car-mode #favToggleBtn,
-    body.car-mode #recordBtn,
     body.car-mode #eqPresetSelect,
     body.car-mode #eqToggleBtn,
     body.car-mode #sleepSelect,
-    body.car-mode .volume-box,
     body.car-mode #themeSelect,
     body.car-mode #playerSection > .hud-box:nth-child(2) {
       display: none !important;
+    }
+    body.car-mode #carThemeCycleBtn {
+      display: inline-block !important;
+      min-height: 46px;
+      padding: 8px 14px;
+      font-size: 1rem;
     }
     body.car-mode #selectModeBox {
       display: block !important;
@@ -332,29 +337,70 @@
       border-radius: 10px;
     }
     body.car-mode #nowPlayingTitle {
-      font-size: 2.5rem;
+      font-size: 2.4rem;
       display: block;
       margin-top: 8px;
     }
     body.car-mode .icy-marquee {
-      font-size: 1.15rem;
-      margin-top: 12px;
+      font-size: 1.1rem;
+      margin-top: 10px;
     }
     body.car-mode #visualizerCanvas {
-      height: 85px;
+      height: 80px;
     }
     body.car-mode .controls-row {
       display: grid;
-      grid-template-columns: 1fr 1.3fr 1fr;
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
-      margin-top: 18px;
+      margin-top: 16px;
     }
-    body.car-mode .controls-row button {
-      min-height: 78px;
-      font-size: 1.3rem;
+    body.car-mode .controls-row > button {
+      min-height: 74px;
+      font-size: 1.25rem;
       border-width: 2px;
       border-radius: 10px;
     }
+    body.car-mode #playPauseBtn {
+      grid-column: span 2;
+      min-height: 82px;
+      font-size: 1.45rem;
+    }
+    body.car-mode #recordBtn {
+      grid-column: span 2;
+      min-height: 68px;
+      font-size: 1.25rem;
+    }
+    body.car-mode #recTimer {
+      grid-column: span 2;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    body.car-mode .volume-box {
+      grid-column: span 2;
+      display: flex !important;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      margin-left: 0;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.45);
+      padding: 14px 16px;
+      border-radius: 10px;
+    }
+    body.car-mode .volume-box #muteBtn {
+      min-width: 58px;
+      min-height: 54px;
+      font-size: 1.4rem;
+      border-radius: 8px;
+    }
+    body.car-mode .volume-box input[type="range"] {
+      flex: 1;
+      width: auto;
+      height: 16px;
+      accent-color: var(--border-glow);
+      cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -390,6 +436,7 @@
         <option value="16">🫐 柔和：午夜藍莓奶昔</option>
         <option value="17">🌾 柔和：燕麥奶霜白</option>
       </select>
+      <button type="button" id="carThemeCycleBtn" class="btn-mini btn-yellow hidden" onclick="cycleHudTheme()" title="一鍵切換背景主題配色">🎨 換色</button>
       <button type="button" id="carModeBtn" class="btn-mini btn-green" onclick="toggleCarMode()" title="切換車用極簡大字模式">🚘 車用模式</button>
       <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
       <button id="openAuthBtn" class="btn-green" onclick="openAuthModal()">🔐 登入 / 雲端同步</button>
@@ -693,6 +740,11 @@
 
   function selectHudTheme(val) {
     currentThemeIdx = parseInt(val, 10) || 0;
+    localStorage.setItem('roy_hud_theme', currentThemeIdx);
+    applyHudTheme(currentThemeIdx);
+  }
+  function cycleHudTheme() {
+    currentThemeIdx = (currentThemeIdx + 1) % HUD_THEMES.length;
     localStorage.setItem('roy_hud_theme', currentThemeIdx);
     applyHudTheme(currentThemeIdx);
   }
