@@ -339,6 +339,15 @@
       color: var(--sub-title);
       user-select: none;
     }
+    .quick-chip.chip-dragging {
+      opacity: 0.5;
+      border: 2px dashed var(--accent-yellow) !important;
+      transform: scale(0.96);
+    }
+    .quick-chip.chip-drag-over {
+      border: 2px solid var(--accent-green) !important;
+      box-shadow: 0 0 14px rgba(0, 255, 157, 0.55) !important;
+    }
 
         /* 🚘 車用 / 桌面極簡大字模式（含錄音、大音量條與一鍵換色） */
     body.car-mode .tabs,
@@ -1617,16 +1626,115 @@
       visibleList.push({ st, idx, isFav });
     });
 
-    if (quickGrid) {
+       if (quickGrid) {
       const sorted = [...visibleList].sort((a, b) => (b.isFav ? 1 : 0) - (a.isFav ? 1 : 0)).slice(0, 12);
       quickGrid.innerHTML = sorted.map(item => `
-        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}" onclick="startStream(${item.idx})" title="${escapeHTML(item.st.name)}">
+        <div class="quick-chip ${item.idx === currentStationIndex ? 'active' : ''}"
+             data-idx="${item.idx}"
+             draggable="true"
+             ondragstart="onChipDragStart(event, ${item.idx})"
+             ondragover="onChipDragOver(event)"
+             ondragleave="onChipDragLeave(event)"
+             ondrop="onChipDrop(event, ${item.idx})"
+             ondragend="onChipDragEnd(event)"
+             ontouchstart="onChipTouchStart(event, ${item.idx})"
+             onclick="handleChipClick(event, ${item.idx})"
+             title="${escapeHTML(item.st.name)}（長按可拖曳排序）">
           ${item.isFav ? '⭐' : '📻'} ${escapeHTML(item.st.name)}
         </div>
       `).join('');
     }
+
   }
 
+let chipDragSrcIdx = -1;
+let isChipDraggingTouch = false;
+
+function handleChipClick(e, idx) {
+ if (isChipDraggingTouch) {
+   isChipDraggingTouch = false;
+   return;
+ }
+ startStream(idx);
+}
+
+function onChipDragStart(e, idx) {
+ chipDragSrcIdx = idx;
+ e.currentTarget.classList.add('chip-dragging');
+ if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+}
+
+function onChipDragOver(e) {
+ e.preventDefault();
+ e.currentTarget.classList.add('chip-drag-over');
+}
+
+function onChipDragLeave(e) {
+ e.currentTarget.classList.remove('chip-drag-over');
+}
+
+async function onChipDrop(e, targetIdx) {
+ e.preventDefault();
+ e.currentTarget.classList.remove('chip-drag-over');
+ if (chipDragSrcIdx !== -1 && chipDragSrcIdx !== targetIdx) {
+   await reorderStation(chipDragSrcIdx, targetIdx);
+ }
+ chipDragSrcIdx = -1;
+}
+
+function onChipDragEnd(e) {
+ e.currentTarget.classList.remove('chip-dragging');
+ document.querySelectorAll('.quick-chip').forEach(el => el.classList.remove('chip-drag-over'));
+}
+
+function onChipTouchStart(e, idx) {
+ const startChip = e.currentTarget;
+ isChipDraggingTouch = false;
+ let currentOverChip = null;
+
+ const holdTimer = setTimeout(() => {
+   isChipDraggingTouch = true;
+   startChip.classList.add('chip-dragging');
+   if (navigator.vibrate) navigator.vibrate(30);
+ }, 350);
+
+ const onTouchMove = (ev) => {
+   if (!isChipDraggingTouch) {
+     clearTimeout(holdTimer);
+     return;
+   }
+   ev.preventDefault();
+   const touch = ev.touches.item(0);
+   if (!touch) return;
+   const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+   const targetChip = elUnder ? elUnder.closest('.quick-chip[data-idx]') : null;
+   if (currentOverChip && currentOverChip !== targetChip) {
+     currentOverChip.classList.remove('chip-drag-over');
+   }
+   if (targetChip && targetChip !== startChip) {
+     targetChip.classList.add('chip-drag-over');
+     currentOverChip = targetChip;
+   } else {
+     currentOverChip = null;
+   }
+ };
+
+ const onTouchEnd = async () => {
+   clearTimeout(holdTimer);
+   document.removeEventListener('touchmove', onTouchMove);
+   document.removeEventListener('touchend', onTouchEnd);
+   startChip.classList.remove('chip-dragging');
+   if (isChipDraggingTouch && currentOverChip) {
+     currentOverChip.classList.remove('chip-drag-over');
+     const targetIdx = parseInt(currentOverChip.getAttribute('data-idx'), 10);
+     if (!isNaN(targetIdx)) await reorderStation(idx, targetIdx);
+   }
+   setTimeout(() => { isChipDraggingTouch = false; }, 100);
+ };
+
+ document.addEventListener('touchmove', onTouchMove, { passive: false });
+ document.addEventListener('touchend', onTouchEnd);
+}
   function renderHistory() {
     const box = document.getElementById('listViewBox');
     const filtered = playHistory.filter(matchesSearch);
