@@ -511,6 +511,7 @@
           <option value="custom">🎚️ 音場：自訂調音</option>
         </select>
         <button type="button" id="eqToggleBtn" class="btn-mini" onclick="toggleCustomEqPanel()" title="展開/收合自訂 EQ 推桿">🎚️ 微調</button>
+        <button type="button" id="compToggleBtn" class="btn-mini active-eq" onclick="toggleLoudnessComp()" title="自動平衡各電臺大小聲落差（解決新聞台太小聲、廣告爆音）">⚖️ 音量平衡：開</button>
 
         <select id="sleepSelect" onchange="setSleepTimer(this.value)" style="width:auto;margin:0;padding:7px 10px;" title="睡眠定時器">
           <option value="0">⏲ 睡眠定時：關閉</option>
@@ -929,6 +930,40 @@
   let currentEqPreset = localStorage.getItem('roy_eq_preset') || 'flat';
   let customEqValues = JSON.parse(localStorage.getItem('roy_custom_eq')) || { bass: 0, mid: 0, treble: 0 };
 
+  let compNode = null, makeupGainNode = null;
+  let isLoudnessCompOn = localStorage.getItem('roy_loudness_comp') !== '0';
+
+  function applyLoudnessCompState(enabled) {
+    isLoudnessCompOn = !!enabled;
+    localStorage.setItem('roy_loudness_comp', isLoudnessCompOn ? '1' : '0');
+    const btn = document.getElementById('compToggleBtn');
+    if (btn) {
+      btn.textContent = isLoudnessCompOn ? '⚖️ 音量平衡：開' : '⚖️ 音量平衡：關';
+      btn.classList.toggle('active-eq', isLoudnessCompOn);
+    }
+    if (compNode && makeupGainNode && audioCtx) {
+      const now = audioCtx.currentTime;
+      if (isLoudnessCompOn) {
+        compNode.threshold.setTargetAtTime(-24, now, 0.05);
+        compNode.knee.setTargetAtTime(18, now, 0.05);
+        compNode.ratio.setTargetAtTime(4.5, now, 0.05);
+        compNode.attack.setTargetAtTime(0.015, now, 0.05);
+        compNode.release.setTargetAtTime(0.25, now, 0.05);
+        makeupGainNode.gain.setTargetAtTime(1.35, now, 0.05);
+      } else {
+        compNode.threshold.setTargetAtTime(0, now, 0.05);
+        compNode.knee.setTargetAtTime(0, now, 0.05);
+        compNode.ratio.setTargetAtTime(1, now, 0.05);
+        makeupGainNode.gain.setTargetAtTime(1.0, now, 0.05);
+      }
+    }
+  }
+
+  function toggleLoudnessComp() {
+    applyLoudnessCompState(!isLoudnessCompOn);
+  }
+  applyLoudnessCompState(isLoudnessCompOn);
+
   const EQ_PRESETS = {
     flat:   { bass: 0,  mid: 0,  treble: 0 },
     vocal:  { bass: -3, mid: 5,  treble: 2 },
@@ -1025,12 +1060,19 @@
 
       recDestNode = audioCtx.createMediaStreamDestination();
 
+            compNode = audioCtx.createDynamicsCompressor();
+      makeupGainNode = audioCtx.createGain();
+      applyLoudnessCompState(isLoudnessCompOn);
+
       source.connect(eqBassFilter);
       eqBassFilter.connect(eqMidFilter);
       eqMidFilter.connect(eqTrebleFilter);
       eqTrebleFilter.connect(recDestNode);
-      eqTrebleFilter.connect(analyser);
+      eqTrebleFilter.connect(compNode);
+      compNode.connect(makeupGainNode);
+      makeupGainNode.connect(analyser);
       analyser.connect(audioCtx.destination);
+
 
       applyEqPreset(currentEqPreset);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
