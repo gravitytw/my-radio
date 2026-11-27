@@ -369,7 +369,20 @@
       <div class="clock" id="clockDisplay">📅 載入時間中...</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <button type="button" id="themeCycleBtn" class="btn-mini btn-yellow" onclick="cycleHudTheme()" title="切換介面霓虹主題色">🎨 主題：賽博青藍</button>
+           <select id="themeSelect" onchange="selectHudTheme(this.value)" style="width:auto;margin:0;padding:4px 8px;font-size:0.82rem;border-color:var(--accent-yellow);color:var(--accent-yellow);font-weight:bold;cursor:pointer;" title="直接選擇介面主題配色">
+        <option value="0">🎨 主題：賽博青藍</option>
+        <option value="1">🎨 主題：駭客任務綠</option>
+        <option value="2">🎨 主題：霓虹紫羅蘭</option>
+        <option value="3">🎨 主題：琥珀黃金</option>
+        <option value="4">🎨 主題：血色櫻花紅</option>
+        <option value="5">🎨 主題：極地冰川藍</option>
+        <option value="6">🎨 主題：日落霓虹橘</option>
+        <option value="7">🎨 主題：星際銀白</option>
+        <option value="8">🌿 柔和：森林鼠尾草</option>
+        <option value="9">☕ 柔和：暖冬焦糖拿鐵</option>
+        <option value="10">🌸 柔和：暮靄薰衣草</option>
+        <option value="11">🌊 柔和：靜謐深海藍</option>
+      </select>
       <button type="button" id="carModeBtn" class="btn-mini btn-green" onclick="toggleCarMode()" title="切換車用極簡大字模式">🚘 車用模式</button>
       <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
       <button id="openAuthBtn" class="btn-green" onclick="openAuthModal()">🔐 登入 / 雲端同步</button>
@@ -632,7 +645,7 @@
       .replace(/'/g, '\u0027');
   }
 
-    const HUD_THEMES = [
+      const HUD_THEMES = [
     { name: '賽博青藍', glow: '#00f3ff', rgb: '0, 243, 255', sub: '#8be9fd', green: '#00ff9d', pink: '#ff007f', bg: '#101d36', dark: '#070b14' },
     { name: '駭客任務綠', glow: '#00ff66', rgb: '0, 255, 102', sub: '#99ffbb', green: '#aaff00', pink: '#ff3366', bg: '#082214', dark: '#040f09' },
     { name: '霓虹紫羅蘭', glow: '#d966ff', rgb: '217, 102, 255', sub: '#eeb3ff', green: '#00f3ff', pink: '#ff007f', bg: '#1e1035', dark: '#0d0717' },
@@ -640,12 +653,17 @@
     { name: '血色櫻花紅', glow: '#ff2a6d', rgb: '255, 42, 109', sub: '#ff85a2', green: '#05d9e8', pink: '#ffbe0b', bg: '#2b0916', dark: '#14040a' },
     { name: '極地冰川藍', glow: '#38bdf8', rgb: '56, 189, 248', sub: '#bae6fd', green: '#34d399', pink: '#f472b6', bg: '#0c243c', dark: '#06111d' },
     { name: '日落霓虹橘', glow: '#ff6b35', rgb: '255, 107, 53', sub: '#ffb085', green: '#ffd166', pink: '#ef476f', bg: '#2b1226', dark: '#140712' },
-    { name: '星際銀白', glow: '#e2e8f0', rgb: '226, 232, 240', sub: '#f8fafc', green: '#38bdf8', pink: '#fb7185', bg: '#1e293b', dark: '#090d14' }
+    { name: '星際銀白', glow: '#e2e8f0', rgb: '226, 232, 240', sub: '#f8fafc', green: '#38bdf8', pink: '#fb7185', bg: '#1e293b', dark: '#090d14' },
+    { name: '森林鼠尾草（柔和）', glow: '#84a98c', rgb: '132, 169, 140', sub: '#cad2c5', green: '#a3b18a', pink: '#e07a5f', bg: '#1b2621', dark: '#0f1613' },
+    { name: '暖冬焦糖拿鐵（柔和）', glow: '#d4a373', rgb: '212, 163, 115', sub: '#faedcd', green: '#ccd5ae', pink: '#e5989b', bg: '#281e18', dark: '#140f0c' },
+    { name: '暮靄薰衣草（柔和）', glow: '#b8b8ff', rgb: '184, 184, 255', sub: '#e0e1ff', green: '#9bf6ff', pink: '#ffadad', bg: '#1f1d36', dark: '#100f1c' },
+    { name: '靜謐深海藍（柔和）', glow: '#7ea8be', rgb: '126, 168, 190', sub: '#c2dfe3', green: '#98c1d9', pink: '#ee6c4d', bg: '#162530', dark: '#0b1319' }
   ];
   let currentThemeIdx = parseInt(localStorage.getItem('roy_hud_theme') || '0', 10) % HUD_THEMES.length;
 
   function applyHudTheme(idx) {
-    const t = HUD_THEMES[idx] || HUD_THEMES[0];
+    const safeIdx = (idx >= 0 && idx < HUD_THEMES.length) ? idx : 0;
+    const t = HUD_THEMES[safeIdx] || HUD_THEMES[0];
     document.documentElement.style.setProperty('--bg-dark', t.dark || '#070b14');
     document.documentElement.style.setProperty('--border-glow', t.glow);
     document.documentElement.style.setProperty('--border-glow-rgb', t.rgb);
@@ -655,13 +673,13 @@
     document.body.style.background = `radial-gradient(circle at top, ${t.bg} 0%, ${t.dark || '#070b14'} 80%)`;
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme) metaTheme.setAttribute('content', t.dark || '#070b14');
-    const btn = document.getElementById('themeCycleBtn');
-    if (btn) btn.textContent = `🎨 主題：${t.name}`;
+    const sel = document.getElementById('themeSelect');
+    if (sel && sel.value !== String(safeIdx)) sel.value = String(safeIdx);
   }
   applyHudTheme(currentThemeIdx);
 
-  function cycleHudTheme() {
-    currentThemeIdx = (currentThemeIdx + 1) % HUD_THEMES.length;
+  function selectHudTheme(val) {
+    currentThemeIdx = parseInt(val, 10) || 0;
     localStorage.setItem('roy_hud_theme', currentThemeIdx);
     applyHudTheme(currentThemeIdx);
   }
@@ -876,7 +894,7 @@
     localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
     applyEqPreset('custom');
   }
-  function initVisualizer() {
+    function initVisualizer() {
     if (visInitialized) {
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       return;
@@ -904,7 +922,8 @@
       eqTrebleFilter.frequency.value = 7500;
 
       analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 64;
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.84;
 
       recDestNode = audioCtx.createMediaStreamDestination();
 
@@ -917,38 +936,81 @@
 
       applyEqPreset(currentEqPreset);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
-      tag.textContent = "HUD SPECTRUM + EQ // REAL-TIME";
+      tag.textContent = "HUD HD SPECTRUM + EQ // 64-BAND";
     } catch (e) {
       isVisSimulated = true;
-      tag.textContent = "HUD SPECTRUM // SIMULATED";
+      tag.textContent = "HUD HD SPECTRUM // SIMULATED";
     }
+
+    const barCount = 64;
+    const peakHeights = new Float32Array(barCount);
+    const smoothHeights = new Float32Array(barCount);
 
     function drawSpectrum() {
       requestAnimationFrame(drawSpectrum);
       if (document.hidden) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const barCount = 32;
-      const barWidth = (canvas.width / barCount) - 4;
+
+      const gap = 3;
+      const totalGap = gap * (barCount - 1);
+      const barWidth = Math.max(2, (canvas.width - totalGap) / barCount);
       let hasSignal = false;
 
       if (!isVisSimulated && analyser && !activeAudio.paused) {
         analyser.getByteFrequencyData(visDataArray);
-        for (let j = 0; j < barCount; j++) { if (visDataArray[j] > 0) { hasSignal = true; break; } }
+        for (let j = 0; j < barCount; j++) {
+          if (visDataArray[j] > 0) { hasSignal = true; break; }
+        }
       }
 
       const activeTheme = HUD_THEMES[currentThemeIdx] || HUD_THEMES[0];
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, activeTheme.sub);
+      grad.addColorStop(0.45, activeTheme.green);
+      grad.addColorStop(1, activeTheme.glow);
+
       for (let i = 0; i < barCount; i++) {
-        let val = 4;
+        let targetVal = 3;
         if (!activeAudio.paused) {
-          if (!isVisSimulated && hasSignal) val = visDataArray[i] || 6;
-          else val = Math.abs(Math.sin(Date.now() * 0.005 + i * 0.45)) * 130 + Math.random() * 65 + 15;
+          if (!isVisSimulated && hasSignal) {
+            const binIdx = Math.min(visDataArray.length - 1, Math.floor(i * 1.15));
+            targetVal = visDataArray[binIdx] || 5;
+          } else {
+            const t = Date.now() * 0.0045;
+            const wave1 = Math.sin(t + i * 0.24) * 0.5 + 0.5;
+            const wave2 = Math.cos(t * 1.3 - i * 0.14) * 0.5 + 0.5;
+            const envelope = Math.sin((i / barCount) * Math.PI) * 0.65 + 0.35;
+            targetVal = (wave1 * 110 + wave2 * 85 + Math.random() * 28) * envelope + 10;
+          }
         }
-        const barH = Math.max(3, (val / 255) * canvas.height);
-        const grad = ctx.createLinearGradient(0, canvas.height - barH, 0, canvas.height);
-        grad.addColorStop(0, activeTheme.green);
-        grad.addColorStop(1, activeTheme.glow);
+
+        const rawH = Math.max(2, (targetVal / 255) * (canvas.height - 6));
+        smoothHeights[i] += (rawH - smoothHeights[i]) * 0.32;
+        const barH = smoothHeights[i];
+
+        if (barH >= peakHeights[i]) {
+          peakHeights[i] = barH;
+        } else {
+          peakHeights[i] = Math.max(2, peakHeights[i] - 0.55);
+        }
+
+        const x = i * (barWidth + gap);
+        const y = canvas.height - barH;
+        const radius = Math.min(barWidth / 2, 2.5);
+
         ctx.fillStyle = grad;
-        ctx.fillRect(i * (barWidth + 4), canvas.height - barH, barWidth, barH);
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(x, y, barWidth, barH, [radius, radius, 0, 0]);
+        } else {
+          ctx.rect(x, y, barWidth, barH);
+        }
+        ctx.fill();
+
+        if (!activeAudio.paused && peakHeights[i] > 4) {
+          ctx.fillStyle = activeTheme.sub;
+          ctx.fillRect(x, Math.max(1, canvas.height - peakHeights[i] - 3), barWidth, 2);
+        }
       }
     }
     drawSpectrum();
