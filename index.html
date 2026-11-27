@@ -548,8 +548,14 @@
         </div>
       </div>
 
-      <div id="recordingVault" class="rec-vault hidden">
-        <div style="font-size:0.88rem;color:var(--accent-pink);font-weight:bold;margin-bottom:8px;">🎙️ 本次錄音暫存清單（可線上試聽或下載）：</div>
+            <div id="recordingVault" class="rec-vault hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <span style="font-size:0.88rem;color:var(--accent-pink);font-weight:bold;">🎙️ 錄音暫存保險箱（重整網頁不遺失）：</span>
+          <label style="font-size:0.84rem;color:var(--accent-green);cursor:pointer;display:flex;align-items:center;gap:5px;">
+            <input type="checkbox" id="autoDownloadRecChk" style="width:auto;margin:0;" onchange="localStorage.setItem('roy_auto_dl_rec', this.checked ? '1' : '0')" />
+            💾 停止錄音時自動下載
+          </label>
+        </div>
         <div id="recordingList"></div>
       </div>
 
@@ -575,6 +581,8 @@
           <option value="警廣">分類：警廣</option>
           <option value="外語">分類：外語</option>
         </select>
+        <input type="text" id="stationNote" placeholder="節目備忘 / 時段註解 (選填，例如：週一至五 18:00 飛碟晚餐)" />
+
         <div class="controls-row">
           <button type="button" onclick="saveStation()">➕ 儲存此電臺</button>
           <button type="button" class="btn-pink" onclick="cancelEdit()">取消修改</button>
@@ -585,6 +593,11 @@
           <button type="button" class="btn-green" onclick="exportStationsJSON()">📤 匯出 JSON 備份</button>
           <button type="button" onclick="document.getElementById('importFileInput').click()">📥 匯入 JSON / M3U 清單</button>
           <input type="file" id="importFileInput" accept=".json,.m3u,.m3u8" class="hidden" onchange="handleImportFile(event)" />
+        </div>
+        <h3>☁️ 雲端帳號資料手動同步保險（需登入帳號）</h3>
+        <div class="controls-row">
+          <button type="button" class="btn-yellow" onclick="forceUploadCloud()">⬆️ 立即強制上傳至雲端</button>
+          <button type="button" class="btn-green" onclick="forceDownloadCloud()">⬇️ 從雲端強制覆蓋還原</button>
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
@@ -749,7 +762,7 @@
     applyHudTheme(currentThemeIdx);
   }
 
-  function toggleCarMode(forceState) {
+    function toggleCarMode(forceState) {
     const isCar = typeof forceState === 'boolean'
       ? document.body.classList.toggle('car-mode', forceState)
       : document.body.classList.toggle('car-mode');
@@ -759,8 +772,24 @@
       btn.textContent = isCar ? '🚘 退出車用' : '🚘 車用模式';
       btn.className = isCar ? 'btn-mini btn-pink' : 'btn-mini btn-green';
     }
+    if (isCar) requestWakeLock();
+    else releaseWakeLock();
   }
   if (localStorage.getItem('roy_car_mode') === '1') toggleCarMode(true);
+
+  function speakStationName(stationName) {
+    if (!document.body.classList.contains('car-mode')) return;
+    if (!('speechSynthesis' in window) || !stationName) return;
+    try {
+      window.speechSynthesis.cancel();
+      const cleanName = stationName.replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s\-()]/g, '').trim();
+      const utter = new SpeechSynthesisUtterance(cleanName || stationName);
+      utter.lang = 'zh-TW';
+      utter.rate = 1.05;
+      utter.volume = 0.9;
+      window.speechSynthesis.speak(utter);
+    } catch (e) {}
+  }
 
   let stationEqMap = JSON.parse(localStorage.getItem('roy_station_eq_map')) || {};
   function saveCurrentStationEq(presetKey, customVals) {
@@ -874,12 +903,16 @@
       } catch (e) {}
     }
   }
-  function releaseWakeLock() {
+    function releaseWakeLock() {
+    const isRec = (mediaRecorder && mediaRecorder.state === 'recording') || isDirectStreamRec;
+    const isCar = document.body.classList.contains('car-mode');
+    if (isRec || isCar) return;
     if (wakeLockSentinel) {
       wakeLockSentinel.release().catch(() => {});
       wakeLockSentinel = null;
     }
   }
+
   let sleepTimerId = null;
   let sleepRemainingSec = 0;
 
@@ -1608,6 +1641,8 @@
     }
 
     document.getElementById('nowPlayingTitle').textContent = st.name;
+    speakStationName(st.name);
+    if (st.note) document.getElementById('icyMetadata').textContent = `📝 節目備忘：${st.note}`;
     setStatus('連線中...', 'warn', '⏳ 載入串流...');
     stopTitleMarquee("⏳ [連線中]");
     updateFavButton();
@@ -1761,26 +1796,26 @@
     document.getElementById('muteBtn').textContent = nextMute ? '🔇' : '🔊';
   }
 
+    let preFadeVolume = null;
   function setSleepTimer(minutes) {
     clearInterval(sleepTimerId);
     sleepTimerId = null;
+    if (preFadeVolume !== null) {
+      changeVolume(preFadeVolume);
+      document.getElementById('volumeSlider').value = preFadeVolume;
+      preFadeVolume = null;
+    }
     const badge = document.getElementById('sleepCountdown');
     const sel = document.getElementById('sleepSelect');
     let mins = 0;
 
     if (minutes === 'custom') {
       const input = prompt('⏲ 請輸入睡眠定時分鐘數（1 ～ 480 分鐘）：', '45');
-      if (input === null) {
-        sel.value = '0';
-        badge.textContent = '';
-        return;
-      }
+      if (input === null) { sel.value = '0'; badge.textContent = ''; return; }
       mins = parseInt(input.trim(), 10);
       if (isNaN(mins) || mins < 1 || mins > 480) {
         alert('請輸入 1 到 480 之間的有效整數分鐘數！');
-        sel.value = '0';
-        badge.textContent = '';
-        return;
+        sel.value = '0'; badge.textContent = ''; return;
       }
     } else {
       mins = parseInt(minutes, 10);
@@ -1791,11 +1826,22 @@
     updateSleepBadge();
     sleepTimerId = setInterval(() => {
       sleepRemainingSec--;
+      if (sleepRemainingSec <= 15 && sleepRemainingSec > 0 && !activeAudio.paused) {
+        if (preFadeVolume === null) preFadeVolume = parseFloat(activeAudio.volume) || 0.8;
+        const faded = Math.max(0.02, +(preFadeVolume * (sleepRemainingSec / 15)).toFixed(2));
+        audio.volume = faded;
+        if (nativeAudio) nativeAudio.volume = faded;
+      }
       if (sleepRemainingSec <= 0) {
         clearInterval(sleepTimerId);
         sleepTimerId = null;
         badge.textContent = '💤 已自動停止';
         if (!activeAudio.paused) togglePlay();
+        if (preFadeVolume !== null) {
+          changeVolume(preFadeVolume);
+          document.getElementById('volumeSlider').value = preFadeVolume;
+          preFadeVolume = null;
+        }
         sel.value = '0';
       } else {
         updateSleepBadge();
@@ -2460,6 +2506,173 @@
       e.returnValue = '';
     }
   });
+
+  const REC_DB_NAME = 'RoysRadioRecordingsDB';
+  const REC_STORE_NAME = 'recordings';
+
+  function openRecDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(REC_DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const dbInst = e.target.result;
+        if (!dbInst.objectStoreNames.contains(REC_STORE_NAME)) {
+          dbInst.createObjectStore(REC_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function persistRecordingToDB(recObj) {
+    try {
+      const dbInst = await openRecDB();
+      const tx = dbInst.transaction(REC_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(REC_STORE_NAME);
+      const req = store.add({
+        name: recObj.name,
+        blob: recObj.blob,
+        mimeType: recObj.mimeType,
+        time: recObj.time,
+        sizeMB: recObj.sizeMB
+      });
+      req.onsuccess = () => { recObj.dbId = req.result; };
+    } catch (e) { console.warn('IndexedDB 儲存錄音失敗:', e); }
+  }
+
+  async function removeRecordingFromDB(dbId) {
+    if (!dbId) return;
+    try {
+      const dbInst = await openRecDB();
+      const tx = dbInst.transaction(REC_STORE_NAME, 'readwrite');
+      tx.objectStore(REC_STORE_NAME).delete(dbId);
+    } catch (e) {}
+  }
+
+  async function loadRecordingsFromDB() {
+    try {
+      const dbInst = await openRecDB();
+      const tx = dbInst.transaction(REC_STORE_NAME, 'readonly');
+      const req = tx.objectStore(REC_STORE_NAME).getAll();
+      req.onsuccess = () => {
+        const items = (req.result || []).reverse();
+        items.forEach(item => {
+          const url = URL.createObjectURL(item.blob);
+          savedRecordings.push({
+            dbId: item.id,
+            name: item.name,
+            url,
+            blob: item.blob,
+            mimeType: item.mimeType,
+            time: item.time,
+            sizeMB: item.sizeMB
+          });
+        });
+        if (savedRecordings.length > 0) renderRecordingVault();
+      };
+    } catch (e) {}
+  }
+
+  const _origRenderRecordingVault = renderRecordingVault;
+  renderRecordingVault = function() {
+    const latest = savedRecordings.at(0);
+    if (latest && !latest._persisted) {
+      latest._persisted = true;
+      persistRecordingToDB(latest);
+      const autoDl = document.getElementById('autoDownloadRecChk');
+      if (autoDl && autoDl.checked) {
+        const a = document.createElement('a');
+        a.href = latest.url;
+        a.download = latest.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    }
+    _origRenderRecordingVault();
+  };
+
+  const _origDeleteRecording = deleteRecording;
+  deleteRecording = function(idx) {
+    const target = savedRecordings.at(idx);
+    if (target && target.dbId) removeRecordingFromDB(target.dbId);
+    _origDeleteRecording(idx);
+  };
+  async function forceUploadCloud() {
+    if (!currentUser || !db) return alert('請先登入雲端帳號再使用手動同步功能！');
+    if (!confirm(`⬆️ 確定要將目前本機的 ${stations.length} 個電臺與收藏紀錄「強制覆蓋上傳」至雲端嗎？`)) return;
+    try {
+      clearTimeout(saveDebounceTimer);
+      await db.collection('users').doc(currentUser.uid).set({
+        stations,
+        favorites,
+        playHistory,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      alert('✅ 已成功將最新清單強制備份上傳至雲端！');
+    } catch (err) {
+      alert('❌ 雲端上傳失敗：' + err.message);
+    }
+  }
+
+  async function forceDownloadCloud() {
+    if (!currentUser || !db) return alert('請先登入雲端帳號再使用雲端還原功能！');
+    if (!confirm('⬇️ 確定要從雲端下載資料並「強制覆蓋」目前本機的電臺清單嗎？')) return;
+    try {
+      const docSnap = await db.collection('users').doc(currentUser.uid).get();
+      if (!docSnap.exists) return alert('⚠️ 雲端目前尚無任何備份資料！');
+      const data = docSnap.data();
+      stations = (data.stations && data.stations.length) ? data.stations : [...PRESET_STATIONS];
+      favorites = data.favorites || [];
+      playHistory = data.playHistory || [];
+      localStorage.setItem('roy_stations', JSON.stringify(stations));
+      localStorage.setItem('roy_favs', JSON.stringify(favorites));
+      localStorage.setItem('roy_history', JSON.stringify(playHistory));
+      renderAllLists();
+      updateFavButton();
+      alert(`✅ 已成功從雲端還原 ${stations.length} 個電臺與收藏紀錄！`);
+    } catch (err) {
+      alert('❌ 從雲端還原失敗：' + err.message);
+    }
+  }
+  saveStation = async function() {
+    const name = document.getElementById('stationName').value.trim();
+    const url = document.getElementById('stationUrl').value.trim();
+    const category = document.getElementById('stationCategory').value;
+    const note = (document.getElementById('stationNote')?.value || '').trim();
+    const editIdx = parseInt(document.getElementById('editIndex').value, 10);
+    if (!name || !url) return alert('請填寫電臺名稱與串流網址！');
+
+    const item = { name, url, category, note, isHls: url.toLowerCase().includes('.m3u8') };
+    if (editIdx >= 0) stations[editIdx] = item;
+    else stations.push(item);
+
+    await saveData();
+    cancelEdit();
+    renderAllLists();
+  };
+
+  const _origEditStation = editStation;
+  editStation = function(idx) {
+    _origEditStation(idx);
+    const noteInput = document.getElementById('stationNote');
+    if (noteInput && stations.at(idx)) {
+      noteInput.value = stations.at(idx).note || '';
+    }
+  };
+
+  const _origCancelEdit = cancelEdit;
+  cancelEdit = function() {
+    _origCancelEdit();
+    const noteInput = document.getElementById('stationNote');
+    if (noteInput) noteInput.value = '';
+  };
+
+  loadRecordingsFromDB();
+  if (localStorage.getItem('roy_auto_dl_rec') === '1') {
+    const chk = document.getElementById('autoDownloadRecChk');
+    if (chk) chk.checked = true;
+  }
 
   loadLocalData();
   renderListeningStats();
