@@ -294,6 +294,51 @@
       .btn-mini { min-height: 32px; }
       input, select { font-size: 16px; }
     }
+    .telemetry-tag {
+      display: inline-block;
+      font-size: 0.74rem;
+      font-family: monospace;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(var(--border-glow-rgb), 0.12);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.3);
+      color: var(--sub-title);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .drag-handle {
+      cursor: grab;
+      padding: 6px 8px;
+      color: var(--border-glow);
+      font-size: 1.1rem;
+      user-select: none;
+      touch-action: none;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .station-item.dragging {
+      opacity: 0.45;
+      border: 1px dashed var(--accent-green);
+      background: rgba(0, 255, 157, 0.08);
+    }
+    .station-item.drag-over {
+      border-top: 2px solid var(--accent-yellow);
+    }
+    .cat-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(var(--border-glow-rgb), 0.1);
+      border: 1px solid rgba(var(--border-glow-rgb), 0.25);
+      border-radius: 5px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 0.86rem;
+      font-weight: bold;
+      color: var(--sub-title);
+      user-select: none;
+    }
 
         /* 🚘 車用 / 桌面極簡大字模式（含錄音、大音量條與一鍵換色） */
     body.car-mode .tabs,
@@ -451,6 +496,9 @@
           <span id="connBadge" class="status-badge">待機中</span>
           <strong id="nowPlayingTitle">未選擇電臺</strong>
           <span id="bufferSpinner" style="color:var(--accent-yellow);margin-left:8px;"></span>
+
+       <span id="streamTelemetryTag" class="telemetry-tag">STANDBY // BUF 0.0s</span>
+
         </div>
         <div class="icy-marquee" id="icyMetadata">🎵 即時節目資訊 (ICY)：等待串流連線...（手機可左右滑動面板切台）</div>
       </div>
@@ -606,6 +654,9 @@
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button type="button" id="healthCheckBtn" class="btn-green btn-mini" onclick="checkAllStationsHealth()">🩺 檢測失效電臺</button>
             <button type="button" class="btn-yellow btn-mini" onclick="mergeDuplicateStations()">🧹 合併重複電臺</button>
+         <button type="button" id="toggleGroupViewBtn" class="btn-mini" onclick="toggleManageGroupView()">📂 依分類折疊檢視</button>
+
+
           </div>
         </div>
         <div id="manageStationList"></div>
@@ -1244,6 +1295,32 @@
   setInterval(() => {
     const now = new Date();
     document.getElementById('clockDisplay').textContent = `📅 ${now.toLocaleString('zh-TW', { hour12: false })}`;
+    const teleEl = document.getElementById('streamTelemetryTag');
+    if (teleEl) {
+      if (!activeAudio || activeAudio.paused || currentStationIndex < 0 || !stations.at(currentStationIndex)) {
+        teleEl.textContent = 'STANDBY // BUF 0.0s';
+        teleEl.style.color = 'var(--text-dim)';
+      } else {
+        const st = stations.at(currentStationIndex);
+        const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
+        let proto = isHls ? 'HLS' : (st.url.toLowerCase().includes('.m4a') ? 'AAC/M4A' : 'STREAM');
+        let bitrateStr = '';
+        if (hls && hls.levels && hls.currentLevel >= 0 && hls.levels.at(hls.currentLevel)) {
+          const kbps = Math.round((hls.levels.at(hls.currentLevel).bitrate || 0) / 1000);
+          if (kbps > 0) bitrateStr = ` ${kbps}kbps`;
+        }
+        let bufSec = 0;
+        try {
+          if (activeAudio.buffered && activeAudio.buffered.length > 0) {
+            const end = activeAudio.buffered.end(activeAudio.buffered.length - 1);
+            bufSec = Math.max(0, end - activeAudio.currentTime);
+          }
+        } catch (e) {}
+        const healthDot = bufSec >= 4 ? '🟢' : (bufSec >= 1.5 ? '🟡' : '🔴');
+        teleEl.textContent = `${healthDot} ${proto}${bitrateStr} // BUF ${bufSec.toFixed(1)}s`;
+        teleEl.style.color = bufSec >= 4 ? 'var(--accent-green)' : (bufSec >= 1.5 ? 'var(--accent-yellow)' : 'var(--accent-pink)');
+      }
+    }
 
     if (activeAudio && !activeAudio.paused && currentStationIndex >= 0 && stations[currentStationIndex]) {
       const stName = stations[currentStationIndex].name;
@@ -2294,21 +2371,42 @@
     arrow.textContent = content.classList.contains('open') ? '▲ 收合' : '▼ 展開';
   }
 
-  function renderAllLists() {
-    applySearchFilter();
-    const manageBox = document.getElementById('manageStationList');
-    manageBox.innerHTML = stations.map((st, idx) => {
-      const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
-      const health = stationHealthMap[st.url];
-      let healthBadge = '';
-      if (health === 'checking') healthBadge = '<span style="color:var(--accent-yellow);font-size:0.78rem;margin-left:6px;">⏳ 檢測中...</span>';
-      else if (health === 'ok') healthBadge = '<span style="color:var(--accent-green);font-size:0.78rem;margin-left:6px;">🟢 正常</span>';
-      else if (health === 'fail') healthBadge = '<span style="color:var(--accent-pink);font-size:0.78rem;margin-left:6px;">🔴 疑似失效</span>';
+  let isManageGrouped = localStorage.getItem('roy_manage_grouped') === '1';
+  let collapsedCats = JSON.parse(localStorage.getItem('roy_collapsed_cats') || '{}');
+  let dragSrcIndex = -1;
 
-      return `
-      <div class="station-item" style="flex-wrap:wrap;">
-        <div style="flex:1;min-width:200px;">
+  function toggleManageGroupView() {
+    isManageGrouped = !isManageGrouped;
+    localStorage.setItem('roy_manage_grouped', isManageGrouped ? '1' : '0');
+    const btn = document.getElementById('toggleGroupViewBtn');
+    if (btn) btn.textContent = isManageGrouped ? '📋 切換為全部平鋪（可拖曳排序）' : '📂 依分類折疊檢視';
+    renderAllLists();
+  }
+
+  function toggleCatCollapse(catName) {
+    collapsedCats[catName] = !collapsedCats[catName];
+    localStorage.setItem('roy_collapsed_cats', JSON.stringify(collapsedCats));
+    renderAllLists();
+  }
+
+  function buildManageItemHTML(st, idx) {
+    const isHls = st.isHls || st.url.toLowerCase().includes('.m3u8');
+    const health = stationHealthMap[st.url];
+    let healthBadge = '';
+    if (health === 'checking') healthBadge = '<span style="color:var(--accent-yellow);font-size:0.78rem;margin-left:6px;">⏳ 檢測中...</span>';
+    else if (health === 'ok') healthBadge = '<span style="color:var(--accent-green);font-size:0.78rem;margin-left:6px;">🟢 正常</span>';
+    else if (health === 'fail') healthBadge = '<span style="color:var(--accent-pink);font-size:0.78rem;margin-left:6px;">🔴 疑似失效</span>';
+
+    const noteHtml = st.note ? `<div style="font-size:0.76rem;color:var(--accent-yellow);margin-top:2px;">📝 ${escapeHTML(st.note)}</div>` : '';
+    const dragAttr = isManageGrouped ? '' : `draggable="true" data-idx="${idx}" ondragstart="onDragStart(event, ${idx})" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropStation(event, ${idx})" ondragend="onDragEnd(event)"`;
+    const handleHtml = isManageGrouped ? '' : `<span class="drag-handle" ontouchstart="onTouchDragStart(event, ${idx})" title="按住上下拖曳排序">⠿</span>`;
+
+    return `
+      <div class="station-item" ${dragAttr} style="flex-wrap:wrap;">
+        ${handleHtml}
+        <div style="flex:1;min-width:190px;">
           <strong>${escapeHTML(st.name)}</strong><span class="cat-tag">${escapeHTML(st.category || '綜合')}</span> ${isHls ? '<span style="color:var(--accent-green);font-size:0.8rem;">[HLS]</span>' : ''}${healthBadge}
+          ${noteHtml}
           <div style="font-size:0.76rem;color:var(--text-dim);word-break:break-all;">${escapeHTML(st.url)}</div>
         </div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
@@ -2319,8 +2417,117 @@
           <button type="button" class="btn-pink btn-mini" onclick="deleteStation(${idx})">🗑 刪除</button>
         </div>
       </div>`;
+  }
+
+  function renderAllLists() {
+    applySearchFilter();
+    const manageBox = document.getElementById('manageStationList');
+    const toggleBtn = document.getElementById('toggleGroupViewBtn');
+    if (toggleBtn) toggleBtn.textContent = isManageGrouped ? '📋 切換為全部平鋪（可拖曳排序）' : '📂 依分類折疊檢視';
+
+    if (!isManageGrouped) {
+      manageBox.innerHTML = stations.map((st, idx) => buildManageItemHTML(st, idx)).join('');
+      return;
+    }
+
+    const groups = {};
+    stations.forEach((st, idx) => {
+      const cat = st.category || '綜合';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push({ st, idx });
+    });
+
+    manageBox.innerHTML = Object.entries(groups).map(([cat, items]) => {
+      const isClosed = !!collapsedCats[cat];
+      const arrow = isClosed ? '▶ 展開' : '▼ 收合';
+      const innerHtml = isClosed ? '' : items.map(item => buildManageItemHTML(item.st, item.idx)).join('');
+      return `
+        <div>
+          <div class="cat-group-header" onclick="toggleCatCollapse('${escapeHTML(cat)}')">
+            <span>📂 ${escapeHTML(cat)}（${items.length} 台）</span>
+            <span style="color:var(--border-glow);font-size:0.8rem;">${arrow}</span>
+          </div>
+          ${innerHtml}
+        </div>`;
     }).join('');
   }
+  async function reorderStation(fromIdx, toIdx) {
+ if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx || fromIdx >= stations.length || toIdx >= stations.length) return;
+ const playingUrl = (currentStationIndex >= 0 && stations.at(currentStationIndex)) ? stations.at(currentStationIndex).url : null;
+ const [moved] = stations.splice(fromIdx, 1);
+ stations.splice(toIdx, 0, moved);
+ if (playingUrl) currentStationIndex = stations.findIndex(s => s.url === playingUrl);
+ await saveData();
+ renderAllLists();
+}
+
+function onDragStart(e, idx) {
+ dragSrcIndex = idx;
+ e.currentTarget.classList.add('dragging');
+ if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragOver(e) {
+ e.preventDefault();
+ e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(e) {
+ e.currentTarget.classList.remove('drag-over');
+}
+
+async function onDropStation(e, targetIdx) {
+ e.preventDefault();
+ e.currentTarget.classList.remove('drag-over');
+ if (dragSrcIndex !== -1 && dragSrcIndex !== targetIdx) {
+   await reorderStation(dragSrcIndex, targetIdx);
+ }
+ dragSrcIndex = -1;
+}
+
+function onDragEnd(e) {
+ e.currentTarget.classList.remove('dragging');
+ document.querySelectorAll('.station-item').forEach(el => el.classList.remove('drag-over'));
+}
+
+function onTouchDragStart(e, idx) {
+ const startItem = e.currentTarget.closest('.station-item');
+ if (!startItem) return;
+ startItem.classList.add('dragging');
+ let currentOverItem = null;
+
+ const onTouchMove = (ev) => {
+   ev.preventDefault();
+   const touch = ev.touches.item(0);
+   if (!touch) return;
+   const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+   const targetItem = elUnder ? elUnder.closest('.station-item[data-idx]') : null;
+   if (currentOverItem && currentOverItem !== targetItem) {
+     currentOverItem.classList.remove('drag-over');
+   }
+   if (targetItem && targetItem !== startItem) {
+     targetItem.classList.add('drag-over');
+     currentOverItem = targetItem;
+   } else {
+     currentOverItem = null;
+   }
+ };
+
+ const onTouchEnd = async () => {
+   document.removeEventListener('touchmove', onTouchMove);
+   document.removeEventListener('touchend', onTouchEnd);
+   startItem.classList.remove('dragging');
+   if (currentOverItem) {
+     currentOverItem.classList.remove('drag-over');
+     const targetIdx = parseInt(currentOverItem.getAttribute('data-idx'), 10);
+     if (!isNaN(targetIdx)) await reorderStation(idx, targetIdx);
+   }
+ };
+
+ document.addEventListener('touchmove', onTouchMove, { passive: false });
+ document.addEventListener('touchend', onTouchEnd);
+}
+
   async function moveStation(idx, dir) {
     const targetIdx = idx + dir;
     if (targetIdx < 0 || targetIdx >= stations.length) return;
