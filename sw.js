@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roys-radio-hud-v4.4';
+const CACHE_NAME = 'roys-radio-hud-v4.5';
 const STATIC_ASSETS = [
   './',
   './index.html',
