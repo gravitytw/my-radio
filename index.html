@@ -632,22 +632,29 @@
       .replace(/'/g, '\u0027');
   }
 
-  const HUD_THEMES = [
-    { name: '賽博青藍', glow: '#00f3ff', rgb: '0, 243, 255', sub: '#8be9fd', green: '#00ff9d', pink: '#ff007f', bg: '#101d36' },
-    { name: '駭客任務綠', glow: '#00ff66', rgb: '0, 255, 102', sub: '#99ffbb', green: '#aaff00', pink: '#ff3366', bg: '#082214' },
-    { name: '霓虹紫羅蘭', glow: '#d966ff', rgb: '217, 102, 255', sub: '#eeb3ff', green: '#00f3ff', pink: '#ff007f', bg: '#1e1035' },
-    { name: '琥珀黃金', glow: '#ffb700', rgb: '255, 183, 0', sub: '#ffe082', green: '#00ff9d', pink: '#ff4444', bg: '#261a08' }
+    const HUD_THEMES = [
+    { name: '賽博青藍', glow: '#00f3ff', rgb: '0, 243, 255', sub: '#8be9fd', green: '#00ff9d', pink: '#ff007f', bg: '#101d36', dark: '#070b14' },
+    { name: '駭客任務綠', glow: '#00ff66', rgb: '0, 255, 102', sub: '#99ffbb', green: '#aaff00', pink: '#ff3366', bg: '#082214', dark: '#040f09' },
+    { name: '霓虹紫羅蘭', glow: '#d966ff', rgb: '217, 102, 255', sub: '#eeb3ff', green: '#00f3ff', pink: '#ff007f', bg: '#1e1035', dark: '#0d0717' },
+    { name: '琥珀黃金', glow: '#ffb700', rgb: '255, 183, 0', sub: '#ffe082', green: '#00ff9d', pink: '#ff4444', bg: '#261a08', dark: '#120c03' },
+    { name: '血色櫻花紅', glow: '#ff2a6d', rgb: '255, 42, 109', sub: '#ff85a2', green: '#05d9e8', pink: '#ffbe0b', bg: '#2b0916', dark: '#14040a' },
+    { name: '極地冰川藍', glow: '#38bdf8', rgb: '56, 189, 248', sub: '#bae6fd', green: '#34d399', pink: '#f472b6', bg: '#0c243c', dark: '#06111d' },
+    { name: '日落霓虹橘', glow: '#ff6b35', rgb: '255, 107, 53', sub: '#ffb085', green: '#ffd166', pink: '#ef476f', bg: '#2b1226', dark: '#140712' },
+    { name: '星際銀白', glow: '#e2e8f0', rgb: '226, 232, 240', sub: '#f8fafc', green: '#38bdf8', pink: '#fb7185', bg: '#1e293b', dark: '#090d14' }
   ];
   let currentThemeIdx = parseInt(localStorage.getItem('roy_hud_theme') || '0', 10) % HUD_THEMES.length;
 
   function applyHudTheme(idx) {
     const t = HUD_THEMES[idx] || HUD_THEMES[0];
+    document.documentElement.style.setProperty('--bg-dark', t.dark || '#070b14');
     document.documentElement.style.setProperty('--border-glow', t.glow);
     document.documentElement.style.setProperty('--border-glow-rgb', t.rgb);
     document.documentElement.style.setProperty('--sub-title', t.sub);
     document.documentElement.style.setProperty('--accent-green', t.green);
     document.documentElement.style.setProperty('--accent-pink', t.pink);
-    document.body.style.background = `radial-gradient(circle at top, ${t.bg} 0%, var(--bg-dark) 80%)`;
+    document.body.style.background = `radial-gradient(circle at top, ${t.bg} 0%, ${t.dark || '#070b14'} 80%)`;
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', t.dark || '#070b14');
     const btn = document.getElementById('themeCycleBtn');
     if (btn) btn.textContent = `🎨 主題：${t.name}`;
   }
