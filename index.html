@@ -370,7 +370,7 @@
       <div class="clock" id="clockDisplay">📅 載入時間中...</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-           <select id="themeSelect" onchange="selectHudTheme(this.value)" style="width:auto;margin:0;padding:4px 8px;font-size:0.82rem;border-color:var(--accent-yellow);color:var(--accent-yellow);font-weight:bold;cursor:pointer;" title="直接選擇介面主題配色">
+                <select id="themeSelect" onchange="selectHudTheme(this.value)" style="width:auto;margin:0;padding:4px 8px;font-size:0.82rem;border-color:var(--accent-yellow);color:var(--accent-yellow);font-weight:bold;cursor:pointer;" title="直接選擇介面主題配色">
         <option value="0">🎨 主題：賽博青藍</option>
         <option value="1">🎨 主題：駭客任務綠</option>
         <option value="2">🎨 主題：霓虹紫羅蘭</option>
@@ -383,6 +383,12 @@
         <option value="9">☕ 柔和：暖冬焦糖拿鐵</option>
         <option value="10">🌸 柔和：暮靄薰衣草</option>
         <option value="11">🌊 柔和：靜謐深海藍</option>
+        <option value="12">🍵 柔和：京都抹茶奶綠</option>
+        <option value="13">🌫️ 柔和：冰霧莫蘭迪灰</option>
+        <option value="14">🌅 柔和：晨曦杏桃微光</option>
+        <option value="15">💎 柔和：琉璃薄荷青</option>
+        <option value="16">🫐 柔和：午夜藍莓奶昔</option>
+        <option value="17">🌾 柔和：燕麥奶霜白</option>
       </select>
       <button type="button" id="carModeBtn" class="btn-mini btn-green" onclick="toggleCarMode()" title="切換車用極簡大字模式">🚘 車用模式</button>
       <span id="currentUserNickname" style="color:var(--accent-green);font-weight:bold;font-size:0.95rem;">👤 本地體驗模式</span>
@@ -646,7 +652,7 @@
       .replace(/'/g, '\u0027');
   }
 
-      const HUD_THEMES = [
+        const HUD_THEMES = [
     { name: '賽博青藍', glow: '#00f3ff', rgb: '0, 243, 255', sub: '#8be9fd', green: '#00ff9d', pink: '#ff007f', bg: '#101d36', dark: '#070b14' },
     { name: '駭客任務綠', glow: '#00ff66', rgb: '0, 255, 102', sub: '#99ffbb', green: '#aaff00', pink: '#ff3366', bg: '#082214', dark: '#040f09' },
     { name: '霓虹紫羅蘭', glow: '#d966ff', rgb: '217, 102, 255', sub: '#eeb3ff', green: '#00f3ff', pink: '#ff007f', bg: '#1e1035', dark: '#0d0717' },
@@ -658,13 +664,19 @@
     { name: '森林鼠尾草（柔和）', glow: '#84a98c', rgb: '132, 169, 140', sub: '#cad2c5', green: '#a3b18a', pink: '#e07a5f', bg: '#1b2621', dark: '#0f1613' },
     { name: '暖冬焦糖拿鐵（柔和）', glow: '#d4a373', rgb: '212, 163, 115', sub: '#faedcd', green: '#ccd5ae', pink: '#e5989b', bg: '#281e18', dark: '#140f0c' },
     { name: '暮靄薰衣草（柔和）', glow: '#b8b8ff', rgb: '184, 184, 255', sub: '#e0e1ff', green: '#9bf6ff', pink: '#ffadad', bg: '#1f1d36', dark: '#100f1c' },
-    { name: '靜謐深海藍（柔和）', glow: '#7ea8be', rgb: '126, 168, 190', sub: '#c2dfe3', green: '#98c1d9', pink: '#ee6c4d', bg: '#162530', dark: '#0b1319' }
+    { name: '靜謐深海藍（柔和）', glow: '#7ea8be', rgb: '126, 168, 190', sub: '#c2dfe3', green: '#98c1d9', pink: '#ee6c4d', bg: '#162530', dark: '#0b1319' },
+    { name: '京都抹茶奶綠（柔和）', glow: '#95b89c', rgb: '149, 184, 156', sub: '#d8e6db', green: '#b7d3b0', pink: '#e29578', bg: '#18261d', dark: '#0c140f' },
+    { name: '冰霧莫蘭迪灰（柔和）', glow: '#94a3b8', rgb: '148, 163, 184', sub: '#cbd5e1', green: '#7dd3fc', pink: '#fda4af', bg: '#1b222c', dark: '#0e1218' },
+    { name: '晨曦杏桃微光（柔和）', glow: '#e6a895', rgb: '230, 168, 149', sub: '#f8dcd2', green: '#f3c69f', pink: '#e07a7a', bg: '#291c1b', dark: '#150e0d' },
+    { name: '琉璃薄荷青（柔和）', glow: '#76c7c0', rgb: '118, 199, 192', sub: '#bceae6', green: '#9be3ce', pink: '#f28482', bg: '#132626', dark: '#091414' },
+    { name: '午夜藍莓奶昔（柔和）', glow: '#9b9ece', rgb: '155, 158, 206', sub: '#d2d4f0', green: '#8ecae6', pink: '#f4978e', bg: '#1a1b30', dark: '#0d0e1a' },
+    { name: '燕麥奶霜白（柔和）', glow: '#cfc6b8', rgb: '207, 198, 184', sub: '#ebe6de', green: '#b5c99a', pink: '#e5989b', bg: '#24221e', dark: '#12110f' }
   ];
   let currentThemeIdx = parseInt(localStorage.getItem('roy_hud_theme') || '0', 10) % HUD_THEMES.length;
 
   function applyHudTheme(idx) {
     const safeIdx = (idx >= 0 && idx < HUD_THEMES.length) ? idx : 0;
-    const t = HUD_THEMES[safeIdx] || HUD_THEMES[0];
+    const t = HUD_THEMES.at(safeIdx) || HUD_THEMES.at(0);
     document.documentElement.style.setProperty('--bg-dark', t.dark || '#070b14');
     document.documentElement.style.setProperty('--border-glow', t.glow);
     document.documentElement.style.setProperty('--border-glow-rgb', t.rgb);
@@ -895,7 +907,7 @@
     localStorage.setItem('roy_custom_eq', JSON.stringify(customEqValues));
     applyEqPreset('custom');
   }
-    function initVisualizer() {
+      function initVisualizer() {
     if (visInitialized) {
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       return;
@@ -923,8 +935,8 @@
       eqTrebleFilter.frequency.value = 7500;
 
       analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.84;
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.86;
 
       recDestNode = audioCtx.createMediaStreamDestination();
 
@@ -937,13 +949,13 @@
 
       applyEqPreset(currentEqPreset);
       visDataArray = new Uint8Array(analyser.frequencyBinCount);
-      tag.textContent = "HUD HD SPECTRUM + EQ // 64-BAND";
+      tag.textContent = "HUD MIRROR SPECTRUM // 96-BAND HD";
     } catch (e) {
       isVisSimulated = true;
-      tag.textContent = "HUD HD SPECTRUM // SIMULATED";
+      tag.textContent = "HUD MIRROR SPECTRUM // SIMULATED";
     }
 
-    const barCount = 64;
+    const barCount = 96;
     const peakHeights = new Float32Array(barCount);
     const smoothHeights = new Float32Array(barCount);
 
@@ -952,54 +964,74 @@
       if (document.hidden) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const gap = 3;
+      const activeTheme = HUD_THEMES.at(currentThemeIdx) || HUD_THEMES.at(0);
+      const baselineY = canvas.height - 13;
+      const maxBarH = baselineY - 5;
+
+      // 繪製科技水平基準光軌
+      ctx.strokeStyle = `rgba(${activeTheme.rgb}, 0.28)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, baselineY + 0.5);
+      ctx.lineTo(canvas.width, baselineY + 0.5);
+      ctx.stroke();
+
+      const gap = 2;
       const totalGap = gap * (barCount - 1);
-      const barWidth = Math.max(2, (canvas.width - totalGap) / barCount);
+      const barWidth = Math.max(1.5, (canvas.width - totalGap) / barCount);
       let hasSignal = false;
 
       if (!isVisSimulated && analyser && !activeAudio.paused) {
         analyser.getByteFrequencyData(visDataArray);
         for (let j = 0; j < barCount; j++) {
-          if (visDataArray[j] > 0) { hasSignal = true; break; }
+          if (visDataArray.at(j) > 0) { hasSignal = true; break; }
         }
       }
 
-      const activeTheme = HUD_THEMES[currentThemeIdx] || HUD_THEMES[0];
-      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, activeTheme.sub);
-      grad.addColorStop(0.45, activeTheme.green);
-      grad.addColorStop(1, activeTheme.glow);
+      // 主光束漸層（由頂部高光過渡到霓虹主色）
+      const mainGrad = ctx.createLinearGradient(0, 2, 0, baselineY);
+      mainGrad.addColorStop(0, activeTheme.sub);
+      mainGrad.addColorStop(0.5, activeTheme.green);
+      mainGrad.addColorStop(1, activeTheme.glow);
+
+      // 底部微透明倒影漸層
+      const reflectGrad = ctx.createLinearGradient(0, baselineY, 0, canvas.height);
+      reflectGrad.addColorStop(0, `rgba(${activeTheme.rgb}, 0.35)`);
+      reflectGrad.addColorStop(1, `rgba(${activeTheme.rgb}, 0.0)`);
 
       for (let i = 0; i < barCount; i++) {
-        let targetVal = 3;
+        let targetVal = 2;
         if (!activeAudio.paused) {
           if (!isVisSimulated && hasSignal) {
-            const binIdx = Math.min(visDataArray.length - 1, Math.floor(i * 1.15));
-            targetVal = visDataArray[binIdx] || 5;
+            // 對數頻率映射，讓低中音更有律動、高音更細膩
+            const ratio = i / barCount;
+            const binIdx = Math.min(visDataArray.length - 1, Math.floor(Math.pow(ratio, 1.35) * (visDataArray.length * 0.72)));
+            targetVal = visDataArray.at(binIdx) || 4;
           } else {
-            const t = Date.now() * 0.0045;
-            const wave1 = Math.sin(t + i * 0.24) * 0.5 + 0.5;
-            const wave2 = Math.cos(t * 1.3 - i * 0.14) * 0.5 + 0.5;
-            const envelope = Math.sin((i / barCount) * Math.PI) * 0.65 + 0.35;
-            targetVal = (wave1 * 110 + wave2 * 85 + Math.random() * 28) * envelope + 10;
+            const t = Date.now() * 0.0042;
+            const w1 = Math.sin(t + i * 0.16) * 0.5 + 0.5;
+            const w2 = Math.cos(t * 1.4 - i * 0.09) * 0.5 + 0.5;
+            const w3 = Math.sin(t * 2.1 + i * 0.31) * 0.5 + 0.5;
+            const env = Math.sin((i / barCount) * Math.PI) * 0.6 + 0.4;
+            targetVal = (w1 * 95 + w2 * 70 + w3 * 40 + Math.random() * 18) * env + 8;
           }
         }
 
-        const rawH = Math.max(2, (targetVal / 255) * (canvas.height - 6));
-        smoothHeights[i] += (rawH - smoothHeights[i]) * 0.32;
-        const barH = smoothHeights[i];
+        const rawH = Math.max(1.5, (targetVal / 255) * maxBarH);
+        const prevH = smoothHeights.at(i) || 1.5;
+        const barH = prevH + (rawH - prevH) * 0.28;
+        smoothHeights.set([barH], i);
 
-        if (barH >= peakHeights[i]) {
-          peakHeights[i] = barH;
-        } else {
-          peakHeights[i] = Math.max(2, peakHeights[i] - 0.55);
-        }
+        const prevPeak = peakHeights.at(i) || 1.5;
+        const nextPeak = barH >= prevPeak ? barH : Math.max(1.5, prevPeak - 0.42);
+        peakHeights.set([nextPeak], i);
 
         const x = i * (barWidth + gap);
-        const y = canvas.height - barH;
-        const radius = Math.min(barWidth / 2, 2.5);
+        const y = baselineY - barH;
+        const radius = Math.min(barWidth / 2, 2);
 
-        ctx.fillStyle = grad;
+        // 1. 繪製上方主細膩光柱
+        ctx.fillStyle = mainGrad;
         ctx.beginPath();
         if (typeof ctx.roundRect === 'function') {
           ctx.roundRect(x, y, barWidth, barH, [radius, radius, 0, 0]);
@@ -1008,14 +1040,23 @@
         }
         ctx.fill();
 
-        if (!activeAudio.paused && peakHeights[i] > 4) {
+        // 2. 繪製下方科技鏡像倒影
+        const reflectH = Math.min(11, barH * 0.32);
+        if (reflectH > 1) {
+          ctx.fillStyle = reflectGrad;
+          ctx.fillRect(x, baselineY + 1, barWidth, reflectH);
+        }
+
+        // 3. 繪製上方懸浮峰值光點（Peak Hold）
+        if (!activeAudio.paused && nextPeak > 3) {
           ctx.fillStyle = activeTheme.sub;
-          ctx.fillRect(x, Math.max(1, canvas.height - peakHeights[i] - 3), barWidth, 2);
+          ctx.fillRect(x, Math.max(1, baselineY - nextPeak - 2.5), barWidth, 1.5);
         }
       }
     }
     drawSpectrum();
   }
+
 
   function startTitleMarquee(displayText) {
     stopTitleMarquee();
